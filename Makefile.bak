@@ -1,0 +1,29 @@
+# Cryxtels Modern Version Makefile
+CC = g++
+
+CFLAGS_SDL = $(shell sdl2-config --cflags)
+CFLAGS = -std=c++11 -Wall -I./include $(CFLAGS_SDL) 
+CFLAGS_DEBUG = -g
+CFLAGS_RELEASE = -s -O2
+
+LFLAGS = $(shell sdl2-config --libs)
+
+OBJS  = source/cryxtels.o source/fast3d.o source/global.o
+OBJS += source/input.o source/scanline.o source/text3d.o
+
+all: release
+
+release: CFLAGS += $(CFLAGS_RELEASE)
+release: cryxtels
+
+debug: CFLAGS += $(CFLAGS_DEBUG)
+debug: cryxtels
+
+cryxtels:	$(OBJS)
+		$(CC) $(CFLAGS) $(LFLAGS) -o ./bin/$@ $^
+
+.cpp.o:
+		$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+		rm -f source/*.o bin/cryxtels

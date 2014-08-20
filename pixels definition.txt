@@ -1,0 +1,143 @@
+Modifying PIXELS.DEF:
+
+use a text editor, such as the notepad. Especially if using WinXP, it is perfect. If using one of the terminally stupid notepads provided with past versions (Win95, 98, ME) you'll be limited to 64 Kb or less as the text size, so you're suggested to get another text editor, such as ConText, which is also freeware. Always place a semicolon at the end of each line.
+
+Declaration of the microcosm:
+
+Place a couple of commands at the top of the file:
+   SEED = <a number from 0 to 65535, whatever number you like>;
+   AUTHOR = YOUR_NAME_HERE;
+Note: use underscores to mark spaces in texts.
+
+Declaration of a pixel:
+
+TYPE 0;
+   endpixel;
+
+this is a void pixel declaration.
+Between "TYPE" and "endpixel", the shape can be defined using drawing primitives, as in the following example...
+
+TYPE 0;
+   dock, 0, 0, 0, 100, 100;
+   box, 0, 0, 0, 100, 100, 100;
+   endpixel;
+
+This would generate a cube (a box, each side of which is 100 units).
+
+Full listing of primitives:
+
+DOCK
+Syntax: DOCK, X, Y, Z, X-SIZE, Z-SIZE;
+DOCK defines the area in the middle of which the ship will land.
+The size parameters of the area makes it normally rectangular: to make it shaped like a circle, specify X-SIZE as the radius in units, and Z-SIZE=-1.
+
+DOT
+Syntax: DOT, X, Y, Z;
+DOT defines a single dot in the given coordinates.
+All the primitives include the X, Y and Z coordinates, giving the centre of the shape in respect to the centre of the pixel.
+
+ASTERISK
+Syntax: ASTERISK, X, Y, Z, RADIUS, STEP;
+ASTERISK draws a 3D asterisk at given coordinates: RADIUS gives the lenght of its "rays", and STEP gives how many degrees separate the rays.
+
+LINE
+Syntax: LINE, X, Y, Z, X2, Y2, Z2;
+LINE defines a line going from X, Y, Z to X2, Y2, Z2.
+
+RECTANGLE
+Syntax: RECTANGLE, X, Y, Z, WIDTH, HEIGHT, PLANE;
+RECTANGLE defines a rectangle of given size.
+The PLANE parameter can be 0, 1 or 2.
+PLANE 0: X-Y plane (vertical, west-east);
+PLANE 1: X-Z plane (horizontal);
+PLANE 2: Y-Z plane (vertical, north-south).
+All the other primitives using a PLANE parameter work the same.
+
+BOX
+Syntax: BOX, X, Y, Z, WIDTH, HEIGHT, DEPTH;
+BOX defines a box of given size, that's it.
+
+GRID
+Syntax: GRID, X, Y, Z, WIDTH, HEIGHT, STEPS, PLANE;
+GRID defines a grid whose tiles are WIDTH x HEIGHT in size, having as many tiles as the STEP parameter indicates, and aligned along PLANE.
+
+DOTTED ELLIPSE
+Syntax: DOTTED ELLIPSE, X, Y, Z, WIDTH, HEIGHT, PLANE, STEP;
+DOTTED ELLIPSE draws a sequence of dots forming an ellipse of given size, aligned along PLANE. The STEP parameter is espressed in degrees per dot: if STEP equals 360, there will be one dot per degree.
+
+ELLIPSE
+as above, but connects the dots with lines.
+
+SPIRAL
+Syntax: SPIRAL, X, Y, Z, INCREMENT, PLANE, STEP;
+SPIRAL draws a spiral aligned along PLANE, where STEP gives how many degree are separating each point of the shape. At each point (connected to the others with a line) the radius of the spiral increments by INCREMENT units.
+
+WAVE
+Syntax: WAVE, X, Y, Z, SCALE, AMPLITUDE, PLANE, STEP;
+WAVE draws a wave aligned along PLANE, where SCALE gives the length of the wave, AMPLITUDE gives the height of each of them, and STEP how any degrees separate each point.
+
+COLUMN
+Syntax: COLUMN, X, Y, Z, BASE RADIUS, TIP RADIUS, HEIGHT, STEP;
+COLUMS draws a cone trunc, always aligned along the vertical axis (making it a column, in effects), where STEP gives how many degrees separate each point.
+
+SPHERE
+Syntax: SPHERE, X, Y, Z, RADIUS, ASPECT RATIO, STEP;
+SPHERE draws a (dotted) sphere of given radius: aspect ratio is 1 for a perfect sphere, while STEP gives how many degrees separate each point.
+
+GRIDSPHERE
+as above, but connects the points with lines.
+
+DONUT
+Syntax: DONUT, X, Y, Z, RADIUS, SECTION, STEP;
+DONUT draws a donut of given radius, where SECTION gives the thickness of the donut, and STEP gives how many degrees separate each point.
+
+TEXT
+Syntax: TEXT, X, Y, Z, X-SCALE, Y-SCALE, ALPHA, BETA, STRING;
+TEXT writes a text (given as STRING), starting at X, Y, Z, where each character is sized using X-SCALE and Y-SCALE, and aligned along the direction given by ALPHA (rotates along X) and BETA angles (rotates along Y): both ALPHA and BETA are given in degrees. Note: including "%d" in the text string will replace it with the number of the pixel.
+
+DETAIL
+Syntax: DETAIL;
+DETAIL marks the end of a detail group: grouping primitives from the bigger to the smaller helps making the program draw the shapes faster when a pixel is far from the observer. There are 4 groups of details. Using more than 4 "detail" primitives is useless.
+
+COLLISION
+Syntax: COLLISION, X, Y, Z, WIDTH, HEIGHT, DEPTH;
+COLLISION creates a collision area where the observer cannot walk across: the HEIGHT parameter is giving the top limit of the collision area, but the observer is not allowed to walk below the area anyway.
+
+COLLISION HIGH
+as above, but allows walking below the area.
+To be sincere, it was an improved version of COLLISION, distingiushed to preserve compatibility with previous shapes: this is better than COLLISION, so you may just use this one.
+
+SOLID BLOCK
+as COLLISION HIGH, but also highlights the collision area with a box. It is useful to "condense" pixel definitions where all your collision blocks have to be also visually showen (example: the many steps forming the stairs of pixel type 31).
+
+FORBIDDEN
+Syntax: FORBIDDEN, X, Y, Z, WIDTH, HEIGHT, DEPTH;
+Basically operates as a normal collision block (COLLISION), but normally marks a section of the pixel's surface that does not exist. No objects will be placed where a forbidden block is. Use it to clip "holes" in the surfaces.
+
+TOTAL MASS
+Syntax: TOTAL MASS, MASS;
+TOTAL MASS gives how much a pixel weights, and its brilliance in the distance, it's "how big it is", in short. Normally obscillates between 10000 and 50000.
+
+ASSOCIATED FILE
+Syntax: ASSOCIATED FILE, FILENAME;
+Allows associating a file with a pixel or an object.
+Associated files in effects give the "atmosphere" bitmap around a pixel, but the bitmap is a file containing raw data and having ATM extension. There is no converter tool yet to create .ATM files from bitmaps, just ignore that. The use of this primitive is marking special objects.
+
+Declaration of an object:
+
+MODEL 0;
+   endpixel;
+
+Objects are declared using the same primitives as for the pixels, but their mass normally ranges from 10 to 500, depending on how big you generally think they might be. If mass is above or equal to 100, it will need CAPS LOCK to be active in order to pick the object up. The "associated file" primitive can determine special kinds of object.
+
+associated file, text-v;
+creates a vertical notepad.
+
+associated file, text-h;
+creates a horizontal notepad.
+
+associated file, magnify;
+creates a magnifier: "wearing" it will magnify things on the screen.
+
+associated file, bomb;
+defines the object as a bomb: throwing it towards a pixel will cause the pixel to be destroyed upon collision. The bomb object will also be destroyed, along with all of the objects placed on the target pixel.

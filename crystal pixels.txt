@@ -1,0 +1,166 @@
+Build 2. Changes since Build 1: more extensive pixel definitions, with upto 100 primitives rather than max. 40. Same occurs for the objects. Introduced "solidblock" primitive.
+
+___________
+WinXP NOTES
+
+   If the program presents a strange stop-and-go behaviour, where the frame rate wildly changes and the program stops at times, try right-clicking the program's icon and select "properties". Find the "other" tab and drop the priority slider to the minimum possible. That solved the problem on my PC, but I have no idea why it happens in the first place. Oh, the priority I'm talking about is called "priority while waiting" in the italian version of WindowsXP Home (sorry, couldn't buy an english version here in Italy, they don't seem to sell any but the italian version, which is pretty annoying anyway). It may be called "priority while idle", "background priority", or something similar, in en/us versions.
+
+_______________
+What's Crystal Pixels?
+
+   Crystal Pixels is a strange piece of software, that's probably the most fitting definition, although it may be classified as a "simulator". But it doesn't simulate anything real, nor anything similar to whatever may be real. Crystal Pixels is an old program, the coding of which started in 1994. Precisely, on September 12th, 1994. It is very old, therefore don't expect special graphics quality: it renders in a strange kind of "fluorescent wireframe", melting the wires as they intersect. The resolution is poor: 320x200 at 256 colors, most of which colors are not even effectively used. Crystal Pixels takes its name from the entities that populate its microcosm: those entities are called "pixels" because, when seen in the distance, they look as single pixels. Because they're usually small, tiny little blue worlds made of bright wires lost in a black void space extending infinitely around, the only reference point being a weird little star called "Sunny". The atmosphere of Crystal Pixels is unique, and often considered melancholic: I made this program only a couple of years after getting out of a deeply depressed period of my life. I loved it and I still love it: it is a part of me, and it's also one of my very first C++ programs.
+
+__________________
+What's IN Crystal Pixels?
+
+   There's this huge black void around, with Sunny as the centre of that microcosm. Around Sunny lay the pixels, and on the pixels may lay several objects. You are given a special flying vehicle, called "The Fly" because of its shape, using which you can navigate throught the void, approach and dock onto pixels, take and move and drop and use objects there.
+
+___________________________
+What can I do as I start the program?
+
+   By starting the program "as is", as it is provided in my ZIP archive, you will see an intro screen. Press any key to wipe it out and enter the microcosm.
+
+________________________
+I'm seeing a strange flashing thing
+spreading rays of blue light around,
+right in front of me. Impressive.
+But now what?
+
+   That's just Sunny.
+Look around and you will also see several bright dots, a few of which are slowly moving: those are the pixels.
+
+_______________________
+Oh cute! I want to approach one!
+
+   Beware: it will not be easy to drive "The Fly".
+   The rules applying to Crystal Pixel's microcosm are about the same rules applying to our universe: the most important is inertia (momentum), which means that if your vehicle accelerates in one direction, it will keep moving in that direction UNTIL you don't accelerate in the OPPOSITE direction. Make a small mistake pointing the thrusters in the appropriate direction and you'll be getting mad attempting to stop, later. The vehicle will provide a few useful functions to approach and dock the pixels, but it's got NO AUTOPILOT, so it's your responsibility to drive it well.
+
+________________
+Ok, ok, how do I start?
+
+   Well, to point The Fly around, just drag the mouse. This is easy, and there's no inertia when changing direction. We may say the vehicle compensates it in some way, or we may say I forgot to include that, or we may say it would have been TOO difficult otherwise :)
+   Now, while you're looking around by dragging the mouse, without pressing any of the mouse buttons for now, you'll see a small sign in the shape of an X in the middle of the screen: that's the pointer that tells you the direction in which you will be accelerating.
+   As a first "exercise", try to find out which is the nearest pixel to your starting position: look around until you see a pixel indicated by a pretty visible crosshair. The center of the crosshair will be indicating the position of the nearest pixel. The readout of its distance is given on the vehicle's control panel, at the bottom of the screen. I know it isn't very readable, but you'll eventually get used to it as I did. Anyway, there will be an indicator reading D=1.6Km, and that's it: the nearest pixel is at 1.6 Kilometers from you, approximately 1 mile.
+
+_________
+Accelerating.
+
+   Make sure the said pixel (marked by the crosshair) is also in the middle of the X sign indicating the direction you're heading to. At that point, press the left mouse button shortly. You may hold it down for a small while, but be careful: The Fly accelerates at impressive speed, and in no time you may find yourself travelling way too fast. It is important to consider that, before coming at mid-way between your starting position and your target, you will have to begin slowing down, in order to stop and find yourself reasonably nearer to the target. Let's say that the velocity indication (V=...) in the control panel might not cross 250-300 KpH (Kilometers per Hour) in order to safely cover a distance as small as 1.6 Km.
+
+_________________
+Turning off the thruster.
+
+   Press the right mouse button once to stop accelerating or decelerating, that is, to stop the engine push.
+
+_________
+Decelerating.
+
+   To decelerate you will have to point the vehicle in the opposite direction in respect to the direction you were heading to while accelerating: if you don't move the mouse after accelerating, you can point in that direction easily, by pressing the F1 key. If you DID move the mouse in the meantime, you will need to turn around manually until you see a hash # sign in the middle of the screen. The hash indicates the direction you're COMING from, and the direction in which you have to accelerate in order to decrease your actual velocity. If you keep following the hash sign while decelerating, you might be able to stop the vehicle almost completely. But you don't really have to: just decrease your speed to a convenient value, depending on the distance indicator, and don't go too fast or you may miss the pixel by overtaking it, and find yourself several Km beyond it before you can stop.
+
+___________________
+When you're near the pixel.
+
+   You'll see the pixel getting bigger, and once you're VERY near to it, within a range of 15 meters (about 16 yards), you can press the F4 button. If you're near enough, the ship will automatically dock with the pixel and stop on its surface. If by any chance something gone wrong while you were apporaching the pixel, and you're not practiced enough to stop The Fly, well, just quit the program by pressing the ESC key once. The screen will fade and the program will terminate: launch it again and you'll find yourself again in the starting position. Redo from start.
+
+______________________________________________
+Yes, I got mad before succeeding with that, but I'm here, finally.
+Now what?
+
+   Once docked, the hard part is finished. Everything that remains is much easier. Press F3 to leave the ship: you will stand on your feet and be able to walk on the pixel's surface. Explore it as much as you like. To be sincere, I think there are no objects at all on the surface of that pixel, in the initial situation, but now that you know how to fly, you may just return to The Fly and press the F3 key again: you'll be back in control of the vehicle. Press F4 to undock and you're ready to head towards any other pixels. There are 250 of them in the initial situation, randomly selected from 31 different types. Spread upon them, there are complessively 250 objects, again taken from 30 different models.
+
+________________________
+There are only 31 kinds of pixels?
+
+   Initially, and in my own microcosm, yes. Along with 30 kinds of objects.
+   But you can create YOUR own microcosm, with your pixels, and shape them the way you like, as well as creating the shapes of the objects that can be placed upon them. There is a particular file to edit for that: the PIXELS.DEF file. But I'll explain it later...
+
+____________________
+"Magic" properties of Sunny:
+
+   Sunny is the generator of all the microcosm's reality: it can create pixels, objects, and equally destroy them. There is a glowing yellow atmosphere around Sunny, which gets visible when you're crossing it while flying your vehicle. Here's what Sunny can do:
+
+   - create objects: get in its halo and press Page Up;
+   - create pixels: get very near to Sunny's centre;
+   - destroying objects: any objects falling into Sunny's halo will explode.
+
+______________
+Creating a new pixel:
+
+   You have to fly thought the CENTRE of Sunny.
+   If you were near enough you'll notice a new pixel is floating in front of your vehicle: it will follow you until your speed drops near to zero. When your vehicle is pratically not moving (speed below 10 KPH), the pixel will "unlink" from it and be fixed forever in that position. If you placed it in a position you didn't want to place it, then I'm sorry, you'll have to destroy it with a bomb, and redo from start.
+
+__________________________
+Listing of function keys in the vehicle.
+
+   F1 will point the vehicle in the direction opposite to that you're actually facing (180 degree turn).
+   F2 will point the vehicle in the direction you're moving towards.
+   F3 will allow getting in/out of the vehicle once it's docked to a pixel.
+   F4 will dock/undock from a pixel.
+   F5 will point the vehicle towards Sunny.
+
+   Note: F5, used while carrying a new pixel to be placed somewhere, also switches to the next type of pixel.
+
+___________
+"Magic" objects:
+
+   There are a couple of objects which are hard-coded into the program and cannot be modified by changing the definitions of the models in the PIXELS.DEF file. They are the first two objects created by Sunny upon crossing its atmosphere and pressing Page Up. The first object is the "Fottifoh": it is a flat drawing of a teddybear; the Fottifoh is a 3D photocopier, and is used to duplicate objects. The second object is the "orbital engine": it looks like a rotating asterisk, and has the property of making pixels move around Sunny as if they were orbiting around it.
+
+____________________
+How do I pick up an object?
+
+   - get near to it;
+   - look *in its direction*;
+   - press the Page Up key.
+
+   Effect I: it is possible to recover objects floating around in space, if you left them there, but you will have to get extremely near to them, and while driving The Fly. This is very difficult and thus, it is not recommended to leave objects into void space if you want to recover them later.
+
+   Effect II: it is possible to CREATE another object by pressing the Page Up key, while not carrying another object, and while you're in Sunny's atmosphere (the yellow halo surrounding Sunny). Pressing Page Up repeatedly will change the object's model so you can select it.
+
+   Effect III: is is not always possible to pick up heavy objects without a little trick. Objects which mass is declared in PIXELS.DEF as above or equal to 100, and the two magic objects, can be picked up from the surface of a pixel only if the CAPS LOCK key is lit while pressing Page Up. For example, this is useful to avoid removing, by mistake, a table from underneath a lamp, when you just wanted to pick up the lamp. Leaving CAPS LOCK off while operating with normal "small" objects will avoid such mistakes.
+
+__________________
+How do I leave an object?
+
+   - press the Page Down key.
+
+   Effect I: you can leave objects upon other objects, you can place, for instance, a lamp on a table. To leave an object in the EXACT centre of an underlying object (if any), hold down one of the SHIFT keys while pressing Page Down.
+
+   Effect II: you can leave objects floating around while you're onboard The Fly, but beware that if you do that while the vehicle is moving, the object will preserve your actual momentum, making it pretty difficult to recover the object later. Objects moving even at a small velocity, in time, will keep moving, they will never stop.
+
+   Effect III: throwing an object towards Sunny will DESTROY it upon contact with Sunny's atmosphere.
+
+   Effect IV: throwing an object which is declared as a "bomb" towards a pixel, will DESTROY the pixel and all the objects currently placed upon it.
+
+   Effect V: dropping an object upon a Fottifoh will DUPLICATE the object.
+
+   Effect VI: dropping an orbital engine upon a pixel will start moving the pixel around Sunny; thats why some of the pixels are moving in the initial situation, because the program places objects randomly upon the pixels, and doing that, sometimes places orbital engines upon them. The more engines are placed upon the same pixel, the faster it will move. Consider, however, that it won't be easy to approach a moving pixel once you've left it.
+
+__________
+Using notepads.
+
+   Certain objects appear, at least for how I defined them in PIXELS.DEF, like flat rectangular frames: those are notepads, declared as associated with "text-h" or "text-v" commands. This makes them capable of holding text: you can activate a notepad by getting near to it and activating the SCROLL LOCK key. While in this situation, you can also move a cursor upon the notepad and type some text, which will be instantly saved to an associated text file.
+
+_____________
+Saving the situation.
+
+   Hold down the LEFT SHIFT key, and press a key from A to Z to save the actual situation in a file called CRYXTELS.?IT, where the ? is replaced by the letter you've pressed. Of course if a certain situation file exists, it will be overwritten. To load a previously saved situation press the RIGHT SHIFT key and the corresponding letter. Situation maked with letter "S" is the default situation, loaded upon starting Crystal Pixels without command line parameters.
+
+__________________
+Command line parameters.
+
+   The syntax from the command line is:
+   CRYXTELS n PIXELS m OBJECTS
+
+   where n and m are numbers ranging from 1 to 500.
+   But further pixels and objects could still be added later, upto 500 pixels and 500 objects complessively.
+
+__________________
+Other keyboard shortcuts.
+
+   X - hide/show the vehicle.
+   I - hide/show direction indicators.
+   M - toggles mouse to keyboard controls.
+   TAB - toggles capability of climbing onto objects.
+
+______
+That's all.
