@@ -1,1 +1,4 @@
-cd bin && ./cryxtels && cd ..
+#!/bin/sh
+cd bin
+./cryxtels
+cd ..

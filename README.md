@@ -9,6 +9,7 @@ At the moment, this version was only tested to work on Linux.
 ## Building
 
 Run *configure* to generate the Makefile's, then run *make*.
+Alternatively, use the custom Makefile under the name *Makefile.bak*.
 
 Others building procedures for more operating systems could be available eventually.
 
