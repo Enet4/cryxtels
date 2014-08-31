@@ -30,7 +30,6 @@ extern char mediumwidth; // Larghezza media dei caratteri.
 //extern char symbol[65][41];
 
 /// Draw text
-template<bool LockSurface = true>
 void Txt (const char * text, double x, double y, double z,
 	  double scale_x, double scale_y, int alpha, int beta);
 

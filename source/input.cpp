@@ -66,9 +66,6 @@ void mouse_input () {
     // mouse delta is saved in mdltx and mdlty.
     auto r = SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
-    if (mdltx != 0 || mdlty != 0)
-    	cout << "(" << mdltx << "," << mdlty << ")" << endl;
-
     // Update mouse key presses
     mpul = !!(r&SDL_BUTTON(1)) | ((!!(r&SDL_BUTTON(3)))<<1);
 }
@@ -110,7 +107,7 @@ char trova_id (const char *id) {
     int cl;
     int dlt;
     char *idpos;
-    long spostam;
+    int spostam;
 
     lseek (fh, 0, SEEK_SET);
 

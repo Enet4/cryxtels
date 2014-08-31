@@ -91,19 +91,19 @@ double far *pixel_zdisloc; //     -     Z.
 
 // Definizioni comode.
 
-const long ELEMS             =   100; // Increased from Max. 40
-const long BUFFERS           =   100; // Increased from Max. 40
-const long LIMITE_DISLIVELLI =   70; // Illimitato
-const long CULLING           = 8000; // Illimitato
+const int ELEMS             =   100; // Increased from Max. 40
+const int BUFFERS           =   100; // Increased from Max. 40
+const int LIMITE_DISLIVELLI =   70; // Illimitato
+const int CULLING           = 8000; // Illimitato
 
-const long FRONTIER          =            250; // Da 3 a 647.
-const long FRONTIER_M1       =   FRONTIER - 1;
-const long FRONTIER_M2       =   FRONTIER - 2;
-const long FRONTIER_M3       =   FRONTIER - 3;
-const long FRONTIER_COMPL    = 650 - FRONTIER;
-const long FRONTIER_COMPL_M1 = 649 - FRONTIER;
+const int FRONTIER          =            250; // Da 3 a 647.
+const int FRONTIER_M1       =   FRONTIER - 1;
+const int FRONTIER_M2       =   FRONTIER - 2;
+const int FRONTIER_M3       =   FRONTIER - 3;
+const int FRONTIER_COMPL    = 650 - FRONTIER;
+const int FRONTIER_COMPL_M1 = 649 - FRONTIER;
 
-const long MEMORIA_RICHIESTA = 251901 + 81*ELEMS*BUFFERS + 3*BUFFERS;
+const int MEMORIA_RICHIESTA = 251901 + 81*ELEMS*BUFFERS + 3*BUFFERS;
 
 //unsigned char far *ctrlkeys = (unsigned char far *) 0x417;
 

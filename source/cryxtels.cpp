@@ -36,7 +36,6 @@
 #include "global.h"
 #include "fast3d.h"
 #include "text3d.h"
-#include "scanline.h"
 #include "input.h"
 #include "sdl_exception.h"
 
@@ -318,8 +317,7 @@ int main(int argc, char** argv)
 //       asm {
 //          pusha
 //          les di, dword ptr adapted
-            SDL_LockSurface(p_surface);
-            auto di = static_cast<unsigned char*>(p_surface->pixels);
+            auto di = &video_buffer[0];
             unsigned short i = 0;
 //          xor ah, ah
 //          int 1ah
@@ -367,7 +365,7 @@ int main(int argc, char** argv)
 //              loop _chic
             } while (--cx > 0);
 //          les di, dword ptr adapted
-            di = static_cast<unsigned char*>(p_surface->pixels);
+            di = &video_buffer[0];
 //          add di, 20800
             //di += WIDTH*(DELTA_U);// fottifoh upper limit
 //          mov cx, 22400 }
@@ -406,7 +404,7 @@ int main(int argc, char** argv)
             fade ();
     }
 
-    long rclick = 0;
+    int rclick = 0;
     //long stso = 0;
     //long gap = 0;
 
@@ -896,14 +894,9 @@ noang:
                 strcat (dist, ".ATM");
                 a = open (dist, 0);
                 if (a>-1) {
-//                  asm {
-//                  mov bx, a
-                    //auto bx = a;
-//                  mov ax, 360
+
                     auto ax = 360u;
-//                  sub ax, beta
                     ax -= beta;
-//                  mov dx, 32
                     auto dx = 32u;
 //                  mul dx          // dx:ax := ax*(dx)
                     ax = ax * dx; // 360*32
@@ -962,32 +955,34 @@ noang:
                     lseek(a, dx, SEEK_SET);
 //                  push ds
 //                  lds dx, dword ptr adapted
-                    SDL_LockSurface(p_surface);
-                    auto p_data = static_cast<unsigned char*>(p_surface->pixels);
+
+                    // -- draw operation begin
+                    auto p_data = &video_buffer[0];
 //                    p_data += dx;
 //                  mov si, 8 }
                     si = 8;
 //        atm:
                     do {
-//                  asm {
-//                  mov cx, 8000
-                    cx = WIDTH*HEIGHT / 8;
-//                  mov ah, 3fh
-//                  int 0x21
-                    read(a, p_data, cx);
-//                  add dx, 8000
-                    p_data += WIDTH*HEIGHT / 8;
-//                  dec si
-//                  jnz atm
+//                      asm {
+//                      mov cx, 8000
+                        cx = WIDTH*HEIGHT / 8;
+//                      mov ah, 3fh
+//                      int 0x21
+                        read(a, p_data, cx);
+//                      add dx, 8000
+                        p_data += WIDTH*HEIGHT / 8;
+//                      dec si
+//                      jnz atm
                     } while (--si != 0);
 //                  pop ds }
-                    SDL_UnlockSurface(p_surface);
                     close (a);
+                    // -- draw operation end
+
                     if (d>500) {
                         a = (d - 500) / 4;
 
-                        SDL_LockSurface(p_surface);
-                        auto si = static_cast<unsigned char*>(p_surface->pixels);
+                        // -- draw operation begin
+                        auto si = &video_buffer[0];
                         unsigned int cx = WIDTH*HEIGHT;
                         do
                         {
@@ -998,7 +993,8 @@ noang:
                             else *si -= a&0xFF;
                             si++;
                         } while (--cx != 0);
-                        SDL_UnlockSurface(p_surface);
+                        // -- draw operation end
+
 //              Old code of the above:
 //                asm {   mov ax, a
 //                        les si, dword ptr adapted
@@ -1011,15 +1007,11 @@ noang:
 //                        jnz diminish }
                         }
                     } else {
-                        SDL_LockSurface(p_surface);
-                        pclear (static_cast<unsigned char*>(p_surface->pixels), 0);
-                        SDL_UnlockSurface(p_surface);
+                        pclear (&video_buffer[0], 0);
                     }
             }
             else {
-                SDL_LockSurface(p_surface);
-                pclear (static_cast<unsigned char*>(p_surface->pixels), 0);
-                SDL_UnlockSurface(p_surface);
+                pclear (&video_buffer[0], 0);
             }
         }
 
@@ -1062,9 +1054,9 @@ noang:
             pixel_zdisloc[pixels-1] = cam_z + 1000 * tcos[beta] * tcos[alfa];
             if (veloc<2&&dsol>500&&!trackframe) carried_pixel = -1;
         }
-
-        for (a=(int)(SDL_GetTicks()%18); a<180+(int)(SDL_GetTicks()%18); a+=18) // "Sole" centrale (il Solicchio).
-            for (b=(int)(SDL_GetTicks()%18); b<180+(int)(SDL_GetTicks()%18); b+=18) {
+        auto tmpticks = SDL_GetTicks();
+        for (a=static_cast<int>(tmpticks%18); a<180+static_cast<int>(tmpticks%18); a+=18) // "Sole" centrale (il Solicchio).
+            for (b=static_cast<int>(tmpticks%18); b<180+static_cast<int>(tmpticks%18); b+=18) {
                 ox = random (14000) + 1000;
                 oz = ox * tcos[b];
                 z2 = ox * tsin[b];
@@ -1537,9 +1529,7 @@ noang:
                 }
             }
 
-            //SDL_Flip(p_surface);
             Render();
-            //pcopy (adaptor, adapted); // Il "display-swapping" a 32 bit.
 
             blink = 1 - blink; // Lampeggo della spia "volo rovesciato".
 
@@ -1563,7 +1553,6 @@ noang:
 inline void init_start()
 {
     int r;
-    initscanlines ();
     init ();
 
     auto mem_ok = allocation_farm();
@@ -1755,7 +1744,7 @@ void build_cosm(char& flag)
 
     cout << "Loading pixels..." << endl;
     for (p=0; p<existant_pixeltypes; p++) {
-        cout << "Percentage complete: " << 100*(long)p/existant_pixeltypes << "\r";
+        cout << "Percentage complete: " << 100*(int)p/existant_pixeltypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p);
     }
     cout << "Percentage complete: 100";
@@ -1764,7 +1753,7 @@ void build_cosm(char& flag)
     pixelmass[FRONTIER_M2] = 100; // del motore orbitale.
     pixelmass[FRONTIER_M1] = 100; // del lettore di cd.
     for (p=3; p<existant_objecttypes; p++) {
-        cout << "Percentage complete: " << 100*(long)p/existant_objecttypes << "\r";
+        cout << "Percentage complete: " << 100*(int)p/existant_objecttypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p+FRONTIER_M3);
     }
     cout << "Percentage complete: 100\n" << endl;
@@ -1950,7 +1939,6 @@ void fade ()
 
         darken_once();
         Render();
-        //SDL_Flip(p_surface);
         while (sync + TICKS_PER_FRAME > SDL_GetTicks());
     }
     while(!skip && dx++ < 100);
@@ -2127,9 +2115,8 @@ void Riproduci_Situazione (char i)
         //globalvocfile[0] = '.';
         mx = beta * 5; my = alfa * 5;
         r_x = rel_x; r_y = rel_y; r_z = rel_z;
-        SDL_LockSurface(p_surface);
-        pclear (static_cast<unsigned char*>(p_surface->pixels), 0);
-        SDL_UnlockSurface(p_surface);
+
+        pclear (video_buffer.get(), 0);
         //for (c = 0; c<objects; c++)
                 //if (absolute_y[c]>=10E10) absolute_y[c]=0;
         justloaded = 1;
@@ -2138,11 +2125,6 @@ void Riproduci_Situazione (char i)
         auto err = errno;
         cerr << "Failed to read game from \"" << t << "\": " << strerror(err) << endl;
     }
-}
-
-void snapshot()
-{
-    SDL_SaveBMP(p_surface, "SNAP.bmp");
 }
 
 void ispd ()
@@ -2777,7 +2759,7 @@ void collyblock (double cx, double cy, double cz,
 void CollyZone (int nopix, char objectblocks)
 {
         int o;
-        long jjj;
+        int jjj;
         int iii, nr_elem = 0;
 
         max_y = 10E9;
@@ -2858,33 +2840,6 @@ trovato:while (nr_elem<pixeltype_elements[iii]) {
         }
 }
 
-/// Use share_x and share_y to make a simple thick plot
-void aux_plot()
-{
-    auto di = share_x+riga[share_y];
-    SDL_LockSurface(p_surface);
-//    asm {
-//    les si, dword ptr adapted
-    auto si = static_cast<unsigned char*>(p_surface->pixels);
-//    add si, di
-    si += di;
-//    cmp byte ptr es:[si], 32
-//    jnb a_tz
-    if (si[0] < 32) {
-        si[0] += 8;
-        si[1] += 4;
-        si[-1] += 4;
-        si[WIDTH] += 4;
-        si[-WIDTH] += 4;
-//    add byte ptr es:[si], 8
-//    add byte ptr es:[si+1], 4
-//    add byte ptr es:[si-1], 4
-//    add byte ptr es:[si+320], 4
-//    add byte ptr es:[si-320], 4
-//    }
-    }
-    SDL_UnlockSurface(p_surface);
-}
 
 void Pixel (int typ)
 {
@@ -2892,7 +2847,7 @@ void Pixel (int typ)
     double first_x, first_y, first_z;
 
     int iii, pid = 3, nr_elem = 0;
-    long jjj, bkuneg = uneg;
+    int jjj, bkuneg = uneg;
     unsigned vptr;
 
     if (typ>FRONTIER_M1) goto ricerca;
@@ -2907,524 +2862,492 @@ void Pixel (int typ)
         for (a=0; a<360; a+=c) {
             for (b=c; b<180; b+=c) {
                 if (C32(ox+p0*tsin[b]*tcos[a], oy+p0*tcos[b], oz-p0*tsin[a]*tsin[b])) {
-//                     _DI = share_x+riga[share_y];
-                    SDL_LockSurface(p_surface);
-                    auto di = share_x + riga[share_y];
-//               asm {
-//                     les si, dword ptr adapted
-                    auto si = static_cast<unsigned char*>(p_surface->pixels);
-//                     add si, di
-                    si += di;
-//                     cmp byte ptr es:[si], 32
-//                     jnb e_tz
+                    // --- draw operation begin
+                    auto di = share_x + WIDTH*share_y;
+                    auto si = &video_buffer[0] + di;
+
                     if (*si < 32) {
-                        si[0] += 7;
-                        si[1] += 5; si[-1] += 5;
-                        si[WIDTH] += 5;  si[-WIDTH] += 5;
-                        si[WIDTH+1] += 3; si[-WIDTH-1] += 3;
-                        si[-WIDTH+1] += 3; si[WIDTH-1] += 3;
-//                     add byte ptr es:[si], 7
-//                     add byte ptr es:[si+1], 5
-//                     add byte ptr es:[si-1], 5
-//                     add byte ptr es:[si+320], 5
-//                     add byte ptr es:[si-320], 5
-//                     add byte ptr es:[si+321], 3
-//                     add byte ptr es:[si-321], 3
-//                     add byte ptr es:[si+319], 3
-//                     add byte ptr es:[si-319], 3
-//                  }
+                        *si += 7;
+                        *(si+1) += 5; *(si-1) += 5;
+                        *(si+WIDTH) += 5;  *(si-WIDTH) += 5;
+                        *(si+WIDTH+1) += 3; *(si-WIDTH-1) += 3;
+                        *(si-WIDTH+1) += 3; *(si+WIDTH-1) += 3;
                     }
-//                        e_tz:
-                    SDL_UnlockSurface(p_surface);
-                    }
+                    // --- draw operation end
                 }
             }
         }
+    }
 
-        if (pixel_absd[nopix]>pixelmass[typ]) {
-            if (!C32(ox, oy, oz)) return;
-            vptr = share_x+riga[share_y];
-            SDL_LockSurface(p_surface);
-//          _CL = pixelmass[typ] / 1000; if (_CL>32) _CL = 32;
-            auto cl = pixelmass[typ] / 1000; if (cl > 32) cl = 32;
-//          _CH = _CL / 2; _DL = _CL / 4;
-            auto ch = cl / 2; auto dl = cl / 4;
-//                asm {
-//                        les si, dword ptr adapted
-            auto si = static_cast<unsigned char*>(p_surface->pixels);
-//                        add si, vptr
-            si += vptr;
-//                        cmp byte ptr es:[si], 32
-//                        jnb tz_0
-            if (si[0] < 32 ) {
-                si[0] += cl;
-                si[1] += ch; si[-1] += ch;
-                si[2] += dl; si[-2] += dl;
-                si[WIDTH-1] += dl; si[-WIDTH+1] += dl;
-                si[WIDTH+1] += dl; si[-WIDTH-1] += dl;
-                si[WIDTH] += ch; si[-WIDTH] += ch;
-                si[WIDTH*2] += dl; si[-WIDTH*2] += dl;
-//              add byte ptr es:[si], cl
-//              add byte ptr es:[si+1], ch
-//              add byte ptr es:[si-1], ch
-//              add byte ptr es:[si+2], dl
-//              add byte ptr es:[si-2], dl
-//              add byte ptr es:[si+319], dl
-//              add byte ptr es:[si-319], dl
-//              add byte ptr es:[si+320], ch
-//              add byte ptr es:[si-320], ch
-//              add byte ptr es:[si+640], dl
-//              add byte ptr es:[si-640], dl
-//              add byte ptr es:[si+321], dl
-//              add byte ptr es:[si-321], dl
-//          }
+    if (pixel_absd[nopix]>pixelmass[typ]) {
+        if (!C32(ox, oy, oz)) return;
+        vptr = share_x+WIDTH*share_y;
+
+        // --- draw operation begin
+        auto cl = pixelmass[typ] / 1000; if (cl > 32) cl = 32;
+        auto ch = cl / 2; auto dl = cl / 4;
+
+        auto si = &video_buffer[0] + vptr;
+
+        if (*si < 32 ) {
+            *si += cl;
+            *(si+1) += ch;
+            *(si-1) += ch;
+            *(si+2) += dl;
+            *(si-2) += dl;
+            *(si+WIDTH-1) += dl;
+            *(si-WIDTH+1) += dl;
+            *(si+WIDTH) += ch;
+            *(si-WIDTH) += ch;
+            *(si+WIDTH+1) += dl;
+            *(si-WIDTH-1) += dl;
+            *(si+WIDTH*2) += dl;
+            *(si-WIDTH*2) += dl;
+        }
+        // --- draw operation end
+    } else {
+ricerca:
+        if (loaded_pixeltypes) {
+            for (iii = 0; iii<loaded_pixeltypes; iii++) {
+                if (typ==pixeltype_type[iii])
+                    goto trovato;
             }
-  //  tz_0:
-        } else {
-    ricerca:
-            if (loaded_pixeltypes) {
-                for (iii = 0; iii<loaded_pixeltypes; iii++) {
-                    if (typ==pixeltype_type[iii])
-                        goto trovato;
-                }
-            }
-            Aggiornamento ();
-            goto ricerca;
+        }
+        Aggiornamento ();
+        goto ricerca;
 trovato:
-            if (typ>FRONTIER_M1) {
-                _x = ox - cam_x; _y = oy - cam_y; _z = oz - cam_z;
-                d = sqrt(_x*_x+_y*_y+_z*_z);
-                id = (int)(d / pixelmass[typ]);
-                goto ogg_2;
-            }
-            else {
-                id = (int) (pixel_absd[nopix]/CULLING);
-                if (nopix==pix) explode = explode_count;
-            }
-            uneg += pixel_absd[nopix] / 100;
-            if (uneg>1000) uneg = 1000;
+        if (typ>FRONTIER_M1) {
+            _x = ox - cam_x; _y = oy - cam_y; _z = oz - cam_z;
+            d = sqrt(_x*_x+_y*_y+_z*_z);
+            id = static_cast<int>(d / pixelmass[typ]);
+            goto ogg_2;
+        } else {
+            id = static_cast<int>(pixel_absd[nopix]/CULLING);
+            if (nopix==pix) explode = explode_count;
+        }
+        uneg += pixel_absd[nopix] / 100;
+        if (uneg>1000) uneg = 1000;
 ogg_2:
-            if (id>3) id = 3;
-            while (nr_elem<pixeltype_elements[iii]) {
-                jjj = ELEMS * iii + nr_elem;
-                if (pixel_elem_t[jjj]==DETTAGLIO) {
-                    if (id==pid) {
-                        uneg = bkuneg;
-                        explode = 0;
-                        return;
-                    }
-                    pid--;
+        if (id>3) id = 3;
+        while (nr_elem<pixeltype_elements[iii]) {
+            jjj = ELEMS * iii + nr_elem;
+            if (pixel_elem_t[jjj]==DETTAGLIO) {
+                if (id==pid) {
+                    uneg = bkuneg;
+                    explode = 0;
+                    return;
                 }
-                p0 = pixel_elem_x[jjj];
-                p1 = pixel_elem_y[jjj];
-                p2 = pixel_elem_z[jjj];
-                p3 = pixel_elem_1[jjj];
-                p4 = pixel_elem_2[jjj];
-                p5 = pixel_elem_3[jjj];
-                p6 = pixel_elem_4[jjj];
-                switch (pixel_elem_t[jjj]) {
-                    case SPIRALE:
-                        if (!p5) par0 (nr_elem, pixeltype[nopix]);
-                        c = p5 * (id+1);
-                        p3 *= id+1;
-                        switch ((int)p4) {
+                pid--;
+            }
+            p0 = pixel_elem_x[jjj];
+            p1 = pixel_elem_y[jjj];
+            p2 = pixel_elem_z[jjj];
+            p3 = pixel_elem_1[jjj];
+            p4 = pixel_elem_2[jjj];
+            p5 = pixel_elem_3[jjj];
+            p6 = pixel_elem_4[jjj];
+            switch (pixel_elem_t[jjj]) {
+                case SPIRALE:
+                    if (!p5) par0 (nr_elem, pixeltype[nopix]);
+                    c = p5 * (id+1);
+                    p3 *= id+1;
+                    switch (static_cast<int>(p4)) {
+                        case 0:
+                            a = c; k1 = 0;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0+k1*tcos[(int)crx], p1+k1*tsin[(int)crx], p2,
+                                        p0+k1*tcos[(int)cry], p1+k1*tsin[(int)cry], p2);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k1 += p3;
+                                a += c;
+                            }
+                            break;
+                        case 1:
+                            a = c; k1 = 0;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0+k1*tcos[(int)crx], p1, p2+k1*tsin[(int)crx],
+                                        p0+k1*tcos[(int)cry], p1, p2+k1*tsin[(int)cry]);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k1 += p3;
+                                a += c;
+                            }
+                            break;
+                        case 2:
+                            a = c; k1 = 0;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0, p1+k1*tcos[(int)crx], p2+k1*tsin[(int)crx], p0,
+                                        p1+k1*tcos[(int)cry], p2+k1*tsin[(int)cry]);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k1 += p3;
+                                a += c;
+                            }
+                        }
+                        break;
+                    case PUNTO:
+                        if (!id) xrel (p0, p1, p2);
+                        break;
+                    case LINEA:
+                        rel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case RETTANGOLO:
+                        rectrel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case SCATOLA:
+                    case SOLID_BOX:
+                        boxrel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case GRIGLIA:
+                        p5 = (int) p5;
+                        if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                        if (id) {
+                            c = p5;
+                            p5 /= id;
+                            if (p5<1) p5 = 1;
+                            p3 *= (float)c / p5;
+                            p4 *= (float)c / p5;
+                        }
+                        _x = p3;
+                        _y = p4;
+                        switch ((int)p6) {
                             case 0:
-                                a = c; k1 = 0;
-                                crx = c; cry = 0;
-                                while (a<1080) {
-                                    rel (p0+k1*tcos[(int)crx], p1+k1*tsin[(int)crx], p2,
-                                            p0+k1*tcos[(int)cry], p1+k1*tsin[(int)cry], p2);
-                                    cry = crx; crx += c;
-                                    if (crx>359) crx-=360;
-                                    k1 += p3;
-                                    a += c;
+                                p0 -= (p5*_x) / 2;
+                                p1 -= (p5*_y) / 2;
+                                p6 = p1 + _y*p5; _z = p0;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p6, p2);
+                                    p0 += _x;
+                                }
+                                p0 = _z; p6 = p0 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p6, p1, p2);
+                                    p1 += _y;
                                 }
                                 break;
                             case 1:
-                                a = c; k1 = 0;
-                                crx = c; cry = 0;
-                                while (a<1080) {
-                                    rel (p0+k1*tcos[(int)crx], p1, p2+k1*tsin[(int)crx],
-                                            p0+k1*tcos[(int)cry], p1, p2+k1*tsin[(int)cry]);
-                                    cry = crx; crx += c;
-                                    if (crx>359) crx-=360;
-                                    k1 += p3;
-                                    a += c;
+                                p0 -= (p5*_x) / 2;
+                                p2 -= (p5*_y) / 2;
+                                p6 = p2 + _y*p5; _z = p0;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p1, p6);
+                                    p0 += _x;
+                                }
+                                p0 = _z; p6 = p0 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p6, p1, p2);
+                                    p2 += _y;
                                 }
                                 break;
                             case 2:
-                                a = c; k1 = 0;
-                                crx = c; cry = 0;
-                                while (a<1080) {
-                                    rel (p0, p1+k1*tcos[(int)crx], p2+k1*tsin[(int)crx], p0,
-                                            p1+k1*tcos[(int)cry], p2+k1*tsin[(int)cry]);
-                                    cry = crx; crx += c;
-                                    if (crx>359) crx-=360;
-                                    k1 += p3;
-                                    a += c;
+                                p2 -= (p5*_x) / 2;
+                                p1 -= (p5*_y) / 2;
+                                p6 = p1 + _y*p5; _z = p2;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p6, p2);
+                                    p2 += _x;
+                                }
+                                p2 = _z; p6 = p2 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p1, p6);
+                                    p1 += _y;
                                 }
                             }
                             break;
-                        case PUNTO:
-                            if (!id) xrel (p0, p1, p2);
-                            break;
-                        case LINEA:
-                            rel (p0, p1, p2, p3, p4, p5);
-                            break;
-                        case RETTANGOLO:
-                            rectrel (p0, p1, p2, p3, p4, p5);
-                            break;
-                        case SCATOLA:
-                        case SOLID_BOX:
-                            boxrel (p0, p1, p2, p3, p4, p5);
-                            break;
-                        case GRIGLIA:
-                            p5 = (int) p5;
-                            if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
-                            if (id) {
-                                c = p5;
-                                p5 /= id;
-                                if (p5<1) p5 = 1;
-                                p3 *= (float)c / p5;
-                                p4 *= (float)c / p5;
-                            }
-                            _x = p3;
-                            _y = p4;
-                            switch ((int)p6) {
-                                case 0:
-                                    p0 -= (p5*_x) / 2;
-                                    p1 -= (p5*_y) / 2;
-                                    p6 = p1 + _y*p5; _z = p0;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p0, p6, p2);
-                                        p0 += _x;
+                        case DISEGNO_ELLITTICO:
+                            if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                            p6 *= id+1;
+                            if (p6>90) p6 = 90;
+                            if (p5==0) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0+tcos[c]*p3, oy+p1+tsin[c]*p4, oz+p2)) {
+                                        aux_plot();
                                     }
-                                    p0 = _z; p6 = p0 + p5*_x;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p6, p1, p2);
-                                        p1 += _y;
+                                }
+                                break;
+                            }
+                            if (p5==1) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0+tcos[c]*p3, oy+p1, oz+p2+tsin[c]*p4)) {
+                                        aux_plot();
+                                    }
+                                }
+                                break;
+                            }
+                            if (p5==2) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0, oy+p1+tsin[c]*p4, oz+p2+tcos[c]*p3)) {
+                                        aux_plot();
+                                    }
+                                }
+                                break;
+                            }
+                            break;
+                        case ONDA:
+                            if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                            p6 *= id+1;
+                            if (p6>90) p6 = 90;
+                            switch ((int)p5) {
+                                case 0:
+                                    _x = p0 - p3*180 + p6*p3;
+                                    _oy = p1; _ox = _x - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _y = p1 + tsin[c] * p4;
+                                        rel (_x, _y, p2, _ox, _oy, p2);
+                                        _oy = _y;
+                                        _ox = _x;
+                                        _x += p6*p3;
                                     }
                                     break;
                                 case 1:
-                                    p0 -= (p5*_x) / 2;
-                                    p2 -= (p5*_y) / 2;
-                                    p6 = p2 + _y*p5; _z = p0;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p0, p1, p6);
-                                        p0 += _x;
-                                    }
-                                    p0 = _z; p6 = p0 + p5*_x;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p6, p1, p2);
-                                        p2 += _y;
+                                    _z = p2 - p3*180 + p6*p3;
+                                    _ox = p0; _oz = _z - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _x = tsin[c] * p4;
+                                        rel (_x, p1, _z, _ox, p1, _oz);
+                                        _ox = _x;
+                                        _oz = _z;
+                                        _z += p6*p3;
                                     }
                                     break;
                                 case 2:
-                                    p2 -= (p5*_x) / 2;
-                                    p1 -= (p5*_y) / 2;
-                                    p6 = p1 + _y*p5; _z = p2;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p0, p6, p2);
-                                        p2 += _x;
-                                    }
-                                    p2 = _z; p6 = p2 + p5*_x;
-                                    for (a=0; a<=p5; a++) {
-                                        rel (p0, p1, p2, p0, p1, p6);
-                                        p1 += _y;
-                                    }
-                                }
-                                break;
-                            case DISEGNO_ELLITTICO:
-                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
-                                p6 *= id+1;
-                                if (p6>90) p6 = 90;
-                                if (p5==0) {
-                                    for (c=0; c<360; c+=p6) {
-                                        if (C32 (ox+p0+tcos[c]*p3, oy+p1+tsin[c]*p4, oz+p2)) {
-                                            aux_plot();
-                                        }
-                                    }
-                                    break;
-                                }
-                                if (p5==1) {
-                                    for (c=0; c<360; c+=p6) {
-                                        if (C32 (ox+p0+tcos[c]*p3, oy+p1, oz+p2+tsin[c]*p4)) {
-                                            aux_plot();
-                                        }
-                                    }
-                                    break;
-                                }
-                                if (p5==2) {
-                                    for (c=0; c<360; c+=p6) {
-                                        if (C32 (ox+p0, oy+p1+tsin[c]*p4, oz+p2+tcos[c]*p3)) {
-                                            aux_plot();
-                                        }
-                                    }
-                                    break;
-                                }
-                                break;
-                            case ONDA:
-                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
-                                p6 *= id+1;
-                                if (p6>90) p6 = 90;
-                                switch ((int)p5) {
-                                    case 0:
-                                        _x = p0 - p3*180 + p6*p3;
-                                        _oy = p1; _ox = _x - p6*p3;
-                                        for (c=p6; c<=360; c+=p6) {
-                                            _y = p1 + tsin[c] * p4;
-                                            rel (_x, _y, p2, _ox, _oy, p2);
-                                            _oy = _y;
-                                            _ox = _x;
-                                            _x += p6*p3;
-                                        }
-                                        break;
-                                    case 1:
-                                        _z = p2 - p3*180 + p6*p3;
-                                        _ox = p0; _oz = _z - p6*p3;
-                                        for (c=p6; c<=360; c+=p6) {
-                                            _x = tsin[c] * p4;
-                                            rel (_x, p1, _z, _ox, p1, _oz);
-                                            _ox = _x;
-                                            _oz = _z;
-                                            _z += p6*p3;
-                                        }
-                                        break;
-                                    case 2:
-                                        _z = p2 - p3*180 + p6*p3;
-                                        _oy = p1; _oz = _z - p6*p3;
-                                        for (c=p6; c<=360; c+=p6) {
-                                            _y = p1 + tsin[c] * p4;
-                                            rel (p0, _y, _z, p0, _oy, _oz);
-                                            _oy = _y;
-                                            _oz = _z;
-                                            _z += p6*p3;
-                                        }
-                                    }
-                                    break;
-                                case COLONNA:
-                                    if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    p6 *= id+1;
-                                    if (p6>90) p6 = 90;
-                                    _x = p0 + tcos[0]*p4;
-                                    _z = p2 + tsin[0]*p4;
-                                    _y = p1 - p5 / 2;
-                                    crx = p0 + tcos[0]*p3;
-                                    crz = p2 + tsin[0]*p3;
-                                    cry = p1 + p5 / 2;
-                                    for (a=p6; a<360; a+=p6) {
-                                        _ox = _x;
+                                    _z = p2 - p3*180 + p6*p3;
+                                    _oy = p1; _oz = _z - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _y = p1 + tsin[c] * p4;
+                                        rel (p0, _y, _z, p0, _oy, _oz);
+                                        _oy = _y;
                                         _oz = _z;
-                                        first_x = crx;
-                                        first_z = crz;
-                                        _x = p0 + tcos[a]*p4;
-                                        _z = p2 + tsin[a]*p4;
-                                        crx = p0 + tcos[a]*p3;
-                                        crz = p2 + tsin[a]*p3;
-                                        rel (_x, _y, _z, crx, cry, crz);
-                                        if (p4) rel (_x, _y, _z, _ox, _y, _oz);
-                                        if (p3) rel (first_x, cry, first_z, crx, cry, crz);
+                                        _z += p6*p3;
                                     }
+                                }
+                                break;
+                            case COLONNA:
+                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                _x = p0 + tcos[0]*p4;
+                                _z = p2 + tsin[0]*p4;
+                                _y = p1 - p5 / 2;
+                                crx = p0 + tcos[0]*p3;
+                                crz = p2 + tsin[0]*p3;
+                                cry = p1 + p5 / 2;
+                                for (a=p6; a<360; a+=p6) {
                                     _ox = _x;
                                     _oz = _z;
                                     first_x = crx;
                                     first_z = crz;
-                                    _x = p0 + tcos[0]*p4;
-                                    _z = p2 + tsin[0]*p4;
-                                    crx = p0 + tcos[0]*p3;
-                                    crz = p2 + tsin[0]*p3;
+                                    _x = p0 + tcos[a]*p4;
+                                    _z = p2 + tsin[a]*p4;
+                                    crx = p0 + tcos[a]*p3;
+                                    crz = p2 + tsin[a]*p3;
                                     rel (_x, _y, _z, crx, cry, crz);
                                     if (p4) rel (_x, _y, _z, _ox, _y, _oz);
                                     if (p3) rel (first_x, cry, first_z, crx, cry, crz);
-                                    break;
-                                case ASTERISCO:
-                                    if (p4<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    p3 = -p3;
-                                    p4 *= id+1;
-                                    if (p4>90) p4 = 90;
-                                    for (a=0; a<180; a+=p4)
-                                        for (b=p4; b<180; b+=p4) {
-                                            _oz = p3 * tcos[b];
-                                            z2 = p3 * tsin[b];
-                                            _ox = z2 * tcos[a];
-                                            _oy = z2 * tsin[a];
-                                            rel (p0-_ox, p1-_oz, p2+_oy, p0+_ox, p1+_oz, p2-_oy);
+                                }
+                                _ox = _x;
+                                _oz = _z;
+                                first_x = crx;
+                                first_z = crz;
+                                _x = p0 + tcos[0]*p4;
+                                _z = p2 + tsin[0]*p4;
+                                crx = p0 + tcos[0]*p3;
+                                crz = p2 + tsin[0]*p3;
+                                rel (_x, _y, _z, crx, cry, crz);
+                                if (p4) rel (_x, _y, _z, _ox, _y, _oz);
+                                if (p3) rel (first_x, cry, first_z, crx, cry, crz);
+                                break;
+                            case ASTERISCO:
+                                if (p4<=0) par0 (nr_elem, pixeltype[nopix]);
+                                p3 = -p3;
+                                p4 *= id+1;
+                                if (p4>90) p4 = 90;
+                                for (a=0; a<180; a+=p4)
+                                    for (b=p4; b<180; b+=p4) {
+                                        _oz = p3 * tcos[b];
+                                        z2 = p3 * tsin[b];
+                                        _ox = z2 * tcos[a];
+                                        _oy = z2 * tsin[a];
+                                        rel (p0-_ox, p1-_oz, p2+_oy, p0+_ox, p1+_oz, p2-_oy);
+                                    }
+                                break;
+                            case SFERA:
+                                if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                                c = p5 * (id+1);
+                                if (c>90) c = 90;
+                                p3 = -p3;
+                                _ox = ox;
+                                _oy = oy;
+                                _oz = oz;
+                                crx = ox + p0;
+                                cry = oy + p1;
+                                crz = oz + p2;
+                                for (a=0; a<360; a+=c)
+                                    for (b=c; b<180; b+=c) {
+                                        oz = p3 * tcos[b] * p4;
+                                        z2 = p3 * tsin[b];
+                                        ox = z2 * tcos[a];
+                                        oy = z2 * tsin[a];
+                                        if (C32(ox+crx, oz+cry, crz-oy)) {
+                                            aux_plot();
                                         }
+                                    }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
+                            case TESTO:
+                                sprintf (t, &pixel_elem_b[40*jjj], nopix);
+                                Txt (t, p0, p1, p2, p3, p4, p5, p6);
+                                break;
+                            case ELLISSE:
+                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                if (p5==0) {
+                                    _x = p0+p3;
+                                    _y = p1;
+                                    for (c=p6; c<360; c+=p6) {
+                                        crx = p0+tcos[c]*p3;
+                                        cry = p1+tsin[c]*p4;
+                                        rel (_x, _y, p2, crx, cry, p2);
+                                        _x = crx;
+                                        _y = cry;
+                                    }
+                                    rel (_x, _y, p2, p0+p3, p1, p2);
                                     break;
-                                case SFERA:
-                                    if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    c = p5 * (id+1);
-                                    if (c>90) c = 90;
-                                    p3 = -p3;
-                                    _ox = ox;
-                                    _oy = oy;
-                                    _oz = oz;
-                                    crx = ox + p0;
-                                    cry = oy + p1;
-                                    crz = oz + p2;
-                                    for (a=0; a<360; a+=c)
-                                        for (b=c; b<180; b+=c) {
-                                            oz = p3 * tcos[b] * p4;
-                                            z2 = p3 * tsin[b];
-                                            ox = z2 * tcos[a];
-                                            oy = z2 * tsin[a];
-                                            if (C32(ox+crx, oz+cry, crz-oy)) {
-                                                aux_plot();
+                                }
+                                if (p5==1) {
+                                    _x = p0+p3;
+                                    _z = p2;
+                                    for (c=p6; c<360; c+=p6) {
+                                        crx = p0+tcos[c]*p3;
+                                        crz = p2+tsin[c]*p4;
+                                        rel (_x, p1, _z, crx, p1, crz);
+                                        _x = crx;
+                                        _z = crz;
+                                    }
+                                    rel (_x, p1, _z, p0+p3, p1, p2);
+                                    break;
+                                }
+                                if (p5==2) {
+                                    _y = p1+p3;
+                                    _z = p2;
+                                    for (c=p6; c<360; c+=p6) {
+                                        cry = p1+tcos[c]*p3;
+                                        crz = p2+tsin[c]*p4;
+                                        rel (p0, _y, _z, p0, cry, crz);
+                                        _y = cry;
+                                        _z = crz;
+                                    }
+                                    rel (p0, _y, _z, p0, p1+p3, p2);
+                                    break;
+                                }
+                                break;
+                            case CIAMBELLA:
+                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                _ox = ox;
+                                _oy = oy;
+                                _oz = oz;
+                                ox += p0;
+                                oy += p1;
+                                oz += p2;
+                                switch (int(p5)) {
+                                    case 0:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (crx, crz, _y, first_x, first_z, first_y);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (crx, crz, _y, _x*tcos[(int)(a-p6)], - _x*tsin[(int)(a-p6)], _y);
                                             }
+                                            rel (crx, crz, _y, cry, (p3-p4) * tsin[a], 0);
                                         }
-                                    ox = _ox;
-                                    oy = _oy;
-                                    oz = _oz;
-                                    break;
-                                case TESTO:
-                                    sprintf (t, &pixel_elem_b[40*jjj], nopix);
-                                    Txt (t, p0, p1, p2, p3, p4, p5, p6);
-                                    break;
-                                case ELLISSE:
-                                    if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    p6 *= id+1;
-                                    if (p6>90) p6 = 90;
-                                    if (p5==0) {
-                                        _x = p0+p3;
-                                        _y = p1;
-                                        for (c=p6; c<360; c+=p6) {
-                                            crx = p0+tcos[c]*p3;
-                                            cry = p1+tsin[c]*p4;
-                                            rel (_x, _y, p2, crx, cry, p2);
-                                            _x = crx;
-                                            _y = cry;
-                                        }
-                                        rel (_x, _y, p2, p0+p3, p1, p2);
                                         break;
-                                    }
-                                    if (p5==1) {
-                                        _x = p0+p3;
-                                        _z = p2;
-                                        for (c=p6; c<360; c+=p6) {
-                                            crx = p0+tcos[c]*p3;
-                                            crz = p2+tsin[c]*p4;
-                                            rel (_x, p1, _z, crx, p1, crz);
-                                            _x = crx;
-                                            _z = crz;
+                                    case 1:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (crx, _y, crz, first_x, first_y, first_z);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (crx, _y, crz, _x*tcos[(int)(a-p6)], _y, - _x*tsin[static_cast<int>(a-p6)]);
+                                            }
+                                            rel (crx, _y, crz, cry, 0, (p3-p4) * tsin[a]);
                                         }
-                                        rel (_x, p1, _z, p0+p3, p1, p2);
                                         break;
-                                    }
-                                    if (p5==2) {
-                                        _y = p1+p3;
-                                        _z = p2;
-                                        for (c=p6; c<360; c+=p6) {
-                                            cry = p1+tcos[c]*p3;
-                                            crz = p2+tsin[c]*p4;
-                                            rel (p0, _y, _z, p0, cry, crz);
-                                            _y = cry;
-                                            _z = crz;
+                                    case 2:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (_y, crz, crx, first_y, first_z, first_x);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (_y, crz, crx, _y, - _x*tsin[(int)(a-p6)], _x*tcos[a-static_cast<int>(p6)]);
+                                            }
+                                            rel (_y, crz, crx, 0, (p3-p4) * tsin[a], cry);
                                         }
-                                        rel (p0, _y, _z, p0, p1+p3, p2);
                                         break;
+                                }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
+                            case SFERA_RETICOLARE:
+                                if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                                c = p5 * (id+1);
+                                if (c>90) c = 90;
+                                p3 = -p3;
+                                _ox = ox; ox += p0;
+                                _oy = oy; oy += p1;
+                                _oz = oz; oz += p2;
+                                for (a=0; a<360; a+=c) {
+                                    first_z = p3 * tcos[c] * p4;
+                                    z2 = p3 * tsin[c];
+                                    first_x = z2 * tcos[a];
+                                    first_y = z2 * tsin[a];
+                                    for (b=2*c; b<180; b+=c) {
+                                        crz = p3 * tcos[b] * p4;
+                                        k1 = p3 * tsin[b];
+                                        crx = k1 * tcos[a];
+                                        cry = k1 * tsin[a];
+                                        rel (crx, crz, cry, first_x, first_z, first_y);
+                                        rel (k1 * tcos[a+c], crz, k1 * tsin[a+c], first_x, first_z, first_y);
+                                        first_x = crx;
+                                        first_y = cry;
+                                        first_z = crz;
                                     }
-                                    break;
-                                case CIAMBELLA:
-                                    if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    p6 *= id+1;
-                                    if (p6>90) p6 = 90;
-                                    _ox = ox;
-                                    _oy = oy;
-                                    _oz = oz;
-                                    ox += p0;
-                                    oy += p1;
-                                    oz += p2;
-                                    switch (int(p5)) {
-                                        case 0:
-                                            for (a=p6; a<360+p6; a+=p6) {
-                                                first_x = (p4 - p3) * tcos[a];
-                                                cry = first_x;
-                                                first_y = 0;
-                                                first_z = (p3-p4)*tsin[a];
-                                                for (c=p6; c<360; c+=p6*2) {
-                                                    _x = tcos[c]*p4 - p3;
-                                                    _y = tsin[c]*p4;
-                                                    crx = _x*tcos[a];
-                                                    crz = - _x*tsin[a];
-                                                    rel (crx, crz, _y, first_x, first_z, first_y);
-                                                    first_x = crx; first_y = _y; first_z = crz;
-                                                    rel (crx, crz, _y, _x*tcos[(int)(a-p6)], - _x*tsin[(int)(a-p6)], _y);
-                                                }
-                                                rel (crx, crz, _y, cry, (p3-p4) * tsin[a], 0);
-                                            }
-                                            break;
-                                        case 1:
-                                            for (a=p6; a<360+p6; a+=p6) {
-                                                first_x = (p4 - p3) * tcos[a];
-                                                cry = first_x;
-                                                first_y = 0;
-                                                first_z = (p3-p4)*tsin[a];
-                                                for (c=p6; c<360; c+=p6*2) {
-                                                    _x = tcos[c]*p4 - p3;
-                                                    _y = tsin[c]*p4;
-                                                    crx = _x*tcos[a];
-                                                    crz = - _x*tsin[a];
-                                                    rel (crx, _y, crz, first_x, first_y, first_z);
-                                                    first_x = crx; first_y = _y; first_z = crz;
-                                                    rel (crx, _y, crz, _x*tcos[(int)(a-p6)], _y, - _x*tsin[static_cast<int>(a-p6)]);
-                                                }
-                                                rel (crx, _y, crz, cry, 0, (p3-p4) * tsin[a]);
-                                            }
-                                            break;
-                                        case 2:
-                                            for (a=p6; a<360+p6; a+=p6) {
-                                                first_x = (p4 - p3) * tcos[a];
-                                                cry = first_x;
-                                                first_y = 0;
-                                                first_z = (p3-p4)*tsin[a];
-                                                for (c=p6; c<360; c+=p6*2) {
-                                                    _x = tcos[c]*p4 - p3;
-                                                    _y = tsin[c]*p4;
-                                                    crx = _x*tcos[a];
-                                                    crz = - _x*tsin[a];
-                                                    rel (_y, crz, crx, first_y, first_z, first_x);
-                                                    first_x = crx; first_y = _y; first_z = crz;
-                                                    rel (_y, crz, crx, _y, - _x*tsin[(int)(a-p6)], _x*tcos[a-static_cast<int>(p6)]);
-                                                }
-                                                rel (_y, crz, crx, 0, (p3-p4) * tsin[a], cry);
-                                            }
-                                            break;
-                                    }
-                                    ox = _ox;
-                                    oy = _oy;
-                                    oz = _oz;
-                                    break;
-                                case SFERA_RETICOLARE:
-                                    if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
-                                    c = p5 * (id+1);
-                                    if (c>90) c = 90;
-                                    p3 = -p3;
-                                    _ox = ox; ox += p0;
-                                    _oy = oy; oy += p1;
-                                    _oz = oz; oz += p2;
-                                    for (a=0; a<360; a+=c) {
-                                        first_z = p3 * tcos[c] * p4;
-                                        z2 = p3 * tsin[c];
-                                        first_x = z2 * tcos[a];
-                                        first_y = z2 * tsin[a];
-                                        for (b=2*c; b<180; b+=c) {
-                                            crz = p3 * tcos[b] * p4;
-                                            k1 = p3 * tsin[b];
-                                            crx = k1 * tcos[a];
-                                            cry = k1 * tsin[a];
-                                            rel (crx, crz, cry, first_x, first_z, first_y);
-                                            rel (k1 * tcos[a+c], crz, k1 * tsin[a+c], first_x, first_z, first_y);
-                                            first_x = crx;
-                                            first_y = cry;
-                                            first_z = crz;
-                                        }
-                                    }
-                                    ox = _ox;
-                                    oy = _oy;
-                                    oz = _oz;
-                                    break;
+                                }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
             }
-//nascondi:
             nr_elem++;
         }
         uneg = bkuneg;

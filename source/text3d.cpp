@@ -94,8 +94,7 @@ char symbol[65][41] = {
 // 96: (accento = zerino)
 4, -1, -2,  1, -1,  1, -1,  0, -1,  0, -1, -1, -1, -1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 };
 
-template <>
-void Txt<false> (const char * testo, double x, double y, double z,
+void Txt (const char * testo, double x, double y, double z,
 	  double scala_x, double scala_y, int alfa, int beta)
 {
 	double fxx=0, fyy=0, pxx=0, pyy=0;
@@ -120,7 +119,7 @@ void Txt<false> (const char * testo, double x, double y, double z,
 
 	double icoeff = sqrt (sx*sx+sy*sy+sz*sz);
 	double scala_d = scala_x * mediumwidth;
-	long incr = icoeff / (50*scala_d); if (incr<1) incr = 1;
+	int incr = icoeff / (50*scala_d); if (incr<1) incr = 1;
 	double avan_x = scala_d * tcos[beta] * (double)incr;
 	double avan_z = scala_d * tsin[beta] * (double)incr;
 
@@ -152,21 +151,13 @@ void Txt<false> (const char * testo, double x, double y, double z,
 			lsy = pyy * tcos[alfa] + y;
 			lsz = z2  * tcos[beta] - pxx * tsin[beta] + z;
 			lsx = pxx * tcos[beta] + z2  * tsin[beta] + x;
-			Line3D<false> (sx, sy, sz, lsx, lsy, lsz);
+			Line3D (sx, sy, sz, lsx, lsy, lsz);
 			f += 4;
 		}
 		x += avan_x;
 		z += avan_z;
 		c += incr;
 	}
-}
-
-template <>
-void Txt<true> (const char * testo, double x, double y, double z,
-	  double scala_x, double scala_y, int alfa, int beta) {
-    SDL_LockSurface(p_surface);
-    Txt<false>(testo, x, y, z, scala_x, scala_y, alfa, beta);
-    SDL_UnlockSurface(p_surface);
 }
 
 //Instantiate them

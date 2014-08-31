@@ -98,19 +98,19 @@ extern double far *pixel_zdisloc; //     -    Z.
 
 // Command definitions.
 
-extern const long ELEMS;
-extern const long BUFFERS;
-extern const long LIMITE_DISLIVELLI;
-extern const long CULLING;
+extern const int ELEMS;
+extern const int BUFFERS;
+extern const int LIMITE_DISLIVELLI;
+extern const int CULLING;
 
-extern const long FRONTIER;
-extern const long FRONTIER_M1;
-extern const long FRONTIER_M2;
-extern const long FRONTIER_M3;
-extern const long FRONTIER_COMPL;
-extern const long FRONTIER_COMPL_M1;
+extern const int FRONTIER;
+extern const int FRONTIER_M1;
+extern const int FRONTIER_M2;
+extern const int FRONTIER_M3;
+extern const int FRONTIER_COMPL;
+extern const int FRONTIER_COMPL_M1;
 
-extern const long MEMORIA_RICHIESTA;
+extern const int MEMORIA_RICHIESTA;
 
 /* Descriptions of each pixel type
    (<BUFFERS> tipi caricati per volta, <ELEMS> element per type). */
@@ -215,8 +215,8 @@ extern double cfx, cfy, cfz; // Carried-Final-relative-X/Y/Z (dove deve andare /
 extern const char *source_name[];
 extern const char *record_qlty[];
 
-extern unsigned record_frq[];
-extern unsigned record_filt[];
+extern unsigned int record_frq[];
+extern unsigned int record_filt[];
 
 // Variabili per i testi.
 

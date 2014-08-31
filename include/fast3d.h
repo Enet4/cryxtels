@@ -20,18 +20,19 @@
 #define FAST3D_H_INCLUDED
 
 #include <SDL.h>
+#include <memory>
 
 #ifndef far
 #define far
 #endif
 
-const double Pi = 3.141592653589793238462643383;
+constexpr double Pi = 3.141592653589793238462643383;
 
-/// The SDL surface to perform all rendering in.
-extern SDL_Surface * p_surface;
+/// The software membory buffer to perform all rendering in.
+extern std::unique_ptr<unsigned char[]> video_buffer;
 
-/// The SDL surface to show a scaled result.
-extern SDL_Surface * p_surface_scaled;
+///// The SDL surface to show a scaled result.
+//extern SDL_Surface * p_surface_scaled;
 
 /// Some old adapters.
 //unsigned char far * adaptor = (unsigned char far *) 0xA0000000;
@@ -77,7 +78,10 @@ inline void _80_25_C () {} // modo grafico 80x25 testo a colori.
 void darken_once(void);
 
 /// Render
-void Render ();
+void Render (void);
+
+/// Take a snapshot to a BMP
+void snapshot (void);
 
 /// Create a palette table based on new_palette.
 void tavola_colori (unsigned char *new_palette,
@@ -103,15 +107,19 @@ void init ();
 
 // Tracciamento linee 2d.
 extern unsigned int ptr;
-extern unsigned long global_x, global_y;
+extern unsigned int global_x, global_y;
 
-template <bool LockSurface = true>
+/// Make one thick plot
+void aux_plot(unsigned int x, unsigned int y);
+
+/// Make one thick plot at (share_x,share_y)
+void aux_plot(void);
+
 void Segmento (unsigned int x, unsigned int y,
 	       unsigned int x2, unsigned int y2);
 
 // Tracciamento linee 3d.
 extern char explode;
-template <bool LockSurface = true>
 void Line3D (double p_x, double p_y, double p_z,
 	     double x, double y, double z);
 
@@ -123,7 +131,6 @@ int C32 (double x, double y, double z);
 /// Draw a line relative to the origin coordinate of a crystal pixel.
 /* Traccia una linea relativamente alle coordinate dell'origine di un
    Crystal Pixel. */
-template <bool LockSurface = true>
 void rel (double sx, double sy, double sz,
         double fx, double fy, double fz);
 
@@ -131,7 +138,6 @@ void rel (double sx, double sy, double sz,
 /// Width and Height are 2*hx and 2*hz respectively
 /* Traccia un rettangolo relativamente alle coordinate dell'origine di un
    Crystal Pixel. Lunghezza e larghezza sono date da 2*hx e 2*hz. */
-template <bool LockSurface = true>
 void rectrel (double cx, double cy, double cz,
         double hx, double hz, char orient);
 
@@ -140,13 +146,11 @@ void rectrel (double cx, double cy, double cz,
 /* Traccia un parallelepipedo relativamente alle coordinate dell'origine
    di un Crystal Pixel. L'altezza e data da 2*hy, la lunghezza da 2*hx
    e la profondit da 2*hz. */
-template <bool LockSurface = true>
 void boxrel (double cx, double cy, double cz,
         double hx, double hy, double hz);
 
 /// Draw a point. Coordinates are relative to pixel.
 // Fa un puntino. Coordinate relative al pixel.
-template <bool LockSurface = true>
 void xrel (double px, double py, double pz);
 
 
