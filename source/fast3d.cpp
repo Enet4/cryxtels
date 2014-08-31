@@ -272,14 +272,14 @@ void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
 {
     // Pre-conditions
-    SDL_assert(x > 0);
-    SDL_assert(y > 0);
-    SDL_assert(x < WIDTH-1);
-    SDL_assert(y < HEIGHT-1);
-    SDL_assert(x2 > 0);
-    SDL_assert(y2 > 0);
-    SDL_assert(x2 < WIDTH-1);
-    SDL_assert(y2 < HEIGHT-1);
+    SDL_assert(x >= 0);
+    SDL_assert(y >= 0);
+    SDL_assert(x < WIDTH);
+    SDL_assert(y < HEIGHT);
+    SDL_assert(x2 >= 0);
+    SDL_assert(y2 >= 0);
+    SDL_assert(x2 < WIDTH);
+    SDL_assert(y2 < HEIGHT);
 
     unsigned char* si = &video_buffer[0];
 
@@ -297,8 +297,8 @@ void Segmento (unsigned int x, unsigned int y,
         si += di;
         while (si < ax) {
             if (*si < 32) {
-                SDL_assert_paranoid(si-WIDTH-1 >= &video_buffer[0]);
-                SDL_assert_paranoid(si+WIDTH+1 < &video_buffer[0]+WIDTH*HEIGHT);
+                SDL_assert_paranoid(si-WIDTH >= &video_buffer[0]);
+                SDL_assert_paranoid(si+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
                 *(si-1)       += 2;
                 *si           += 4;
                 *(si+1)       += 2;
@@ -349,8 +349,8 @@ void Segmento (unsigned int x, unsigned int y,
         unsigned char* di2 = si + WIDTH*di + (global_x >> 16);
 
         if ( *di2 < 32 ) {
-            SDL_assert_paranoid(di2-WIDTH-1 >= &video_buffer[0]);
-            SDL_assert_paranoid(di2+WIDTH+1 < &video_buffer[0]+WIDTH*HEIGHT);
+            SDL_assert_paranoid(di2-WIDTH >= &video_buffer[0]);
+            SDL_assert_paranoid(di2+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
             *(di2+1)       += 2;
             *di2           += 4;
             *(di2+1)       += 2;
