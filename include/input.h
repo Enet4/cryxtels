@@ -42,7 +42,6 @@ void Archivia_Situazione (char i);
 /// Find and seek an id text in the open file at fh
 char trova_id (const char *id);
 
-extern char eol;
 /// Read until a specific character code is found
 void leggi_t_fino_a (char codcar, int ptyp);
 

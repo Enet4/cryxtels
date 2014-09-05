@@ -227,6 +227,8 @@ int main(int argc, char** argv)
         init_video();
         tinte (0);
 
+        // Configure input
+
     } catch (int err) {
         cerr << "Error code: " << err << endl;
         return -1;
@@ -523,9 +525,8 @@ noang:
               case SDL_QUIT:
                 quit_now = true;
                 break;
-              case SDL_KEYUP: {
+              case SDL_KEYUP: if (sdlevent.key.state == SDL_RELEASED) {
                 i = sdlevent.key.keysym.sym;
-                cout << i << " UP" << endl;
                 switch (i) {
                     case keymap_thrust:
                         thrust_keyhold = false;
@@ -535,9 +536,8 @@ noang:
                         break;
                 }
                 i = 0;
-              case SDL_KEYDOWN: {
+              case SDL_KEYDOWN: if (sdlevent.key.state == SDL_PRESSED) {
                 i = sdlevent.key.keysym.sym;
-                cout << i << " DOWN" << endl;
                 switch (i) {
 /*                  case 0xa1: ob /= 1.05; if (ob<15000) ob = 15000; break;
                     case 0x9d: micro_y -= 0.001; break;

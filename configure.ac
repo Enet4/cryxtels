@@ -18,6 +18,7 @@ AC_PROG_CXX
 AC_LANG(C++)
 
 # Checks for libraries.
+AC_CHECK_LIB([SDL2],[SDL_CreateWindow])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h stdlib.h unistd.h])

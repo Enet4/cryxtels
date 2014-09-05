@@ -22,7 +22,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#include "scanline.h"
 #include "sdl_exception.h"
 #include "conf.h"
 

@@ -112,20 +112,20 @@ char trova_id (const char *id) {
     lseek (fh, 0, SEEK_SET);
 
     while (1) {
-            cl = read(fh, buffer, 1024);
-            buffer[cl-1] = '\0';
-            if ((idpos = strcasestr ((char*)buffer, id)) != NULL) {
-                    dlt = (unsigned char*)idpos - buffer;
-                    spostam = (int)strlen(id)-(cl-dlt);
-                    lseek (fh, spostam, SEEK_CUR);
-                    return (1);
-            }
-            if (!read(fh, buffer, 1)) return (0);
+        cl = read(fh, buffer, 1024);
+        buffer[cl-1] = '\0';
+        if ((idpos = strcasestr ((char*)buffer, id)) != NULL) {
+            dlt = (unsigned char*)idpos - buffer;
+            spostam = (int)strlen(id)-(cl-dlt);
+            lseek (fh, spostam, SEEK_CUR);
+            return 1;
+        }
+        if (!read(fh, buffer, 1)) return (0);
             lseek (fh, -129, SEEK_CUR);
     }
 }
 
-char eol = 0;
+static char eol = 0;
 void leggi_t_fino_a (char codcar, int ptyp)
 {
     int c;
