@@ -112,8 +112,6 @@ const int MEMORIA_RICHIESTA = 251901 + 81*ELEMS*BUFFERS + 3*BUFFERS;
 
 unsigned char far *buffer; // Buffer per la ricerca degli Id.
 
-int fh;
-
 char loaded_pixeltypes;       // Tipi di pixel caricati.
 
 short int far *pixeltype_type;      // Che tipo di pixel ha questa definizione?

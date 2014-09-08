@@ -89,10 +89,10 @@ void fade ();
 void dock_effects ();
 
 /// Save state
-void Archivia_Situazione (char i);
+void save_situation (char i);
 
 /// Load state
-void Riproduci_Situazione (char i);
+void load_situation (char i);
 
 /// Just makes the program exit because of something...
 void par0 (int el, int pix);
@@ -392,7 +392,11 @@ int main(int argc, char** argv)
         //mouse_input();
         Render();
 
-        while (sync + TICKS_PER_FRAME > SDL_GetTicks());
+        unsigned long cticks = SDL_GetTicks();
+        while (sync + TICKS_PER_FRAME > cticks) {
+            SDL_Delay(3);
+            cticks = SDL_GetTicks();
+        }
         //while (sync==clock());
     }
 
@@ -400,7 +404,7 @@ int main(int argc, char** argv)
 //    ignentra: //push_audiofile ("ECHO");
 
     if (flag)
-            Riproduci_Situazione (sit);
+            load_situation(sit);
     else {
             cam_z = -20000;
             fade ();
@@ -676,9 +680,9 @@ noang:
                     // Loading and saving
                     if ((i>=SDLK_a&&i<=SDLK_z) || i == SDLK_ASTERISK) {
                         if (ctrlkeys[0]&1) {
-                            Riproduci_Situazione (i);
+                            load_situation(i);
                         } else if (ctrlkeys[0]&2) {
-                            Archivia_Situazione (i);
+                            save_situation(i);
                         }
                     }
 ////                }
@@ -890,6 +894,7 @@ noang:
             rz = pixel_zdisloc[pix] - cam_z;
             d = sqrt (rx*rx + ry*ry + rz*rz);
             if (subsignal[9*pixeltype[pix]]&&d<628) {
+                // backdrop
                 strcpy (dist, &subsignal[9*pixeltype[pix]]);
                 strcat (dist, ".ATM");
                 a = open (dist, 0);
@@ -898,83 +903,34 @@ noang:
                     auto ax = 360u;
                     ax -= beta;
                     auto dx = 32u;
-//                  mul dx          // dx:ax := ax*(dx)
                     ax = ax * dx; // 360*32
-//                  xor dx, dx
                     dx = 0;
-//                  mov cx, 36
                     auto cx = 36u;
-//                  div cx          // ax := (dx:ax) / cx
                     ax = ax / cx; // 360*32/36 = 320
-//                  shl ax, 2
                     ax <<= 2; // 320 * 4 = 1280
-//                  xor dx, dx
                     dx = 0;
-//                  mov cx, 320
                     cx = WIDTH;
-//                  div cx
-//                  mov si, dx
                     auto si = ax % cx; // si = 1280 % WIDTH
-//                  mov ax, alfa
                     ax = alfa;
-//                  mov cx, 360
                     cx = 360;
-//                  xor dx, dx
                     dx = 0;
-//                  div cx  // ax := (dx:ax) / cx
-//                  mov ax, dx // dx holds remainder
                     ax = ax % cx; // alfa % 360
-//                  mov dx, 3
                     dx = 3;
-//                  mul dx // dx:ax := ax*(dx)
                     ax = ax * dx; // (alfa % 360) * 3
-//                  xor dx, dx
                     dx = 0;
-//                  mov cx, 320
                     cx = WIDTH;
-//                  mul cx    // dx:ax := ax*(cx)
                     ax = ax * cx; // ax = (alfa % 360) * 3 * WIDTH
-//                  mov cx, dx
                     cx = ax >> 16; // cx = ax >> 16
-//                  mov dx, ax
                     dx = ax;
-//                  add dx, si
                     dx += si;
-//                  jnc add_ok
-                    /*
-                    if (dx >= 0x10000) {
-                        dx &= 0xFFFF;
-                        cx ++;
-//                  inc cx }
-                    } */
-//          add_ok:
-//                  asm {
-//                  mov ax, 0x4200 // move file pointer
-//                  int 21h
-                    // we'll replace this with a seek operation
                     lseek(a, dx, SEEK_SET);
-//                  push ds
-//                  lds dx, dword ptr adapted
-
-                    // -- draw operation begin
                     auto p_data = &video_buffer[0];
-//                    p_data += dx;
-//                  mov si, 8 }
                     si = 8;
-//        atm:
                     do {
-//                      asm {
-//                      mov cx, 8000
                         cx = WIDTH*HEIGHT / 8;
-//                      mov ah, 3fh
-//                      int 0x21
                         read(a, p_data, cx);
-//                      add dx, 8000
                         p_data += WIDTH*HEIGHT / 8;
-//                      dec si
-//                      jnz atm
                     } while (--si != 0);
-//                  pop ds }
                     close (a);
                     // -- draw operation end
 
@@ -994,17 +950,6 @@ noang:
                             si++;
                         } while (--cx != 0);
                         // -- draw operation end
-
-//              Old code of the above:
-//                asm {   mov ax, a
-//                        les si, dword ptr adapted
-//                        mov cx, 64000 }
-//        diminish: asm { sub es:[si], al
-//                        jnc shed
-//                        mov es:[si], ah }
-//        shed:   asm {   inc si
-//                        dec cx
-//                        jnz diminish }
                         }
                     } else {
                         pclear (&video_buffer[0], 0);
@@ -1533,11 +1478,11 @@ noang:
 
             blink = 1 - blink; // Lampeggo della spia "volo rovesciato".
 
-            unsigned long cticks;
-            do {
+            unsigned long cticks = SDL_GetTicks();
+            while (sync + TICKS_PER_FRAME > cticks) {
+                SDL_Delay(3);
                 cticks = SDL_GetTicks();
-                SDL_Delay(10);
-            } while (/*blink && */ (sync + TICKS_PER_FRAME > cticks));
+            }
             //while (blink && (clock()==sync)); // Sincronizzatore (max 37 fps.)
 
             //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
@@ -1553,8 +1498,6 @@ noang:
 inline void init_start()
 {
     int r;
-    init ();
-
     auto mem_ok = allocation_farm();
     if (!mem_ok) {
         cerr << "Not enough memory (seriously!?)" << endl;
@@ -1589,14 +1532,15 @@ void read_args(int argc, char** argv, char& flag, char& sit)
         }
         if (objects==0||pixels==0) {
             _80_25_C();
-            cerr << "Usage: CRYXTELS ([<n> PIXELS <n> OBJECTS] | <gamesave>)" << endl;
+            cerr << "Usage: CRYXTELS ([<n> PIXELS] [<n> OBJECTS] | <gamesave>)" << endl;
             throw 1;
         }
     }
     else if (argc == 2) {
         if (argc==2) sit = argv[1][0];
         sprintf (dist, "CRYXTELS.%cIT", sit);
-        if ((fh = open (dist, 0)) >= 0) {
+        int fh = open(dist, 0);
+        if (fh >= 0) {
             close (fh);
             flag = 1;
         } else {
@@ -1616,8 +1560,8 @@ void read_args(int argc, char** argv, char& flag, char& sit)
 void par0 (int el, int pix)
 {
     alfin (0);
-    fprintf (stderr, "Nel pixel di tipo %d, elemento nr. %d,  stato specificato", pix, el+1);
-    fprintf (stderr, "\nun parametro, pari a 0, non valido in quel punto.\n");
+    cerr << "Pixel definition error: Pixel of type " << pix << " does not specify element nr. " << (el+1) << endl
+         << "0-valued parameters are invalid." << endl;
     exit (1);
 }
 
@@ -1683,12 +1627,6 @@ inline bool allocation_farm()
     }
     return true;
 }
-
-/*
-unsigned int clock ()
-{
-    return SDL_GetTicks();
-}*/
 
 void tinte (char satu)
 {
@@ -1805,94 +1743,6 @@ void build_cosm(char& flag)
 
 }
 
-void Archivia_Situazione (char i)
-{
-    int fh;
-    unsigned conta;
-    unsigned char a;
-
-    if (moving_last_object) return;
-
-    objects = _objects;
-
-    if (i >= 'a' && i <= 'z') {
-        i -= 'a' - 'A';
-    }
-
-    sprintf (t, "CRYXTELS.%cIT", i);
-    fh = creat (t, 0666);
-    if ( fh != -1) {
-        write (fh, &pixels, sizeof(short));
-        write (fh, &pixel_support[0], sizeof(double)*pixels);
-        write (fh, &pixel_xdisloc[0], sizeof(double)*pixels);
-        write (fh, &pixel_ydisloc[0], sizeof(double)*pixels);
-        write (fh, &pixel_zdisloc[0], sizeof(double)*pixels);
-        write (fh, &objects, sizeof(short));
-        write (fh, &objecttype[0], sizeof(short)*objects);
-        write (fh, &relative_x[0], sizeof(double)*objects);
-        write (fh, &relative_y[0], sizeof(double)*objects);
-        write (fh, &relative_z[0], sizeof(double)*objects);
-        write (fh, &absolute_x[0], sizeof(double)*objects);
-        write (fh, &absolute_y[0], sizeof(double)*objects);
-        write (fh, &absolute_z[0], sizeof(double)*objects);
-        write (fh, &object_location[0], sizeof(short int)*objects);
-        write (fh, &cam_x, sizeof(double));
-        write (fh, &cam_y, sizeof(double));
-        write (fh, &cam_z, sizeof(double));
-        write (fh, &alfa, sizeof(short));
-        write (fh, &beta, sizeof(short));
-        write (fh, &nav_a, sizeof(short));
-        write (fh, &nav_b, sizeof(short));
-        write (fh, &taking, sizeof(char));
-        write (fh, &carry_type, sizeof(short));
-        write (fh, &trackframe, sizeof(double));
-        write (fh, &reset_trackframe, sizeof(char));
-        write (fh, &tracking, sizeof(double));
-        write (fh, &req_end_extra, sizeof(char));
-        write (fh, &alfad, sizeof(short));
-        write (fh, &betad, sizeof(short));
-        write (fh, &pix, sizeof(short));
-        write (fh, &alfa90, sizeof(short));
-        write (fh, &beta90, sizeof(short));
-        write (fh, &fid, 1);
-        write (fh, &lead, 1);
-        write (fh, &orig, 1);
-        write (fh, &comera_m, 1);
-        write (fh, &spd_x, sizeof(double));
-        write (fh, &spd_y, sizeof(double));
-        write (fh, &spd_z, sizeof(double));
-        write (fh, &spd, sizeof(double));
-        write (fh, &extra, 1);
-        write (fh, &rel_x, sizeof(double));
-        write (fh, &rel_y, sizeof(double));
-        write (fh, &rel_z, sizeof(double));
-        write (fh, &obj, sizeof(short));
-        write (fh, &m, 1);
-        write (fh, &echo, 1);
-        write (fh, &carried_pixel, sizeof(short));
-        write (fh, &disl, sizeof(double));
-        write (fh, &cursore, sizeof(short));
-        write (fh, &explode_count, 1);
-        a = ctrlkeys[0]; if (a&2) a ^= 2;
-        write (fh, &a, 1);
-        write (fh, &pixel_rot[0], pixels);
-        write (fh, &pixeltype[0], sizeof(short)*pixels);
-        write (fh, &repeat, 1);
-        write (fh, &source, 1);
-        conta = write (fh, &quality, 1);
-        if (conta!=1) {
-            close (fh);
-            remove (t);
-            return;
-        }
-        close (fh);
-        cout << "Game [" << i << "] successfully saved." << endl;
-    } else {
-        int err = errno;
-        cerr << "Failed to save game to \"" << t << "\": " << strerror(err) << endl;
-    }
-}
-
 void rot ()
 {
     // Assegnazione posizioni a pixels gravitanti.
@@ -1939,7 +1789,11 @@ void fade ()
 
         darken_once();
         Render();
-        while (sync + TICKS_PER_FRAME > SDL_GetTicks());
+        unsigned long cticks = SDL_GetTicks();
+        while (sync + TICKS_PER_FRAME > cticks) {
+            SDL_Delay(3);
+            cticks = SDL_GetTicks();
+        }
     }
     while(!skip && dx++ < 100);
 /*
@@ -1963,6 +1817,38 @@ __zero: asm {   inc di
                 jnb rip }
 halt:   keybuffer_cleaner ();
 */
+}
+
+void load_situation(char i) {
+    try {
+        load_game(i);
+        cout << "Game [" << i << "] successfully loaded." << endl;
+        fade ();
+        rot ();
+        dists ();
+        dock_effects ();
+        //sta_suonando = -1;
+        //pixel_sonante = -1;
+        //globalvocfile[0] = '.';
+        mx = beta * 5; my = alfa * 5;
+        r_x = rel_x; r_y = rel_y; r_z = rel_z;
+
+        pclear (&video_buffer[0], 0);
+        //for (c = 0; c<objects; c++)
+                //if (absolute_y[c]>=10E10) absolute_y[c]=0;
+        justloaded = 1;
+    } catch (int e) {
+        cerr << "Failed to read game from \"CRYXTELS." << i << "IT\": " << strerror(e) << endl;
+    }
+}
+
+void save_situation(char i) {
+    try {
+    save_game(i);
+        cout << "Game [" << i << "] successfully saved." << endl;
+    } catch (int e) {
+        cerr << "Failed to save game to \"CRYXTELS." << i << "\": " << strerror(e) << endl;
+    }
 }
 
 void cerca_e_carica (int typ)
@@ -2025,105 +1911,6 @@ void dists ()
             pixel_absd[p] = sqrt(related_x*related_x+
                                 related_y*related_y+
                                 related_z*related_z);
-    }
-}
-
-void Riproduci_Situazione (char i)
-{
-    int fh;
-    //unsigned conta;
-    if (i >= 'a' && i <= 'z') {
-        i -= 'a' - 'A';
-    }
-
-    sprintf (t, "CRYXTELS.%cIT", i);
-
-    fh = open(t, O_RDONLY);
-    if (fh != -1) {
-        short tmp_pixels;
-        read (fh, &tmp_pixels, sizeof(short));
-        if (tmp_pixels == 0) {
-            cerr << "Failed to read game from \"" << t << "\": Invalid situation file." << endl;
-            close(fh);
-            return;
-        }
-        fade ();
-        pixels = tmp_pixels;
-        read (fh, &pixel_support[0], sizeof(double)*pixels);
-        read (fh, &pixel_xdisloc[0], sizeof(double)*pixels);
-        read (fh, &pixel_ydisloc[0], sizeof(double)*pixels);
-        read (fh, &pixel_zdisloc[0], sizeof(double)*pixels);
-        read (fh, &objects, sizeof(short));
-        _objects = objects;
-        read (fh, &objecttype[0], sizeof(short)*objects);
-        read (fh, &relative_x[0], sizeof(double)*objects);
-        read (fh, &relative_y[0], sizeof(double)*objects);
-        read (fh, &relative_z[0], sizeof(double)*objects);
-        read (fh, &absolute_x[0], sizeof(double)*objects);
-        read (fh, &absolute_y[0], sizeof(double)*objects);
-        read (fh, &absolute_z[0], sizeof(double)*objects);
-        read (fh, &object_location[0], sizeof(short)*objects);
-        read (fh, &cam_x, sizeof(double));
-        read (fh, &cam_y, sizeof(double));
-        read (fh, &cam_z, sizeof(double));
-        read (fh, &alfa, sizeof(short));
-        read (fh, &beta, sizeof(short));
-        read (fh, &nav_a, sizeof(short));
-        read (fh, &nav_b, sizeof(short));
-        read (fh, &taking, 1);
-        read (fh, &carry_type, sizeof(short));
-        read (fh, &trackframe, sizeof(double));
-        read (fh, &reset_trackframe, 1);
-        read (fh, &tracking, sizeof(double));
-        read (fh, &req_end_extra, 1);
-        read (fh, &alfad, sizeof(short));
-        read (fh, &betad, sizeof(short));
-        read (fh, &pix, sizeof(short));
-        read (fh, &alfa90, sizeof(short));
-        read (fh, &beta90, sizeof(short));
-        read (fh, &fid, 1);
-        read (fh, &lead, 1);
-        read (fh, &orig, 1);
-        read (fh, &comera_m, 1);
-        read (fh, &spd_x, sizeof(double));
-        read (fh, &spd_y, sizeof(double));
-        read (fh, &spd_z, sizeof(double));
-        read (fh, &spd, sizeof(double));
-        read (fh, &extra, 1);
-        read (fh, &rel_x, sizeof(double));
-        read (fh, &rel_y, sizeof(double));
-        read (fh, &rel_z, sizeof(double));
-        read (fh, &obj, sizeof(short));
-        read (fh, &m, 1);
-        read (fh, &echo, 1);
-        read (fh, &carried_pixel, sizeof(short));
-        read (fh, &disl, sizeof(double));
-        read (fh, &cursore, sizeof(short));
-        read (fh, &explode_count, 1);
-        read (fh, &ctrlkeys[0], 1);
-        read (fh, &pixel_rot[0], pixels);
-        read (fh, &pixeltype[0], sizeof(short)*pixels);
-        read (fh, &repeat, 1);
-        read (fh, &source, 1);
-        read (fh, &quality, 1);
-        close (fh);
-        rot ();
-        dists ();
-        dock_effects ();
-        //sta_suonando = -1;
-        //pixel_sonante = -1;
-        //globalvocfile[0] = '.';
-        mx = beta * 5; my = alfa * 5;
-        r_x = rel_x; r_y = rel_y; r_z = rel_z;
-
-        pclear (video_buffer.get(), 0);
-        //for (c = 0; c<objects; c++)
-                //if (absolute_y[c]>=10E10) absolute_y[c]=0;
-        justloaded = 1;
-        cout << "Game [" << i << "] successfully loaded." << endl;
-    } else {
-        auto err = errno;
-        cerr << "Failed to read game from \"" << t << "\": " << strerror(err) << endl;
     }
 }
 
@@ -3059,7 +2846,6 @@ ogg_2:
                             }
                             break;
                         case DISEGNO_ELLITTICO:
-                            if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
                             p6 *= id+1;
                             if (p6>90) p6 = 90;
                             if (p5==0) {
@@ -3088,7 +2874,6 @@ ogg_2:
                             }
                             break;
                         case ONDA:
-                            if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
                             p6 *= id+1;
                             if (p6>90) p6 = 90;
                             switch ((int)p5) {

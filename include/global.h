@@ -117,8 +117,6 @@ extern const int MEMORIA_RICHIESTA;
 
 extern unsigned char far *buffer; // Buffer for retrieving Id's.
 
-extern int fh;
-
 extern char loaded_pixeltypes;       // Loaded pixel types.
 
 extern short int far *pixeltype_type;      // What pixel type is defined for that pixel?

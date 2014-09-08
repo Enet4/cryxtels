@@ -11,18 +11,20 @@ At the moment, this version was only tested to work on Linux.
 Run *configure* to generate the Makefile's, then run *make*.
 Alternatively, use the custom Makefile under the name *Makefile.bak*.
 
+SDL 2.0.3 must be installed in the system. C++11 support must be supported by the compiler.
+
 Other building procedures for more operating systems could be available eventually.
 
-# Installing
+## Installing
 
 Place the compiled executable in the bin directory. Symlinks for running cryxtels in the console can be made manually.
 
-# Running
+## Running
 
 Before you start playing, please read *crystal pixels.txt* and *readme new.txt* to understand how to play.
 To run the game, simply execute cryxtels. Make sure that PIXELS.DEF and all .ATM files are in the same directory. Simple Directmedia Library version 2 must be installed in the system.
 
-# License
+## License
 
 GNU Public License v3
 

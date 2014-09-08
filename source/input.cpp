@@ -18,27 +18,82 @@
 
 #include <iostream>
 
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "fast3d.h"
 #include "global.h"
 #include "conf.h"
-#include <math.h>
-
+#include "sdl_exception.h"
 #include <SDL.h>
 
 using namespace std;
 
 std::array<unsigned char,2> ctrlkeys = {{0,0}};
 
+const char* loaded_background = nullptr;
+
 const bool grab_mouse = true;
+
+//int fh = 0;
+class RWHandler {
+    SDL_RWops* p_rw;
+public:
+    RWHandler(void) noexcept
+    : p_rw(nullptr) {
+    }
+    RWHandler(const char* file, const char* mode)
+    : p_rw(nullptr) {
+        open(file, mode);
+    }
+    ~RWHandler(void) {
+        close();
+    }
+
+    /// Open file, closing an existing one
+    void open(const char* file, const char* mode) {
+        close();
+        p_rw = SDL_RWFromFile(file, mode);
+        if (p_rw == nullptr) {
+            throw sdl_exception();
+        }
+    }
+    /// Seek
+    /// \param either RW_SEEK_SET, RW_SEEK_CUR or RW_SEEK_END
+    unsigned long long seek(unsigned long long offset, int whence) {
+        return SDL_RWseek(p_rw, offset, whence);
+    }
+
+    template<typename T>
+    size_t write(const T& data) {
+        return write(&data, sizeof(T));
+    }
+    size_t write(const void* data, size_t size) {
+        return SDL_RWwrite(p_rw, data, size, 1);
+    }
+
+    template<typename T>
+    size_t read(T& data) {
+        return read(&data, sizeof(T));
+    }
+    size_t read(void* dest, size_t size) {
+        return SDL_RWread(p_rw, dest, size, 1);
+    }
+
+    /// Close file, silently ignores if no file in handle
+    void close(void) noexcept {
+        if (p_rw) {
+            SDL_RWclose(p_rw);
+            p_rw = nullptr;
+        }
+    }
+};
 
 // aspetta un tasto e d qual'.
 int attendi_pressione_tasto ()
 {
-
     SDL_PumpEvents();
     int n = 0;
     auto arr = SDL_GetKeyboardState(&n);
@@ -103,7 +158,7 @@ void keybuffer_cleaner()
     while( SDL_PollEvent( &event ));
 }
 
-char trova_id (const char *id) {
+char trova_id (int fh, const char *id) {
     int cl;
     int dlt;
     char *idpos;
@@ -126,7 +181,7 @@ char trova_id (const char *id) {
 }
 
 static char eol = 0;
-void leggi_t_fino_a (char codcar, int ptyp)
+void leggi_t_fino_a (int fh, char codcar, int ptyp)
 {
     int c;
     //char f;
@@ -138,7 +193,7 @@ void leggi_t_fino_a (char codcar, int ptyp)
         cerr << "Parameter not found\nElement "
             << (pixeltype_elements[static_cast<int>(loaded_pixeltypes)]+1)
             << " of pixel type " << ptyp << "." << endl;
-        exit (1);
+        exit (1); // FIXME exit bomb
     }
 
     c = 0;
@@ -180,31 +235,31 @@ void leggi_t_fino_a (char codcar, int ptyp)
 
 void load_pixels_def(int& ptyp)
 {
-//spec:
-    if ((fh = open ("PIXELS.DEF", 0)) > -1) {
-        if (!trova_id ("SEED")) {
+    int fh = open ("PIXELS.DEF", 0);
+    if (fh > -1) {
+        if (!trova_id (fh, "SEED")) {
             close (fh);
             _80_25_C();
             cerr << "Missing command in PIXELS.DEF: SEED = n;"
                  << "\n<n> must be a number between 0 and 65535." << endl;
             throw 3;
         }
-        leggi_t_fino_a ('=', -1);
-        eol = 0; leggi_t_fino_a (';', -1);
+        leggi_t_fino_a (fh, '=', -1);
+        eol = 0; leggi_t_fino_a (fh, ';', -1);
         srand ((unsigned)atof(t));
         lseek (fh, 0, SEEK_SET);
-        if (!trova_id ("AUTHOR")) {
+        if (!trova_id (fh, "AUTHOR")) {
             close (fh);
             _80_25_C();
             cerr << "Missing command in PIXELS.DEF: AUTHOR = AUTHOR_NAME;" << endl;
             throw 4;
         }
-        eol = 0; leggi_t_fino_a ('=', -1);
-        eol = 0; leggi_t_fino_a (';', -1);
+        eol = 0; leggi_t_fino_a (fh, '=', -1);
+        eol = 0; leggi_t_fino_a (fh, ';', -1);
         strcpy (autore_forme, t);
         lseek (fh, 0, SEEK_SET);
         sprintf (t, "TYPE %d;\r\n", ptyp);
-        while (trova_id (t)) {
+        while (trova_id (fh, t)) {
             existant_pixeltypes++;
             ptyp++; sprintf (t, "TYPE %d;\r\n", ptyp);
             if (ptyp>FRONTIER_M1) {
@@ -217,7 +272,7 @@ void load_pixels_def(int& ptyp)
         }
         ptyp = 0;
         sprintf (t, "MODEL %d;\r\n", ptyp);
-        while (trova_id (t)) {
+        while (trova_id (fh, t)) {
             existant_objecttypes++;
             ptyp++; sprintf (t, "MODEL %d;\r\n", ptyp);
             if (ptyp>FRONTIER_COMPL_M1) {
@@ -241,8 +296,7 @@ void load_pixels_def(int& ptyp)
 
 // Carica il tipo di pixel specificato.
 
-void LoadPtyp (int ptyp)
-{
+void LoadPtyp (int ptyp) {
     int c;
     unsigned int jjj;
 
@@ -259,16 +313,17 @@ void LoadPtyp (int ptyp)
     pixeltype_type[static_cast<int>(loaded_pixeltypes)] = ptyp;
     pixelmass[ptyp] = 10000;
 
-    if ((fh = open ("PIXELS.DEF", 0)) > -1) {
+    int fh = open("PIXELS.DEF", 0);
+    if (fh >= 0) {
         if (ptyp>FRONTIER_M1)
             sprintf (t, "MODEL %d;\r\n", static_cast<int>(ptyp-FRONTIER));
         else
             sprintf (t, "TYPE %d;\r\n", ptyp);
-        trova_id (t);
+        trova_id (fh, t);
         do {
             eol = 0;
             jjj = ELEMS * loaded_pixeltypes + pixeltype_elements[static_cast<int>(loaded_pixeltypes)];
-            leggi_t_fino_a (',', ptyp);
+            leggi_t_fino_a (fh, ',', ptyp);
             pixel_elem_t[jjj] = 0;
             while (pixel_elem_t[jjj]<coms && strcasecmp(t, comspec[pixel_elem_t[jjj]]))
                 (pixel_elem_t[jjj])++;
@@ -283,21 +338,21 @@ void LoadPtyp (int ptyp)
             }
             if (pixel_elem_t[jjj] == FINEPIXEL) break;
             if (pixel_elem_t[jjj] == SOTTOSEGNALE) {
-                leggi_t_fino_a (';', ptyp);
+                leggi_t_fino_a (fh, ';', ptyp);
                 strcpy (&pixel_elem_b[40*jjj], t);
                 memcpy (&subsignal[9*ptyp], &pixel_elem_b[40*jjj], 8);
                 //goto pros;
                 continue;
             }
             c = params[pixel_elem_t[jjj]];
-            if (c>=1) { leggi_t_fino_a (',', ptyp); pixel_elem_x[jjj] = atof(t); }
-            if (c>=2) { leggi_t_fino_a (',', ptyp); pixel_elem_y[jjj] = atof(t); }
-            if (c>=3) { leggi_t_fino_a (',', ptyp); pixel_elem_z[jjj] = atof(t); }
-            if (c>=4) { leggi_t_fino_a (',', ptyp); pixel_elem_1[jjj] = atof(t); }
-            if (c>=5) { leggi_t_fino_a (',', ptyp); pixel_elem_2[jjj] = atof(t); }
-            if (c>=6) { leggi_t_fino_a (',', ptyp); pixel_elem_3[jjj] = atof(t); }
-            if (c>=7) { leggi_t_fino_a (',', ptyp); pixel_elem_4[jjj] = atof(t); }
-            if (!eol) leggi_t_fino_a (';', ptyp);
+            if (c>=1) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_x[jjj] = atof(t); }
+            if (c>=2) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_y[jjj] = atof(t); }
+            if (c>=3) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_z[jjj] = atof(t); }
+            if (c>=4) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_1[jjj] = atof(t); }
+            if (c>=5) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_2[jjj] = atof(t); }
+            if (c>=6) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_3[jjj] = atof(t); }
+            if (c>=7) { leggi_t_fino_a (fh, ',', ptyp); pixel_elem_4[jjj] = atof(t); }
+            if (!eol) leggi_t_fino_a (fh, ';', ptyp);
             if (pixel_elem_t[jjj] == TESTO) {
                 strcpy (&pixel_elem_b[40*jjj], t);
                 //goto count_;
@@ -329,8 +384,177 @@ void LoadPtyp (int ptyp)
         if (pixeltype_elements[static_cast<int>(loaded_pixeltypes)]==ELEMS) {
             //alfin (0);
             cerr << "Definition too long.\nModel nr. " << ptyp << endl;
-            exit (1);
+            exit (1); // FIXME exit bomb
         }
         loaded_pixeltypes++;
+    }
+}
+
+void load_game (char i)
+{
+    int fh;
+    //unsigned conta;
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
+
+    sprintf (t, "CRYXTELS.%cIT", i);
+
+    fh = open(t, O_RDONLY); // "rb" mode
+    if (fh != -1) {
+        short tmp_pixels;
+        read (fh, &tmp_pixels, sizeof(short));
+        if (tmp_pixels == 0) {
+            cerr << "Failed to read game from \"" << t << "\": Invalid situation file." << endl;
+            close(fh);
+            return;
+        }
+        pixels = tmp_pixels;
+        read (fh, &pixel_support[0], sizeof(double)*pixels);
+        read (fh, &pixel_xdisloc[0], sizeof(double)*pixels);
+        read (fh, &pixel_ydisloc[0], sizeof(double)*pixels);
+        read (fh, &pixel_zdisloc[0], sizeof(double)*pixels);
+        read (fh, &objects, sizeof(short));
+        _objects = objects;
+        read (fh, &objecttype[0], sizeof(short)*objects);
+        read (fh, &relative_x[0], sizeof(double)*objects);
+        read (fh, &relative_y[0], sizeof(double)*objects);
+        read (fh, &relative_z[0], sizeof(double)*objects);
+        read (fh, &absolute_x[0], sizeof(double)*objects);
+        read (fh, &absolute_y[0], sizeof(double)*objects);
+        read (fh, &absolute_z[0], sizeof(double)*objects);
+        read (fh, &object_location[0], sizeof(short)*objects);
+        read (fh, &cam_x, sizeof(double));
+        read (fh, &cam_y, sizeof(double));
+        read (fh, &cam_z, sizeof(double));
+        read (fh, &alfa, sizeof(short));
+        read (fh, &beta, sizeof(short));
+        read (fh, &nav_a, sizeof(short));
+        read (fh, &nav_b, sizeof(short));
+        read (fh, &taking, 1);
+        read (fh, &carry_type, sizeof(short));
+        read (fh, &trackframe, sizeof(double));
+        read (fh, &reset_trackframe, 1);
+        read (fh, &tracking, sizeof(double));
+        read (fh, &req_end_extra, 1);
+        read (fh, &alfad, sizeof(short));
+        read (fh, &betad, sizeof(short));
+        read (fh, &pix, sizeof(short));
+        read (fh, &alfa90, sizeof(short));
+        read (fh, &beta90, sizeof(short));
+        read (fh, &fid, 1);
+        read (fh, &lead, 1);
+        read (fh, &orig, 1);
+        read (fh, &comera_m, 1);
+        read (fh, &spd_x, sizeof(double));
+        read (fh, &spd_y, sizeof(double));
+        read (fh, &spd_z, sizeof(double));
+        read (fh, &spd, sizeof(double));
+        read (fh, &extra, 1);
+        read (fh, &rel_x, sizeof(double));
+        read (fh, &rel_y, sizeof(double));
+        read (fh, &rel_z, sizeof(double));
+        read (fh, &obj, sizeof(short));
+        read (fh, &m, 1);
+        read (fh, &echo, 1);
+        read (fh, &carried_pixel, sizeof(short));
+        read (fh, &disl, sizeof(double));
+        read (fh, &cursore, sizeof(short));
+        read (fh, &explode_count, 1);
+        read (fh, &ctrlkeys[0], 1);
+        read (fh, &pixel_rot[0], pixels);
+        read (fh, &pixeltype[0], sizeof(short)*pixels);
+        read (fh, &repeat, 1);
+        read (fh, &source, 1);
+        read (fh, &quality, 1);
+        close (fh);
+    } else {
+        throw errno;
+    }
+}
+
+void save_game (char i)
+{
+    int fh;
+    unsigned conta;
+    unsigned char a;
+
+    if (moving_last_object) return;
+
+    objects = _objects;
+
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
+
+    sprintf (t, "CRYXTELS.%cIT", i);
+    fh = creat (t, 0666);
+    if ( fh != -1) {
+        write (fh, &pixels, sizeof(short));
+        write (fh, &pixel_support[0], sizeof(double)*pixels);
+        write (fh, &pixel_xdisloc[0], sizeof(double)*pixels);
+        write (fh, &pixel_ydisloc[0], sizeof(double)*pixels);
+        write (fh, &pixel_zdisloc[0], sizeof(double)*pixels);
+        write (fh, &objects, sizeof(short));
+        write (fh, &objecttype[0], sizeof(short)*objects);
+        write (fh, &relative_x[0], sizeof(double)*objects);
+        write (fh, &relative_y[0], sizeof(double)*objects);
+        write (fh, &relative_z[0], sizeof(double)*objects);
+        write (fh, &absolute_x[0], sizeof(double)*objects);
+        write (fh, &absolute_y[0], sizeof(double)*objects);
+        write (fh, &absolute_z[0], sizeof(double)*objects);
+        write (fh, &object_location[0], sizeof(short int)*objects);
+        write (fh, &cam_x, sizeof(double));
+        write (fh, &cam_y, sizeof(double));
+        write (fh, &cam_z, sizeof(double));
+        write (fh, &alfa, sizeof(short));
+        write (fh, &beta, sizeof(short));
+        write (fh, &nav_a, sizeof(short));
+        write (fh, &nav_b, sizeof(short));
+        write (fh, &taking, sizeof(char));
+        write (fh, &carry_type, sizeof(short));
+        write (fh, &trackframe, sizeof(double));
+        write (fh, &reset_trackframe, sizeof(char));
+        write (fh, &tracking, sizeof(double));
+        write (fh, &req_end_extra, sizeof(char));
+        write (fh, &alfad, sizeof(short));
+        write (fh, &betad, sizeof(short));
+        write (fh, &pix, sizeof(short));
+        write (fh, &alfa90, sizeof(short));
+        write (fh, &beta90, sizeof(short));
+        write (fh, &fid, 1);
+        write (fh, &lead, 1);
+        write (fh, &orig, 1);
+        write (fh, &comera_m, 1);
+        write (fh, &spd_x, sizeof(double));
+        write (fh, &spd_y, sizeof(double));
+        write (fh, &spd_z, sizeof(double));
+        write (fh, &spd, sizeof(double));
+        write (fh, &extra, 1);
+        write (fh, &rel_x, sizeof(double));
+        write (fh, &rel_y, sizeof(double));
+        write (fh, &rel_z, sizeof(double));
+        write (fh, &obj, sizeof(short));
+        write (fh, &m, 1);
+        write (fh, &echo, 1);
+        write (fh, &carried_pixel, sizeof(short));
+        write (fh, &disl, sizeof(double));
+        write (fh, &cursore, sizeof(short));
+        write (fh, &explode_count, 1);
+        a = ctrlkeys[0]; if (a&2) a ^= 2;
+        write (fh, &a, 1);
+        write (fh, &pixel_rot[0], pixels);
+        write (fh, &pixeltype[0], sizeof(short)*pixels);
+        write (fh, &repeat, 1);
+        write (fh, &source, 1);
+        conta = write (fh, &quality, 1);
+        if (conta!=1) {
+            close (fh);
+            remove (t);
+            return;
+        }
+        close (fh);
+    } else {
+        throw errno; // FIXME use a better exception type
     }
 }

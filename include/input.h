@@ -18,8 +18,13 @@
 #define INPUT_H_INCLUDED
 
 #include <array>
+#include <memory>
 
 extern std::array<unsigned char,2> ctrlkeys;
+//extern int fh;
+
+extern const char* loaded_background;
+extern std::unique_ptr<unsigned char[]> background_data;
 
 int attendi_pressione_tasto (); // aspetta un tasto e d qual'.
 
@@ -35,22 +40,28 @@ void keybuffer_cleaner();
 
 void update_ctrlkeys();
 
-/// Save state function.
 // Funzioni di continuitá.
+/// Save state function.
 void Archivia_Situazione (char i);
 
 /// Find and seek an id text in the open file at fh
-char trova_id (const char *id);
+//char trova_id (const char *id);
 
 /// Read until a specific character code is found
-void leggi_t_fino_a (char codcar, int ptyp);
+//void leggi_t_fino_a (char codcar, int ptyp);
 
 /// Load PIXELS.DEF
 void load_pixels_def(int& ptyp);
 
-/// Load the specified pixel type
 // Carica il tipo di pixel specificato.
+/// Load the specified pixel type
 void LoadPtyp (int ptyp);
 
+
+/// Load a saved game
+void load_game (char i);
+
+/// Save a game
+void save_game (char i);
 
 #endif // INPUT_H_INCLUDED
