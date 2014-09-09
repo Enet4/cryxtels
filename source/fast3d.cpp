@@ -32,6 +32,8 @@ std::unique_ptr<unsigned char[]> video_buffer;
 SDL_Surface * p_surface_32 = nullptr;
 SDL_Surface * p_surface_scaled = nullptr;
 SDL_Window * p_window = nullptr;
+SDL_Renderer * p_renderer = nullptr;
+SDL_Texture * p_texture = nullptr;
 
 float *tcos, *tsin;
 float *tcosx, *tsinx;
@@ -49,15 +51,16 @@ double rx, ry, rz;
 double x2, y2, z2;
 double ox, oy, oz;
 
-const int zbasex = 200, zbasey = 150;
-const int nav_zbasex = WIDTH-2, nav_zbasey = HEIGHT-2;
-const int lowerbound_y = -97, upperbound_y = 97;
-const int lowerbound_x = -157, upperbound_x = 157;
-
 //#define lwx 3
 const int lwx = 3;
 //#define lwy 3
 const int lwy = 3;
+
+const int zbasex = WIDTH * 2 / 3, zbasey = 150*HEIGHT/200;
+const int nav_zbasex = WIDTH-2, nav_zbasey = HEIGHT-2;
+const int lowerbound_y = -static_cast<int>(HEIGHT/2-lwy), upperbound_y = static_cast<int>(HEIGHT/2-lwy);
+const int lowerbound_x = -static_cast<int>(WIDTH/2-lwx), upperbound_x = static_cast<int>(WIDTH/2-lwx);
+
 //#define upx 317
 const int upx = WIDTH - 3;
 //#define upy 197
@@ -77,8 +80,13 @@ unsigned char tmppal[256 * 4]; // 256*4 bytes (RGBU)
 
 using namespace std;
 
+void init(void);
+
 void init_video () // inizializza grafica a 320x200x256 colori.
 {
+
+    init();
+
     // Set SDL video mode (using surface rendering)
     Uint32 rmask, gmask, bmask, amask;
 
@@ -98,18 +106,23 @@ void init_video () // inizializza grafica a 320x200x256 colori.
 
     // create software video buffer
     video_buffer.reset(new unsigned char[WIDTH*HEIGHT]);
-    memset(video_buffer.get(), 0, WIDTH*HEIGHT);
+    memset(&video_buffer[0], 0, WIDTH*HEIGHT);
 
     p_surface_32 = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, rmask, gmask, bmask, amask);
     if (p_surface_32 == nullptr) throw sdl_exception();
 
     p_window = SDL_CreateWindow("Crystal Pixels",
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            WIDTH_SCALED, HEIGHT_SCALED, 0);
+            WIDTH_SCALED, HEIGHT_SCALED, SDL_WINDOW_RESIZABLE);
     if (p_window == nullptr) throw sdl_exception();
 
-    p_surface_scaled = SDL_GetWindowSurface(p_window);
-    //SDL_SetWindowMinimumSize(p_window, WIDTH, HEIGHT);
+    p_renderer = SDL_CreateRenderer(p_window, -1, SDL_RENDERER_TARGETTEXTURE);
+
+    p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_ABGR8888,
+                                  SDL_TEXTUREACCESS_STREAMING, WIDTH,HEIGHT);
+
+    //p_surface_scaled = SDL_GetWindowSurface(p_window);
+    SDL_SetWindowMinimumSize(p_window, WIDTH, HEIGHT);
 }
 
 /// Darken the screen once.
@@ -133,7 +146,7 @@ void toggle_fullscreen (void) {
 
 void snapshot (void)
 {
-    SDL_SaveBMP(p_surface_scaled, "SNAP.bmp");
+    SDL_SaveBMP(p_surface_32, "SNAP.bmp");
 }
 
 void Render (void)
@@ -141,10 +154,12 @@ void Render (void)
     using namespace std;
 
     // convert indexed 8-bit to RGBA 32-bit colors
-    SDL_LockSurface(p_surface_32);
+    //SDL_LockSurface(p_surface_32);
+    SDL_LockTexture(p_texture, nullptr, &p_surface_32->pixels, &p_surface_32->pitch);
+    // paint into surface pixels
     unsigned int rpos = 0;
     unsigned int rpos_32 = 0;
-    unsigned char* p_orig = video_buffer.get();
+    unsigned char* p_orig = &video_buffer[0];
     unsigned int* p_dest = static_cast<unsigned int*>(p_surface_32->pixels);
     for (unsigned int y = 0 ; y < HEIGHT ; y++) {
         for (unsigned int x = 0 ; x < WIDTH ; x++) {
@@ -153,17 +168,10 @@ void Render (void)
         rpos += WIDTH;
         rpos_32 += (p_surface_32->pitch >> 2);
     }
-    SDL_UnlockSurface(p_surface_32);
-
-    auto err = SDL_BlitScaled(p_surface_32, nullptr,
-            p_surface_scaled, nullptr);
-    if (err != 0) {
-        throw sdl_exception(err);
-    }
-    SDL_UpdateWindowSurface(p_window);
-    if (err != 0) {
-        throw sdl_exception(err);
-    }
+    SDL_UnlockTexture(p_texture);
+    //SDL_UnlockSurface(p_surface_32);
+    SDL_RenderCopy(p_renderer, p_texture, nullptr, nullptr);
+    SDL_RenderPresent(p_renderer);
 }
 
 void tavola_colori (unsigned char *nuova_tavolozza,
@@ -560,14 +568,14 @@ void aux_plot(unsigned int x, unsigned int y) {
     SDL_assert(y < HEIGHT-1);
 
     auto di = x+WIDTH*y;
-    auto si = video_buffer.get() + di;
+    auto si = &video_buffer[0] + di;
 
-    if (si[0] < 32) {
-        si[0] += 8;
-        si[1] += 4;
-        si[-1] += 4;
-        si[WIDTH] += 4;
-        si[-WIDTH] += 4;
+    if (*si < 32) {
+        *si += 8;
+        *(si+1) += 4;
+        *(si-1) += 4;
+        *(si+WIDTH) += 4;
+        *(si-WIDTH) += 4;
 //    }
     }
 }
@@ -628,23 +636,22 @@ void xrel (double px, double py, double pz)
 
         unsigned int di = share_x+WIDTH*share_y;
 
-        unsigned char* si = video_buffer.get();
-
+        unsigned char* si = &video_buffer[0];
         si += di; // get to point position
         if (*si < 32) {
 
             // the following code seems to paint this point's pixel
             // and adjacent pixels to make it look thicker
 
-            si[0] += 8;
-            si[1] += 4;
-            si[-1] += 4;
-            si[WIDTH-1] += 2;
-            si[-WIDTH+1] += 2;
-            si[WIDTH] += 4;
-            si[-WIDTH] += 4;
-            si[WIDTH+1] += 2;
-            si[-WIDTH-1] += 2;
+            *si += 8;
+            *(si+1) += 4;
+            *(si-1) += 4;
+            *(si+WIDTH-1) += 2;
+            *(si-WIDTH+1) += 2;
+            *(si+WIDTH) += 4;
+            *(si-WIDTH) += 4;
+            *(si+WIDTH+1) += 2;
+            *(si-WIDTH-1) += 2;
         }
     }
 }

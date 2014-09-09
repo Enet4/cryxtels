@@ -20,6 +20,7 @@
 #define CONF_H_INCLUDED
 
 #include <SDL.h>
+constexpr int FRAMES_PER_SECOND = 30;
 
 constexpr unsigned int WIDTH = 320;
 constexpr unsigned int HEIGHT = 200;

@@ -48,7 +48,6 @@
 
 using namespace std;
 
-constexpr int FRAMES_PER_SECOND = 40;
 constexpr int TICKS_IN_A_SECOND = 1000;
 constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
 
@@ -259,8 +258,8 @@ int main(int argc, char** argv)
 
     unsigned long sync;
 
-    const int DELTA_U = 65;
-    const int DELTA_L = 135;
+    const int DELTA_U = (HEIGHT-70)/2; // 65
+    const int DELTA_L = (HEIGHT+70)/2; // 135
 
     // Don't run the intro if a game is loaded by the user.
     bool run_intro = (argc!=2);
@@ -281,15 +280,12 @@ int main(int argc, char** argv)
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
+              case SDL_WINDOWEVENT_RESIZED:
+                break;
               case SDL_QUIT:
                 alfin (1);
                 exit(0);
                 break;
-//            case SDL_WINDOWEVENT:
-//              switch (event->window.event) {
-//                case SDL_WINDOWEVENT_HIDDEN:
-//              }
-//              break;
               case SDL_KEYDOWN:
               case SDL_MOUSEBUTTONDOWN:
                 run_intro = false; // Get out of here.
@@ -302,7 +298,7 @@ int main(int argc, char** argv)
         Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
         Txt ("WRITTEN BETWEEN 1994 AND 1997", -100, 0, 80, 2, 4, 270, 0);
         Txt ("BY ALESSANDRO GHIGNOLA.", -85, 0, 60, 2, 4, 270, 0);
-        Txt ("MODERN VERSION MADE IN 2013", -102, 0, -84, 2, 4, 270, 0);
+        Txt ("MODERN VERSION IN 2013-2014", -92, 0, -84, 2, 4, 270, 0);
         Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
         if (beta<360) {
             cam_y += 25;
@@ -353,7 +349,7 @@ int main(int argc, char** argv)
 //              asm {
 //              cmp cx, 8000
 //              jb subt
-                if (cx >= (WIDTH*HEIGHT) >> 3) {
+                if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
 //                  add di, 321
                     i += WIDTH + 1;
 //                  jmp norm }
@@ -526,6 +522,8 @@ noang:
         SDL_Event sdlevent;
         while (SDL_PollEvent(&sdlevent)) {
             switch (sdlevent.type) {
+              case SDL_WINDOWEVENT_RESIZED:
+                break;
               case SDL_QUIT:
                 quit_now = true;
                 break;
@@ -899,7 +897,7 @@ noang:
                 strcat (dist, ".ATM");
                 a = open (dist, 0);
                 if (a>-1) {
-
+                    // -- draw operation begin
                     auto ax = 360u;
                     ax -= beta;
                     auto dx = 32u;
@@ -1519,7 +1517,7 @@ void read_args(int argc, char** argv, char& flag, char& sit)
     flag = 0;
     char dist[20]; // Stringhe usate per conversioni.
     if (argc>2) {
-        pixels = objects = 0;
+        pixels = 0;
         if (strcasecmp(argv[2], "PIXELS") == 0) {
             pixels = (int)atof(argv[1]);
             if (pixels<1) pixels = 1;
