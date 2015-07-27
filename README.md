@@ -1,17 +1,17 @@
 # Crystal Pixels - modern version
 
-Crystal Pixels (Cryxtels in short) is a simulator game where you live in a dark and cold microcosm, imagined and brought to life by Alessandro Ghignola, who is mostly known for developing the space simulator game Noctis. You can fly to small spaces called pixels, with several other features, such as walking around them and creating pixels and objects.
+Crystal Pixels (Cryxtels in short) is a simulator game where you live in a dark and cold microcosm. It was imagined and brought to life by Alessandro Ghignola, who is mostly known for developing the space simulator game Noctis. You can fly to small spaces called pixels, with several other features, such as walking around them and creating pixels and objects.
 
 Cryxtels was initially an MS-DOS game. Later on, a port was developed in order to be playable in modern systems such as Linux. This repository contains the latest development versions of this port.
 
-At the moment, this version was only tested to work on Linux.
+At the moment, this version was only tested to work on Windows 8 and Linux.
 
 ## Building
 
 Run *configure* to generate the Makefile's, then run *make*.
 Alternatively, use the custom Makefile under the name *Makefile.bak*.
 
-SDL 2.0.3 must be installed in the system. C++11 support must be supported by the compiler.
+SDL 2.0.3 must be installed in the system. C++11 must be supported by the compiler.
 
 Other building procedures for more operating systems could be available eventually.
 
