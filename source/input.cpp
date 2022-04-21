@@ -117,12 +117,14 @@ int tasto_premuto () {
 
 int mdltx = 0, mdlty = 0, mx = 0, my = 0, mpul = 0;
 
-void mouse_input () {
+void mouse_input() {
     // mouse delta is saved in mdltx and mdlty.
     auto r = SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
     // Update mouse key presses
-    mpul = !!(r&SDL_BUTTON(1)) | ((!!(r&SDL_BUTTON(3)))<<1);
+    auto lmb = (r & SDL_BUTTON(1)) ? 1 : 0;
+    auto rmb = (r & SDL_BUTTON(3)) ? 2 : 0;
+    mpul = lmb | rmb;
 }
 
 void update_ctrlkeys()

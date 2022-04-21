@@ -759,7 +759,9 @@ noang:
                 i = 61;
                 _x = mx;
                 _y = my;
-                while (mpul) {
+                // restrict nr of iterations,
+                // because sometimes this would lead to an infinite loop
+                for (int k = 0; mpul && k < 16; k++) {
                     mpul = 0;
                     mouse_input();
                 }
