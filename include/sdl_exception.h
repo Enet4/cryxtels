@@ -2,7 +2,7 @@
 #define SDL_EXCEPTION_H_INCLUDED
 
 #include <exception>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 /** Class for defining an SDL exception.
  * This is meant to be thrown right after a failed SDL operation.

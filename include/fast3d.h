@@ -19,7 +19,7 @@
 #ifndef FAST3D_H_INCLUDED
 #define FAST3D_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <memory>
 
 #ifndef far

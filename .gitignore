@@ -1,2 +1,10 @@
+/.vscode/
+/Debug/
+/Release/
 *.o
 Makefile
+/cryxtels
+/cryxtels.exe
+/bin/cryxtels
+/bin/cryxtels.exe
+/bin/CRYXTELS.SIT

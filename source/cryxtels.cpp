@@ -39,7 +39,7 @@
 #include "input.h"
 #include "sdl_exception.h"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include "conf.h"
 
 #ifndef far
