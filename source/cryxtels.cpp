@@ -1538,6 +1538,10 @@ void read_args(int argc, char** argv, char& flag, char& sit)
     }
     else if (argc == 2) {
         sit = argv[1][0];
+        if (sit >= 'a' && sit <= 'z') {
+            sit -= 'a' - 'A';
+        }
+
         sprintf (dist, "CRYXTELS.%cIT", sit);
         FILE* fh = std::fopen(dist, "rb");
         if (fh) {
