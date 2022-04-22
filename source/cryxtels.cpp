@@ -82,7 +82,7 @@ void dists ();
 void rot ();
 
 /// Fade out effect of the display.
-void fade ();
+void fade (unsigned char speed = 1);
 
 /// Docking effects.
 void dock_effects ();
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
             load_situation(sit);
     else {
             cam_z = -20000;
-            fade ();
+            fade (3);
     }
 
     int rclick = 0;
@@ -1773,15 +1773,15 @@ void rot ()
     }
 }
 
-void fade ()
-{
+/// enter a synchronous routine
+/// to fade out the screen
+/// (can be skipped by pressing any key)
+void fade (unsigned char speed) {
     keybuffer_cleaner ();
-//rip:
     unsigned int dx = 0;
     auto skip = false;
-    unsigned int sync;
     do {
-        sync = SDL_GetTicks();
+        unsigned int sync = SDL_GetTicks();
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -1791,7 +1791,7 @@ void fade ()
             }
         }
 
-        darken_once();
+        darken_once(speed);
         Render();
         unsigned long cticks = SDL_GetTicks();
         while (sync + TICKS_PER_FRAME > cticks) {
@@ -1799,7 +1799,7 @@ void fade ()
             cticks = SDL_GetTicks();
         }
     }
-    while(!skip && dx++ < 100);
+    while(!skip && dx++ < (100 / speed));
 /*
 rip:    mpul = 0; mouse_input ();
         _BL = tasto_premuto ();
@@ -1827,7 +1827,7 @@ void load_situation(char i) {
     try {
         load_game(i);
         cout << "Game [" << i << "] successfully loaded." << endl;
-        fade ();
+        fade (2);
         rot ();
         dists ();
         dock_effects ();
@@ -2177,7 +2177,7 @@ void chiudi_filedriver ()
 
 void alfin (char arc)
 {
-        if (arc) fade ();
+        if (arc) fade (5);
         //dsp_driver_off (); // unused right now
         if (recfile) {
                 //audio_stop (); // unused right now

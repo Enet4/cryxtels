@@ -126,14 +126,16 @@ void init_video () // inizializza grafica a 320x200x256 colori.
 }
 
 /// Darken the screen once.
-void darken_once (void) {
+void darken_once (unsigned char inc) {
     unsigned char* it = &video_buffer[0];
     unsigned int cx = WIDTH*HEIGHT;
 
     do {
         auto k = *it;
-        if (k != 0) {
-             *it = k-1;
+        if (k >= inc) {
+             *it = k - inc;
+        } else if (k > 0) {
+            *it = 0;
         }
         ++it;
     } while(--cx != 0);
