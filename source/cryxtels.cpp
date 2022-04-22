@@ -1918,25 +1918,24 @@ void dists ()
     }
 }
 
+/// walk forward in the pixel
 void ispd ()
 {
-    int acount;
 
     if (trackframe&&!extra) return;
     if (!extra&&trackframe<23) {
         //spd = 2*spd + 1;
         spd = 1.5*spd + 0.5;
         if (spd>300) spd = 300;
-    }
-    else {
+    } else {
         _x = rel_x;
         _z = rel_z;
-        acount = (double)(SDL_GetTicks()%(FRAMES_PER_SECOND/4)) - 4;
+        double acount = (SDL_GetTicks() % 520) + 560.0;
         // Sound off
         //if (acount<0&&!sbp_stat) play (PASSO);
-        rel_y += (double)acount / 5;
-        rel_x -= /* 4 */ 2 * tsin[beta] * tcos[alfa];
-        rel_z += /* 4 */ 2 * tcos[beta] * tcos[alfa];
+        rel_y = acount / 280.0;
+        rel_x -= 4 * tsin[beta] * tcos[alfa];
+        rel_z += 4 * tcos[beta] * tcos[alfa];
         if (docksite_h[pixeltype[pix]]>=0) {
             if (rel_x>docksite_w[pixeltype[pix]]-docksite_x[pixeltype[pix]]) rel_x = docksite_w[pixeltype[pix]]-docksite_x[pixeltype[pix]];
             if (rel_x<-docksite_x[pixeltype[pix]]-docksite_w[pixeltype[pix]]) rel_x = -docksite_x[pixeltype[pix]]-docksite_w[pixeltype[pix]];
@@ -1958,6 +1957,7 @@ void ispd ()
     }
 }
 
+/// walk backward in the pixel
 void dspd ()
 {
         if (trackframe&&!extra) return;
