@@ -27,7 +27,7 @@
 #include "global.h"
 #include "conf.h"
 #include "sdl_exception.h"
-#include <SDL2/SDL.h>
+#include "SDL.h"
 
 using namespace std;
 
