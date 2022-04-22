@@ -27,7 +27,7 @@
 #include <iostream>
 #include <random>
 #include <cstdlib>
-#include <unistd.h>
+#include <cstdio>
 #include <fcntl.h>
 #include <cmath>
 #include <cstring>
@@ -39,7 +39,7 @@
 #include "input.h"
 #include "sdl_exception.h"
 
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #include "conf.h"
 
 #ifndef far
@@ -897,8 +897,8 @@ noang:
                 // backdrop
                 strcpy (dist, &subsignal[9*pixeltype[pix]]);
                 strcat (dist, ".ATM");
-                a = open (dist, 0);
-                if (a>-1) {
+                FILE* file = std::fopen(dist, "rb");
+                if (file) {
                     // -- draw operation begin
                     auto ax = 360u;
                     ax -= beta;
@@ -923,15 +923,15 @@ noang:
                     cx = ax >> 16; // cx = ax >> 16
                     dx = ax;
                     dx += si;
-                    lseek(a, dx, SEEK_SET);
+                    std::fseek(file, dx, SEEK_SET);
                     auto p_data = &video_buffer[0];
                     si = 8;
                     do {
                         cx = WIDTH*HEIGHT / 8;
-                        read(a, p_data, cx);
+                        std::fread(p_data, 1, cx, file);
                         p_data += WIDTH*HEIGHT / 8;
                     } while (--si != 0);
-                    close (a);
+                    std::fclose (file);
                     // -- draw operation end
 
                     if (d>500) {
@@ -1537,11 +1537,11 @@ void read_args(int argc, char** argv, char& flag, char& sit)
         }
     }
     else if (argc == 2) {
-        if (argc==2) sit = argv[1][0];
+        sit = argv[1][0];
         sprintf (dist, "CRYXTELS.%cIT", sit);
-        int fh = open(dist, 0);
-        if (fh >= 0) {
-            close (fh);
+        FILE* fh = std::fopen(dist, "rb");
+        if (fh) {
+            std::fclose (fh);
             flag = 1;
         } else {
             _80_25_C();
@@ -2175,10 +2175,11 @@ void alfin (char arc)
 {
         if (arc) fade ();
         //dsp_driver_off (); // unused right now
-        if (recfile>-1) {
+        if (recfile) {
                 //audio_stop (); // unused right now
-                write (recfile, "\0",1);
-                close (recfile);
+                std::fwrite("\0", 1, 1, recfile);
+                std::fclose(recfile);
+                recfile = nullptr;
         }
         //file_driver_off ();
         _80_25_C ();
@@ -3142,7 +3143,7 @@ ogg_2:
 
 void Object (int tipo)
 {
-    int th;
+    FILE* th;
 
     switch (tipo) {
         case 0:
@@ -3172,7 +3173,7 @@ void Object (int tipo)
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
             }
             rectrel (0, 0, 0, 6, 6, 1);
-            if (recfile>-1) Txt ("> RECORD >", -5.5, 0, -5, 0.1, 0.15, 270, 0);
+            if (recfile) Txt ("> RECORD >", -5.5, 0, -5, 0.1, 0.15, 270, 0);
             if (globalvocfile[0]!='.') Txt ("> PLAY >", -5.5, 0, -4, 0.1, 0.15, 270, 0);
             sprintf (t, "INPUT: %s", source_name[static_cast<int>(source)]);
             Txt (t, -5.5, 0, 5, 0.1, 0.15, 270, 0);
@@ -3188,11 +3189,11 @@ void Object (int tipo)
                 a = subsignal[9*(tipo+FRONTIER_M3)+5/*6*/];
                 memset (buffer, ' ', 512);
                 sprintf (autore_forme, "TEXT-%03u.FIX", tipo-3);
-                th = open (autore_forme, O_CREAT|O_RDWR /*4*/,
-                        S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-                if (th>-1) {
+                th = std::fopen (autore_forme, "a+b");
+                if (th) {
+                    std::fseek(th, 0, SEEK_SET);
                     buffer[32] = 0; k1 = 5.32;
-                    read (th, buffer+33, 512);
+                    std::fread(buffer+33, 512, 1, th);
                     for (c=0; c<512; c+=32) {
                         memcpy (buffer, buffer+33+c, 32);
                         if (a=='V') Txt (reinterpret_cast<char*>(buffer), -6.82, -k1, 0, 0.11, 0.14, 0, 0);
@@ -3262,17 +3263,17 @@ void Object (int tipo)
                     if (a=='V') Txt ("*", -6.82+(cursore%32)*0.44, (cursore/32)*0.7-5.32, 0, 0.5, 0.5, 0, 0);
                     else if (a=='H') Txt ("*", -6.82+(cursore%32)*0.44, 0, 5.32-(cursore/32)*0.7, 0.5, 0.5, 270, 0);
                     if (memcmp (buffer+33, buffer+545, 512)) {
-                        lseek (th, 0, SEEK_SET);
-                        write (th, buffer+33, 512);
+                        std::fseek (th, 0, SEEK_SET);
+                        std::fwrite (buffer+33, 512, 1, th);
                     }
                 //}
-                    close (th);
+                    std::fclose (th);
                 }
                 else {
-                    th = creat (autore_forme, 0);
-                    if (th>-1) {
-                        write (th, buffer, 512);
-                        close (th);
+                    th = std::fopen(autore_forme, "wb");
+                    if (th) {
+                        std::fwrite (buffer, 512, 1, th);
+                        std::fclose (th);
                     }
                 }
         }

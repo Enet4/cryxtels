@@ -12,9 +12,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(SDL2 REQUIRED)
 
 # project includes
-include_directories(include)
+include_directories(include ${SDL2_INCLUDE_DIR})
 
 # add the executable
 add_executable(cryxtels
     source/cryxtels.cpp source/fast3d.cpp source/global.cpp source/input.cpp source/text3d.cpp)
-target_link_libraries(cryxtels ${SDL2_LIBRARY})
+target_link_libraries(cryxtels ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY})

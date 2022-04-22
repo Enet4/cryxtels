@@ -15,6 +15,7 @@
  *  along with the program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "global.h"
+#include <cstdio>
 
 bool type_mode = false; // using type mode flag instead of scroll lock
 char type_this = 0; // character to type in the keyboard
@@ -251,7 +252,7 @@ int vicini = 0;
 int sta_suonando = -1;
 int pixel_sonante = -1;
 
-int recfile = -1;
+FILE* recfile = nullptr;
 
 double cox = 0, coy = 0, coz = 0;
 char justloaded = 5;
