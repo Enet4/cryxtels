@@ -92,7 +92,7 @@ void dock_effects ();
 void save_situation (char i);
 
 /// Load state
-void load_situation (char i);
+void load_situation (char i, bool skip_fade = false);
 
 /// Just makes the program exit because of something...
 void par0 (int el, int pix);
@@ -401,7 +401,7 @@ int main(int argc, char** argv)
 //    ignentra: //push_audiofile ("ECHO");
 
     if (flag)
-            load_situation(sit);
+            load_situation(sit, true);
     else {
             cam_z = -20000;
             fade (3);
@@ -1824,11 +1824,13 @@ halt:   keybuffer_cleaner ();
 */
 }
 
-void load_situation(char i) {
+void load_situation(char i, bool skip_fade) {
     try {
         load_game(i);
         cout << "Game [" << i << "] successfully loaded." << endl;
-        fade (2);
+        if (!skip_fade) {
+            fade (2);
+        }
         rot ();
         dists ();
         dock_effects ();
