@@ -23,6 +23,8 @@
 #define far
 #endif
 
+#include <cstdio>
+
 constexpr unsigned int coms = 24; // new element included
 //#define coms 23
 
@@ -202,7 +204,7 @@ extern int vicini;
 extern int sta_suonando;
 extern int pixel_sonante;
 
-extern int recfile;
+extern FILE* recfile;
 
 extern double cox, coy, coz;
 extern char justloaded;
