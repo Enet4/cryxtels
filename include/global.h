@@ -23,6 +23,13 @@
 #define far
 #endif
 
+// provide strcasecmp to msvc
+#ifdef _MSC_VER
+#include <string.h>
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 #include <cstdio>
 
 constexpr unsigned int coms = 24; // new element included
