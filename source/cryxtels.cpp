@@ -50,6 +50,7 @@ using namespace std;
 
 constexpr int TICKS_IN_A_SECOND = 1000;
 constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
+constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
 
 // dummy function (nullify effect)
 inline void play (long) {}
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
         Render();
 
         unsigned long cticks = SDL_GetTicks();
-        while (sync + TICKS_PER_FRAME > cticks) {
+        while (sync + INTRO_TICKS_PER_FRAME > cticks) {
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }
