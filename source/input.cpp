@@ -91,6 +91,39 @@ public:
     }
 };
 
+// Based on https://stackoverflow.com/a/27304609/1233251
+const char* stristr(const char* haystack, const char* needle) {
+    const char* p1 = haystack;
+    const char* p2 = needle;
+    const char* r = *p2 == 0 ? haystack : 0;
+
+    while (*p1 != 0 && *p2 != 0) {
+        if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2)) {
+            if (r == 0) {
+                r = p1;
+            }
+
+            p2++;
+        } else {
+            p2 = needle;
+            if (r != 0) {
+                p1 = r + 1;
+            }
+
+            if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2)) {
+                r = p1;
+                p2++;
+            } else {
+                r = 0;
+            }
+        }
+
+        p1++;
+    }
+
+    return *p2 == 0 ? (const char*)r : 0;
+}
+
 // aspetta un tasto e d qual'.
 int attendi_pressione_tasto ()
 {
@@ -166,11 +199,11 @@ char trova_id (FILE* fh, const char *id) {
     std::fseek(fh, 0, SEEK_SET);
 
     while (1) {
-        char *idpos;
+        const char *idpos;
 
         int cl = std::fread(buffer, 1, 1024, fh);
         buffer[cl-1] = '\0';
-        if ((idpos = strcasestr ((char*)buffer, id)) != NULL) {
+        if ((idpos = stristr ((const char*)buffer, id)) != NULL) {
             int dlt = (unsigned char*)idpos - buffer;
             int spostam = (int)strlen(id)-(cl-dlt);
             std::fseek (fh, spostam, SEEK_CUR);
