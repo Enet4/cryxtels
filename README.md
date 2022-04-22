@@ -23,7 +23,7 @@ Example on Linux:
 mkdir Release
 cd Release
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make
+cmake --build . --config Release
 ```
 
 The output is the executable file `cryxtels`.
