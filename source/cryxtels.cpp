@@ -50,6 +50,7 @@ using namespace std;
 
 constexpr int TICKS_IN_A_SECOND = 1000;
 constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
+constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
 
 // dummy function (nullify effect)
 inline void play (long) {}
@@ -82,7 +83,7 @@ void dists ();
 void rot ();
 
 /// Fade out effect of the display.
-void fade ();
+void fade (unsigned char speed = 1);
 
 /// Docking effects.
 void dock_effects ();
@@ -91,7 +92,7 @@ void dock_effects ();
 void save_situation (char i);
 
 /// Load state
-void load_situation (char i);
+void load_situation (char i, bool skip_fade = false);
 
 /// Just makes the program exit because of something...
 void par0 (int el, int pix);
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
         Render();
 
         unsigned long cticks = SDL_GetTicks();
-        while (sync + TICKS_PER_FRAME > cticks) {
+        while (sync + INTRO_TICKS_PER_FRAME > cticks) {
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }
@@ -400,10 +401,10 @@ int main(int argc, char** argv)
 //    ignentra: //push_audiofile ("ECHO");
 
     if (flag)
-            load_situation(sit);
+            load_situation(sit, true);
     else {
             cam_z = -20000;
-            fade ();
+            fade (3);
     }
 
     int rclick = 0;
@@ -1773,15 +1774,15 @@ void rot ()
     }
 }
 
-void fade ()
-{
+/// enter a synchronous routine
+/// to fade out the screen
+/// (can be skipped by pressing any key)
+void fade (unsigned char speed) {
     keybuffer_cleaner ();
-//rip:
     unsigned int dx = 0;
     auto skip = false;
-    unsigned int sync;
     do {
-        sync = SDL_GetTicks();
+        unsigned int sync = SDL_GetTicks();
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -1791,7 +1792,7 @@ void fade ()
             }
         }
 
-        darken_once();
+        darken_once(speed);
         Render();
         unsigned long cticks = SDL_GetTicks();
         while (sync + TICKS_PER_FRAME > cticks) {
@@ -1799,7 +1800,7 @@ void fade ()
             cticks = SDL_GetTicks();
         }
     }
-    while(!skip && dx++ < 100);
+    while(!skip && dx++ < (100 / speed));
 /*
 rip:    mpul = 0; mouse_input ();
         _BL = tasto_premuto ();
@@ -1823,11 +1824,16 @@ halt:   keybuffer_cleaner ();
 */
 }
 
-void load_situation(char i) {
+void load_situation(char i, bool skip_fade) {
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
     try {
         load_game(i);
         cout << "Game [" << i << "] successfully loaded." << endl;
-        fade ();
+        if (!skip_fade) {
+            fade (2);
+        }
         rot ();
         dists ();
         dock_effects ();
@@ -1847,6 +1853,9 @@ void load_situation(char i) {
 }
 
 void save_situation(char i) {
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
     try {
     save_game(i);
         cout << "Game [" << i << "] successfully saved." << endl;
@@ -1918,25 +1927,24 @@ void dists ()
     }
 }
 
+/// walk forward in the pixel
 void ispd ()
 {
-    int acount;
 
     if (trackframe&&!extra) return;
     if (!extra&&trackframe<23) {
         //spd = 2*spd + 1;
         spd = 1.5*spd + 0.5;
         if (spd>300) spd = 300;
-    }
-    else {
+    } else {
         _x = rel_x;
         _z = rel_z;
-        acount = (double)(SDL_GetTicks()%(FRAMES_PER_SECOND/4)) - 4;
+        int acount = (SDL_GetTicks() % 520) / 4 - 80;
         // Sound off
         //if (acount<0&&!sbp_stat) play (PASSO);
-        rel_y += (double)acount / 5;
-        rel_x -= /* 4 */ 2 * tsin[beta] * tcos[alfa];
-        rel_z += /* 4 */ 2 * tcos[beta] * tcos[alfa];
+        rel_y += acount / 300.0;
+        rel_x -= 4 * tsin[beta] * tcos[alfa];
+        rel_z += 4 * tcos[beta] * tcos[alfa];
         if (docksite_h[pixeltype[pix]]>=0) {
             if (rel_x>docksite_w[pixeltype[pix]]-docksite_x[pixeltype[pix]]) rel_x = docksite_w[pixeltype[pix]]-docksite_x[pixeltype[pix]];
             if (rel_x<-docksite_x[pixeltype[pix]]-docksite_w[pixeltype[pix]]) rel_x = -docksite_x[pixeltype[pix]]-docksite_w[pixeltype[pix]];
@@ -1958,6 +1966,7 @@ void ispd ()
     }
 }
 
+/// walk backward in the pixel
 void dspd ()
 {
         if (trackframe&&!extra) return;
@@ -2177,7 +2186,7 @@ void chiudi_filedriver ()
 
 void alfin (char arc)
 {
-        if (arc) fade ();
+        if (arc) fade (5);
         //dsp_driver_off (); // unused right now
         if (recfile) {
                 //audio_stop (); // unused right now

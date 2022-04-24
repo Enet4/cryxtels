@@ -75,7 +75,7 @@ void toggle_fullscreen();
 inline void _80_25_C () {} // modo grafico 80x25 testo a colori.
 
 /// Darken the screen once.
-void darken_once(void);
+void darken_once(unsigned char inc = 1);
 
 /// Render
 void Render (void);
