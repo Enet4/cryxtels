@@ -147,7 +147,7 @@ void Oggetti_sul_Pixel (char oblige); // not implemented
 /// Function that leaves the taken object on the ground.
 void lascia_cadere ();
 
-/// May be for drawing a console key on The Fly's console.
+/// Draw a console key on The Fly's console.
 void console_key (const char *serigraph, double x, char cod, char input, char cond_attu, char cond_prec);
 
 // Traccia una linea relativamente alla posizione della nave.
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 
     char yel = 0;
 
-    int i = -1, bki = -1, bki9, bki0, bki1, bki2, bki3; // Tasto premuto.
+    int i = -1, bki = -1, bki0, bki1, bki2, bki3, bki4; // Button pressed.
 
     char blink = 0; // flag per lampeggo.
     char dist[20]; // Stringhe usate per conversioni.
@@ -308,11 +308,11 @@ int main(int argc, char** argv)
         }
         else {
             c = (c+1)%360;
-            bki0 = beta; beta = c;
+            bki1 = beta; beta = c;
             cam_y += 140;
             Object (0);
             cam_y -= 140;
-            beta = bki0;
+            beta = bki1;
 //       asm {
 //          pusha
 //          les di, dword ptr adapted
@@ -875,7 +875,7 @@ noang:
 
         // Sezione ridisegno spazio illusorio.
         /// Create hallucinating effect.
-        if (ctrlkeys[0]&32) { // ctrlkeys[0]&32 is left alt
+        if (ctrlkeys[0]&32) { // ctrlkeys[0]&32 is right alt
             darken_once();
                         /*
                         asm {   pusha
@@ -1322,23 +1322,23 @@ noang:
         n (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
     }
 
-    bki9 = bki;
     bki0 = bki;
     bki1 = bki;
     bki2 = bki;
     bki3 = bki;
+    bki4 = bki;
 
-    if (!trackframe&&!extra&&i==59) bki9 = i;
-    if (!extra&&i==60&&!trackframe) bki0 = i;
-    if (trackframe&&i==61) bki1 = i;
-    if (trackframe&&!extra&&i==62) bki2 = i;
-    if (orig&&i==63) bki3 = i;
+    if (!trackframe&&!extra&&i==58) bki0 = i;
+    if (!extra&&i==59&&!trackframe) bki1 = i;
+    if (trackframe&&i==60) bki2 = i;
+    if (trackframe&&!extra&&i==61) bki3 = i;
+    if (orig&&i==62) bki4 = i;
 
-        console_key ("SPIN", -6.0, 59, i, i, bki9);
-        console_key ("LEAD", -4.9, 60, i, i, bki0);
-        console_key ("EXTR", -3.8, 61, i, i, bki1);
-        console_key ("DOCK", -2.7, 62, i, i, bki2);
-        console_key ("ORIG", -1.6, 63, i, i, bki3);
+        console_key ("SPIN", -6.0, 58, i, i, bki0);
+        console_key ("LEAD", -4.9, 59, i, i, bki1);
+        console_key ("EXTR", -3.8, 60, i, i, bki2);
+        console_key ("DOCK", -2.7, 61, i, i, bki3);
+        console_key ("ORIG", -1.6, 62, i, i, bki4);
 
         console_key ("ECHO", 5.0, echo&1, 1, echo, bkecho);
 
@@ -2464,6 +2464,7 @@ void nrect (double x, double y, double z, double l, double h)
 void console_key (const char *serigraph, double x, char cod, char input, char cond_attu, char cond_prec)
 {
         if (extra) {
+                // disable console keys when far away from the HUD
                 d = sqrt(rel_x*rel_x + (rel_z+10)*(rel_z+10));
                 if (d>25) {
                         input = 1;
@@ -2471,7 +2472,11 @@ void console_key (const char *serigraph, double x, char cod, char input, char co
                 }
         }
 
-        if (input!=cod) {
+        // only show console key as pressed when
+        // the key pressed is the same as the one bound to this console key
+        // AND the key wasn't already pressed in the previous frame
+        // (save for key code 1, which is a toggle button)
+        if (input!=cod || (cod != 1 && cond_attu == cond_prec)) {
                 n (x, 3.5, 12.01, x+1, 3.5, 12.01);
                 n (x, 3.5, 12.01, x, 4, 12.01);
                 n (x+1, 3.5, 12.01, x+1, 4, 12.01);
