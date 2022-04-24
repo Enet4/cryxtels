@@ -2472,7 +2472,11 @@ void console_key (const char *serigraph, double x, char cod, char input, char co
                 }
         }
 
-        if (input!=cod) {
+        // only show console key as pressed when
+        // the key pressed is the same as the one bound to this console key
+        // AND the key wasn't already pressed in the previous frame
+        // (save for key code 1, which is a toggle button)
+        if (input!=cod || (cod != 1 && cond_attu == cond_prec)) {
                 n (x, 3.5, 12.01, x+1, 3.5, 12.01);
                 n (x, 3.5, 12.01, x, 4, 12.01);
                 n (x+1, 3.5, 12.01, x+1, 4, 12.01);
