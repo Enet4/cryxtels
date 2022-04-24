@@ -1825,6 +1825,9 @@ halt:   keybuffer_cleaner ();
 }
 
 void load_situation(char i, bool skip_fade) {
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
     try {
         load_game(i);
         cout << "Game [" << i << "] successfully loaded." << endl;
@@ -1850,6 +1853,9 @@ void load_situation(char i, bool skip_fade) {
 }
 
 void save_situation(char i) {
+    if (i >= 'a' && i <= 'z') {
+        i -= 'a' - 'A';
+    }
     try {
     save_game(i);
         cout << "Game [" << i << "] successfully saved." << endl;
