@@ -1933,10 +1933,10 @@ void ispd ()
     } else {
         _x = rel_x;
         _z = rel_z;
-        double acount = (SDL_GetTicks() % 520) + 560.0;
+        int acount = (SDL_GetTicks() % 520) / 4 - 80;
         // Sound off
         //if (acount<0&&!sbp_stat) play (PASSO);
-        rel_y = acount / 280.0;
+        rel_y += acount / 300.0;
         rel_x -= 4 * tsin[beta] * tcos[alfa];
         rel_z += 4 * tcos[beta] * tcos[alfa];
         if (docksite_h[pixeltype[pix]]>=0) {
