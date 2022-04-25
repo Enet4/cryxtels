@@ -615,7 +615,7 @@ noang:
                             if (dsol>15000)
                                 taking = 1; // pick up an object
                             else {
-                                if (_objects<500) // create a new object
+                                if (_objects<MAX_OBJECTS) // create a new object
                                     carry_type = existent_objecttypes - 1;
                             }
                         }
@@ -689,7 +689,7 @@ noang:
                     /* Text typing something */
                     if (type_mode) {
                         if (i >= SDLK_a && i <= SDLK_z) {
-                            i += 'A'-SDLK_a;
+                            i = i + 'A' - SDLK_a;
                         }
                         if (i>=32 && i<=96) {
                             type_this = i;
@@ -988,7 +988,7 @@ noang:
 
         // Gestione pixels "donati" dal Solicchio.
         if (dsol<500)
-            if (pixels<500&&carried_pixel==-1) {
+            if (pixels<MAX_PIXELS&&carried_pixel==-1) {
                 carried_pixel = existent_pixeltypes - 1;
                 pixeltype[pixels] = carried_pixel;
                 pixel_support[pixels] = 0;
@@ -1075,6 +1075,7 @@ noang:
                         sc = 0;
                 } */
 
+        // handle object pick up request while flying
         if (taking&&!extra) {
             kk = 500;
             obj = -1;
@@ -1525,15 +1526,13 @@ void read_args(int argc, char** argv, char& flag, char& sit)
         pixels = 0;
         if (strcasecmp(argv[2], "PIXELS") == 0) {
             pixels = (int)atof(argv[1]);
-            if (pixels<1) pixels = 1;
-            if (pixels>500) pixels = 500;
+            if (pixels>MAX_PIXELS) pixels = MAX_PIXELS;
         }
         if (argc > 4 && strcasecmp(argv[4], "OBJECTS") == 0) {
-                objects = (int)atof(argv[3]);
-                if (objects<1) objects = 1;
-                if (objects>500) objects = 500;
+            objects = (int)atof(argv[3]);
+            if (objects>MAX_OBJECTS) objects = MAX_OBJECTS;
         }
-        if (objects==0||pixels==0) {
+        if (objects<=0||pixels<=0) {
             _80_25_C();
             cerr << "Usage: CRYXTELS ([<n> PIXELS] [<n> OBJECTS] | <gamesave>)" << endl;
             throw 1;
@@ -1590,24 +1589,24 @@ inline bool allocation_farm()
     try {
     pixel_elem_b = x_farmalloc<char>(40*ELEMS*BUFFERS);
 
-    pixeltype = x_farmalloc<short> (500);
-    pixelmass = x_farmalloc<float> (650); // 2600
-    pixel_rot = x_farmalloc<unsigned char>(500 * 2);
+    pixeltype = x_farmalloc<short> (MAX_PIXELS);
+    pixelmass = x_farmalloc<float> (MAX_PIXEL_TYPES); // 2600
+    pixel_rot = x_farmalloc<unsigned char>(MAX_PIXELS * 2);
 
-    pixel_absd = x_farmalloc<float>(500);
-    pixel_support = x_farmalloc<double> (500);
-    pixel_xdisloc = x_farmalloc<double> (500);
-    pixel_ydisloc = x_farmalloc<double> (500);
-    pixel_zdisloc = x_farmalloc<double> (500);
+    pixel_absd = x_farmalloc<float>(MAX_PIXELS);
+    pixel_support = x_farmalloc<double> (MAX_PIXELS);
+    pixel_xdisloc = x_farmalloc<double> (MAX_PIXELS);
+    pixel_ydisloc = x_farmalloc<double> (MAX_PIXELS);
+    pixel_zdisloc = x_farmalloc<double> (MAX_PIXELS);
 
-    objecttype = x_farmalloc<short> (500);
-    relative_x = x_farmalloc<double> (500);
-    relative_y = x_farmalloc<double> (500);
-    relative_z = x_farmalloc<double> (500);
-    absolute_x = x_farmalloc<double> (500);
-    absolute_y = x_farmalloc<double> (500);
-    absolute_z = x_farmalloc<double> (500);
-    object_location = x_farmalloc<short> (500);
+    objecttype = x_farmalloc<short> (MAX_OBJECTS);
+    relative_x = x_farmalloc<double> (MAX_OBJECTS);
+    relative_y = x_farmalloc<double> (MAX_OBJECTS);
+    relative_z = x_farmalloc<double> (MAX_OBJECTS);
+    absolute_x = x_farmalloc<double> (MAX_OBJECTS);
+    absolute_y = x_farmalloc<double> (MAX_OBJECTS);
+    absolute_z = x_farmalloc<double> (MAX_OBJECTS);
+    object_location = x_farmalloc<short> (MAX_OBJECTS);
 
     pixeltype_elements = x_farmalloc<unsigned char>(BUFFERS);
     pixeltype_type = x_farmalloc<short> (BUFFERS);
@@ -1621,12 +1620,13 @@ inline bool allocation_farm()
     pixel_elem_3 = x_farmalloc<float> (ELEMS*BUFFERS);
     pixel_elem_4 = x_farmalloc<float> (ELEMS*BUFFERS);
 
-    docksite_x = x_farmalloc<float>(650); // For 650 pixel types.
-    docksite_y = x_farmalloc<float>(650);
-    docksite_z = x_farmalloc<float>(650);
-    docksite_w = x_farmalloc<float>(650);
-    docksite_h = x_farmalloc<float>(650);
-    subsignal = x_farmalloc<char> (5850);
+    // Pixel type data
+    docksite_x = x_farmalloc<float>(MAX_PIXEL_TYPES);
+    docksite_y = x_farmalloc<float>(MAX_PIXEL_TYPES);
+    docksite_z = x_farmalloc<float>(MAX_PIXEL_TYPES);
+    docksite_w = x_farmalloc<float>(MAX_PIXEL_TYPES);
+    docksite_h = x_farmalloc<float>(MAX_PIXEL_TYPES);
+    subsignal = x_farmalloc<char> (9 * MAX_PIXEL_TYPES);
 
     buffer = x_farmalloc<unsigned char> (1057);
     } catch (const int&) {
@@ -1674,7 +1674,7 @@ void build_cosm(char& flag)
         ad ogni pixel e ad ogni oggetto. Inoltre, vengono scelte le
         forme di ogni corpo del microcosmo. */
 
-    for (p=0; p<500; p++) {
+    for (p=0; p<MAX_PIXELS; p++) {
             //pixelmass[p] = 0;
             pixeltype[p] = p % existent_pixeltypes;
             pixel_xdisloc[p] = (double)(random(10000) - random(10000)) * 150.0;
@@ -2203,14 +2203,18 @@ void alfin (char arc)
 
 void preleva_oggetto (int nr_ogg)
 {
-    if (moving_last_object) return;
+    if (moving_last_object) {
+        return;
+    }
 
     if (globalvocfile[0]=='.'&&extra) play (PRENDERE);
 
     carry_type = objecttype[nr_ogg];
+    // update pixel translation speed if picking up an orbital engine
     if (extra&&object_location[nr_ogg]>-1&&carry_type==1)
         pixel_rot[pix]--;
 
+    // remove object and shift the others
     int o;
     for (o=nr_ogg; o<_objects; o++) {
         objecttype[o] = objecttype[o+1];
@@ -2241,6 +2245,8 @@ void Oggetti_sul_Pixel (char oblige)
                         if (nopix==pix||oblige) {
                                 if (explode_count) explode = explode_count;
                                 if (objecttype[o]==2||objecttype[o]==0) {
+                                        // object copier or music player,
+                                        // which work by placing an object on top
                                         for (a=o+1; a<_objects; a++) {
                                                 if (object_location[a]==nopix) {
                                                         _oy = relative_y[o] - relative_y[a];
@@ -2248,8 +2254,9 @@ void Oggetti_sul_Pixel (char oblige)
                                                                 _ox = relative_x[o] - relative_x[a];
                                                                 _oz = relative_z[o] - relative_z[a];
                                                                 if (sqrt(_ox*_ox+_oy*_oy+_oz*_oz)<object_elevation[objecttype[a]]+5) {
+                                                                        // object is close enough, trigger effect
                                                                         if (objecttype[o]==2) {
-                                                                                /* Audio object type, I suppose. Off you go.
+                                                                                /* Audio object type. Off you go for now.
                                                                                 if (objecttype[a] == sta_suonando) vicini = 1;
                                                                                 if (!fd_status&&!moving_last_object) {
                                                                                         if (absolute_y[a]<10E10) {
@@ -2291,9 +2298,10 @@ void Oggetti_sul_Pixel (char oblige)
                                                                                 }
                                                                                 */
                                                                         }
+                                                                        // object type 0: object copier
                                                                         else {
                                                                                 if (!moving_last_object) {
-                                                                                        if (_objects<500&&absolute_y[a]<10E10) {
+                                                                                        if (_objects<MAX_OBJECTS && absolute_y[a]<10E10) {
                                                                                                 absolute_y[_objects] = 10E10;
                                                                                                 objecttype[_objects] = objecttype[a];
                                                                                                 relative_x[_objects] = relative_x[a];
@@ -2364,6 +2372,8 @@ void lascia_cadere ()
         }
         cfy = rel_y + disl + docksite_y[pixeltype[pix]] - 7;
         object_location[_objects] = pix;
+
+        // increase pixel translation if object dropped is an orbital engine
         if (carry_type==1) {
             pixel_support[pix] = atan (pixel_zdisloc[pix] / pixel_xdisloc[pix]);
             pixel_rot[pix]++;
@@ -2629,6 +2639,7 @@ trovato:while (nr_elem<pixeltype_elements[iii]) {
                         disl = 7 - rel_y;
         }
 
+        // handle object pick up request while in a pixel
         if (taking) {
                 kk = 40;
                 for (o=_objects-1; o>=0; o--) {

@@ -119,6 +119,7 @@ extern const int FRONTIER_M3;
 extern const int FRONTIER_COMPL;
 extern const int FRONTIER_COMPL_M1;
 
+/// Warning: this constant is likely outdated, do not rely on it
 extern const int MEMORIA_RICHIESTA;
 
 /* Descriptions of each pixel type
@@ -145,21 +146,27 @@ extern float  far *pixel_elem_2;
 extern float  far *pixel_elem_3;
 extern float  far *pixel_elem_4;
 
-extern char far *pixel_elem_b;   /* Text buffer for the TEXT function (40 car.),
-                             the buffer contains the text, but can contain the
-                             pixel's id if the "%d" symbol is inserted in the text.
-                             Text parameters, in numeric order from 0:
-                             x, y, z, scalax, scalay, or.x, or.y */
+/** Text buffer for the TEXT function (40 car.),
+ * the buffer contains the text, but can contain the
+ * pixel's id if the "%d" symbol is inserted in the text.
+ * Text parameters, in numeric order from 0:
+ * x, y, z, scalax, scalay, or.x, or.y
+ */
+extern char far *pixel_elem_b;
 
-extern float far *docksite_x;   // Position of the docking type for each pixel type.
+// Position of the docking type for each pixel type.
+extern float far *docksite_x;  
 extern float far *docksite_y;
 extern float far *docksite_z;
-extern float far *docksite_w;   // Width and Depth.
+// Width and Depth.
+extern float far *docksite_w;
 extern float far *docksite_h;
 
-extern float far *pixelmass; // Mass.
+// Pixel mass
+extern float far *pixelmass;
 
-extern char far *subsignal; // Files for sottofondi audio.
+// Files for sottofondi audio.
+extern char far *subsignal;
 
 /* Concerning objects. */
 

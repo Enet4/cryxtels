@@ -39,4 +39,16 @@ constexpr auto keymap_down      = SDLK_DOWN;
 constexpr auto keymap_left      = SDLK_LEFT;
 constexpr auto keymap_right     = SDLK_RIGHT;
 
+/// The maximum number of pixels allowed ingame.
+/// This was hardcoded to 500 in the original version.
+constexpr auto MAX_PIXELS = 500;
+
+/// The maximum number of objects allowed ingame.
+/// This was hardcoded to 500 in the original version.
+constexpr auto MAX_OBJECTS = 500;
+
+/// The maximum number of pixel types allowed ingame.
+/// This was hardcoded to 600 in the original version.
+constexpr auto MAX_PIXEL_TYPES = 650;
+
 #endif // CONF_H_INCLUDED
