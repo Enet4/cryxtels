@@ -781,13 +781,15 @@ noang:
                 if (carry_type==-1)
                     taking = 1;
                 else {
-                    if (carry_type!=-1)
-                        lascia_cadere ();
+                    lascia_cadere ();
                 }
             }
             _x = mx;
             _y = my;
-            while (mpul) {
+
+            // restrict nr of iterations,
+            // because sometimes this would lead to an infinite loop
+            for (int k = 0; mpul && k < 16; k++) {
                 mpul = 0;
                 mouse_input();
             }
