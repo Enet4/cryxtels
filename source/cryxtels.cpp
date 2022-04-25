@@ -616,7 +616,7 @@ noang:
                                 taking = 1; // pick up an object
                             else {
                                 if (_objects<500) // create a new object
-                                    carry_type = existant_objecttypes - 1;
+                                    carry_type = existent_objecttypes - 1;
                             }
                         }
                         else {
@@ -624,7 +624,7 @@ noang:
                                 if (carry_type>0) // change the object being created
                                     carry_type--;
                                 else // create a new object
-                                    carry_type = existant_objecttypes - 1;
+                                    carry_type = existent_objecttypes - 1;
                             }
                         }
                         break;
@@ -709,9 +709,9 @@ noang:
                     */
                     if (dsol<15000&&(i>=SDLK_0&&i<=SDLK_9)) {
                         if (carry_type>-1)
-                            carry_type = ((int)i-SDLK_0) * existant_objecttypes / 10;
+                            carry_type = ((int)i-SDLK_0) * existent_objecttypes / 10;
                         if ((ctrlkeys[0]&64)&&carried_pixel>-1) { // caps lock && is carrying pixel
-                            carried_pixel = ((int)i-SDLK_0) * existant_pixeltypes / 10;
+                            carried_pixel = ((int)i-SDLK_0) * existent_pixeltypes / 10;
                             pixeltype[pixels-1] = carried_pixel;
                         }
                     }
@@ -847,7 +847,7 @@ noang:
                 my = alfa * 5;
                 if (orig&&carried_pixel>-1) {
                     carried_pixel--;
-                    if (carried_pixel<0) carried_pixel = existant_pixeltypes - 1;
+                    if (carried_pixel<0) carried_pixel = existent_pixeltypes - 1;
                     pixeltype[pixels-1] = carried_pixel;
                 }
                 fid = 0;
@@ -989,7 +989,7 @@ noang:
         // Gestione pixels "donati" dal Solicchio.
         if (dsol<500)
             if (pixels<500&&carried_pixel==-1) {
-                carried_pixel = existant_pixeltypes - 1;
+                carried_pixel = existent_pixeltypes - 1;
                 pixeltype[pixels] = carried_pixel;
                 pixel_support[pixels] = 0;
                 pixel_rot[pixels] = 0;
@@ -1676,7 +1676,7 @@ void build_cosm(char& flag)
 
     for (p=0; p<500; p++) {
             //pixelmass[p] = 0;
-            pixeltype[p] = p % existant_pixeltypes;
+            pixeltype[p] = p % existent_pixeltypes;
             pixel_xdisloc[p] = (double)(random(10000) - random(10000)) * 150.0;
             pixel_ydisloc[p] = (double)(random(1000) - 500) * 150.0;
             //pixel_support[p] = (double)(random(1000)) / 200;
@@ -1688,8 +1688,8 @@ void build_cosm(char& flag)
     //ctk = ctrlkeys[0];
 
     cout << "Loading pixels..." << endl;
-    for (p=0; p<existant_pixeltypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existant_pixeltypes << "\r";
+    for (p=0; p<existent_pixeltypes; p++) {
+        cout << "Percentage complete: " << 100*(int)p/existent_pixeltypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p);
     }
     cout << "Percentage complete: 100";
@@ -1697,8 +1697,8 @@ void build_cosm(char& flag)
     pixelmass[FRONTIER_M3] = 100; // Massa del fottifoh.
     pixelmass[FRONTIER_M2] = 100; // del motore orbitale.
     pixelmass[FRONTIER_M1] = 100; // del lettore di cd.
-    for (p=3; p<existant_objecttypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existant_objecttypes << "\r";
+    for (p=3; p<existent_objecttypes; p++) {
+        cout << "Percentage complete: " << 100*(int)p/existent_objecttypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p+FRONTIER_M3);
     }
     cout << "Percentage complete: 100\n" << endl;
@@ -1715,7 +1715,7 @@ void build_cosm(char& flag)
             object_location[o] = random (pixels);
             loaded_pixeltypes = 0;
             LoadPtyp (pixeltype[object_location[o]]);
-            objecttype[o] = o % existant_objecttypes;
+            objecttype[o] = o % existent_objecttypes;
             relative_x[o] = random (docksite_w[pixeltype[object_location[o]]])
                     - random (docksite_w[pixeltype[object_location[o]]]);
             if (docksite_h[pixeltype[object_location[o]]]>=0) {

@@ -88,14 +88,14 @@ extern char subs;
 extern double prevpixx;
 extern double prevpixz;
 
-extern short int existant_pixeltypes; // Existent pixel types.
-extern short int existant_objecttypes; // Existent object types.
+extern short int existent_pixeltypes; // Existent pixel types.
+extern short int existent_objecttypes; // Existent object types.
 
 /* Dati sui pixels. */
 
 extern short int pixels; // Total nr. of pixels (not initialized).
 
-extern short int far *pixeltype; // Pixel type array, from 0 to existant_pixeltypes-1.
+extern short int far *pixeltype; // Pixel type array, from 0 to existent_pixeltypes-1.
 
 extern unsigned char far *pixel_rot; // Rotation around Sunny flag.
 

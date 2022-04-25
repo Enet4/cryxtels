@@ -294,7 +294,7 @@ void load_pixels_def(int& ptyp)
         std::fseek (fh, 0, SEEK_SET);
         sprintf (t, "TYPE %d;\r\n", ptyp);
         while (trova_id (fh, t)) {
-            existant_pixeltypes++;
+            existent_pixeltypes++;
             ptyp++; sprintf (t, "TYPE %d;\r\n", ptyp);
             if (ptyp>FRONTIER_M1) {
                 _80_25_C();
@@ -307,7 +307,7 @@ void load_pixels_def(int& ptyp)
         ptyp = 0;
         sprintf (t, "MODEL %d;\r\n", ptyp);
         while (trova_id (fh, t)) {
-            existant_objecttypes++;
+            existent_objecttypes++;
             ptyp++; sprintf (t, "MODEL %d;\r\n", ptyp);
             if (ptyp>FRONTIER_COMPL_M1) {
                 _80_25_C();

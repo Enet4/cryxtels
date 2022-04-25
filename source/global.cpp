@@ -73,14 +73,14 @@ char subs = 1;
 double prevpixx;
 double prevpixz;
 
-short int existant_pixeltypes = 0; // Tipi di pixel esistenti (letti da disco).
-short int existant_objecttypes = 3; // Tipi di oggetto esistenti.
+short int existent_pixeltypes = 0; // Tipi di pixel esistenti (letti da disco).
+short int existent_objecttypes = 3; // Tipi di oggetto esistenti.
 
 /* Dati sui pixels. */
 
 short int pixels = 0; // Nr. totale dei pixels (non inizializzato).
 
-short int far *pixeltype; // Tipo di pixel, da 0 a existant_pixeltypes-1.
+short int far *pixeltype; // Tipo di pixel, da 0 a existent_pixeltypes-1.
 
 unsigned char far *pixel_rot; // Flag di rotazione attorno al Solicchio.
 
