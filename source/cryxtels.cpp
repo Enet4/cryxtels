@@ -632,23 +632,37 @@ noang:
                         if (carry_type!=-1) lascia_cadere ();
                         break;
                     case SDLK_e: // Echo toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo ^= 1;
                         break;
                     case SDLK_x: // The Fly view toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo ^= 2;
                         break;
                     case SDLK_TAB: /* 9 */ // Toggle climbing
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         echo ^= 4;
                         break;
                     case SDLK_i: // Information toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo^=8;
                         break;
                     case SDLK_m: // Keyboard/Mouse control toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
+
                         mpul = 0;
                         m = 1 - m;
                         alfad = 0;

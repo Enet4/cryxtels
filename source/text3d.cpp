@@ -167,11 +167,3 @@ void Txt (const char * testo, double x, double y, double z,
 		c += incr;
 	}
 }
-
-//Instantiate them
-/*
-template void Txt<false> (const char * text, double x, double y, double z,
-	  double scale_x, double scale_y, int alpha, int beta);
-template void Txt<true> (const char * text, double x, double y, double z,
-	  double scale_x, double scale_y, int alpha, int beta);
-*/
