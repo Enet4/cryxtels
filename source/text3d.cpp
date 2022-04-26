@@ -128,7 +128,15 @@ void Txt (const char * testo, double x, double y, double z,
 
 	c = 0;
 	while (c<ttl) {
-		t = testo[c] - 32;
+		auto glyph = testo[c];
+		// safeguard from unrecognized characters
+		if (glyph < 32 || glyph > 96) {
+			// treat as space so as to not draw anything
+			glyph = ' ';
+		}
+
+		t = glyph - 32;
+
 		pxx = 1000;
 		f = 1;
 		for (l=0; l<symbol[t][0]; l++) {
@@ -159,11 +167,3 @@ void Txt (const char * testo, double x, double y, double z,
 		c += incr;
 	}
 }
-
-//Instantiate them
-/*
-template void Txt<false> (const char * text, double x, double y, double z,
-	  double scale_x, double scale_y, int alpha, int beta);
-template void Txt<true> (const char * text, double x, double y, double z,
-	  double scale_x, double scale_y, int alpha, int beta);
-*/

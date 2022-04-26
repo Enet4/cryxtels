@@ -632,23 +632,37 @@ noang:
                         if (carry_type!=-1) lascia_cadere ();
                         break;
                     case SDLK_e: // Echo toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo ^= 1;
                         break;
                     case SDLK_x: // The Fly view toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo ^= 2;
                         break;
                     case SDLK_TAB: /* 9 */ // Toggle climbing
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         echo ^= 4;
                         break;
                     case SDLK_i: // Information toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
                         echo^=8;
                         break;
                     case SDLK_m: // Keyboard/Mouse control toggle
+                        // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
+                        // ignore in text typing mode
+                        if (type_mode) break;
+
                         mpul = 0;
                         m = 1 - m;
                         alfad = 0;
@@ -3219,16 +3233,21 @@ void Object (int tipo)
             if (!memcmp(&subsignal[9*(tipo+FRONTIER_M3)], "TEXT-" /*"TESTO-"*/, 5/*6*/)) {
                 a = subsignal[9*(tipo+FRONTIER_M3)+5/*6*/];
                 memset (buffer, ' ', 512);
+                // safeguard buffer from reading beyond the end of the text
+                buffer[512] = '\0';
                 sprintf (autore_forme, "TEXT-%03u.FIX", tipo-3);
-                th = std::fopen (autore_forme, "a+b");
+                th = std::fopen (autore_forme, "r+b");
                 if (th) {
-                    std::fseek(th, 0, SEEK_SET);
-                    buffer[32] = 0; k1 = 5.32;
-                    std::fread(buffer+33, 512, 1, th);
-                    for (c=0; c<512; c+=32) {
+                    buffer[32] = '\0';
+                    k1 = 5.32;
+                    int bytes_read = std::fread(&buffer[33], 1, 512, th);
+                    for (c=0; c<bytes_read; c+=32) {
                         memcpy (buffer, buffer+33+c, 32);
-                        if (a=='V') Txt (reinterpret_cast<char*>(buffer), -6.82, -k1, 0, 0.11, 0.14, 0, 0);
-                        else if (a=='H') Txt (reinterpret_cast<char*>(buffer), -6.82, 0, k1, 0.11, 0.14, 270, 0);
+                        if (a=='V') {
+                            Txt (reinterpret_cast<char*>(buffer), -6.82, -k1, 0, 0.11, 0.14, 0, 0);
+                        } else if (a=='H') {
+                            Txt (reinterpret_cast<char*>(buffer), -6.82, 0, k1, 0.11, 0.14, 270, 0);
+                        }
                         k1 -= 0.7;
                     }
                     if (d<15||tipo==carry_type) {
@@ -3295,7 +3314,7 @@ void Object (int tipo)
                     else if (a=='H') Txt ("*", -6.82+(cursore%32)*0.44, 0, 5.32-(cursore/32)*0.7, 0.5, 0.5, 270, 0);
                     if (memcmp (buffer+33, buffer+545, 512)) {
                         std::fseek (th, 0, SEEK_SET);
-                        std::fwrite (buffer+33, 512, 1, th);
+                        std::fwrite (buffer+33, 1, 512, th);
                     }
                 //}
                     std::fclose (th);
@@ -3303,7 +3322,7 @@ void Object (int tipo)
                 else {
                     th = std::fopen(autore_forme, "wb");
                     if (th) {
-                        std::fwrite (buffer, 512, 1, th);
+                        std::fwrite (buffer, 1, 512, th);
                         std::fclose (th);
                     }
                 }
