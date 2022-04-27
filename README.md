@@ -1,5 +1,7 @@
 # Crystal Pixels - modern version
 
+![Screenshot from Crystal Pixels](screenshot.png)
+
 [![CMake](https://github.com/Enet4/cryxtels/actions/workflows/ci.yml/badge.svg)](https://github.com/Enet4/cryxtels/actions/workflows/ci.yml)
 
 Crystal Pixels (Cryxtels in short) is a simulator game where you live in a dark and cold microcosm. It was imagined and brought to life by Alessandro Ghignola, who is mostly known for developing the space simulator game Noctis. You can fly to small spaces called pixels, with several other features, such as walking around them and creating pixels and objects.
