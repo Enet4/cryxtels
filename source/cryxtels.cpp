@@ -670,7 +670,6 @@ noang:
                         my = alfa * 5;
                         if (grab_mouse) {
                             SDL_SetRelativeMouseMode(m ? SDL_TRUE : SDL_FALSE);
-                            SDL_ShowCursor(m ? SDL_DISABLE : SDL_ENABLE);
 
                             // fetch mouse delta to discard past movement
                             SDL_GetRelativeMouseState(&mdltx, &mdlty);
