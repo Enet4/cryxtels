@@ -481,7 +481,6 @@ int main(int argc, char** argv)
             mouse_input ();
 
             if (m && grab_mouse) { // Keep the mouse on the screen
-                //SDL_WarpMouse(WIDTH_SCALED/2, HEIGHT_SCALED/2);
                 mx += mdltx;
                 my += mdlty;
             }
@@ -669,7 +668,12 @@ noang:
                         betad = 0;
                         mx = beta * 5;
                         my = alfa * 5;
-                        //SDL_ShowCursor(m?SDL_DISABLE:SDL_ENABLE);
+                        if (grab_mouse) {
+                            SDL_SetRelativeMouseMode(m ? SDL_TRUE : SDL_FALSE);
+
+                            // fetch mouse delta to discard past movement
+                            SDL_GetRelativeMouseState(&mdltx, &mdlty);
+                        }
                         break;
                     default:
                         break;
