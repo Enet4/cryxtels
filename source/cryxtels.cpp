@@ -1305,13 +1305,13 @@ noang:
     sprintf (dist, "F=%04d/CGR", (int)spd);
     nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
 
-    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", (float)veloc*1.9656);
+    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
     else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
     nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "ASC=%03d`", nav_b);
+    sprintf (dist, "ASC=%03hd`", nav_b);
     nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "DEC=%03d`", nav_a);
+    sprintf (dist, "DEC=%03hd`", nav_a);
     nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
 
     sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
@@ -3247,7 +3247,7 @@ void Object (int tipo)
                 memset (buffer, ' ', 512);
                 // safeguard buffer from reading beyond the end of the text
                 buffer[512] = '\0';
-                sprintf (autore_forme, "TEXT-%03u.FIX", tipo-3);
+                sprintf (autore_forme, "TEXT-%03d.FIX", tipo-3);
                 th = std::fopen (autore_forme, "r+b");
                 if (th) {
                     buffer[32] = '\0';
