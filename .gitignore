@@ -7,4 +7,6 @@ Makefile
 /cryxtels.exe
 /bin/cryxtels
 /bin/cryxtels.exe
-/bin/CRYXTELS.SIT
+/bin/CRYXTELS.*IT
+/bin/SNAP*.bmp
+/bin/TEXT-*.FIX
