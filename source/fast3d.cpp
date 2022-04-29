@@ -165,7 +165,12 @@ void Render (void)
     unsigned int* p_dest = static_cast<unsigned int*>(p_surface_32->pixels);
     for (unsigned int y = 0 ; y < HEIGHT ; y++) {
         for (unsigned int x = 0 ; x < WIDTH ; x++) {
-            p_dest[rpos_32 + x] = reinterpret_cast<unsigned int*>(tmppal)[p_orig[rpos+x]];
+            auto pixel = p_orig[rpos + x];
+            unsigned int c = tmppal[pixel * 4]
+                | (tmppal[pixel * 4 + 1] << 8)
+                | (tmppal[pixel * 4 + 2] << 16)
+                | (tmppal[pixel * 4 + 3] << 24);
+            p_dest[rpos_32 + x] = c;
         }
         rpos += WIDTH;
         rpos_32 += (p_surface_32->pitch >> 2);
