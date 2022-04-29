@@ -165,7 +165,12 @@ void Render (void)
     unsigned int* p_dest = static_cast<unsigned int*>(p_surface_32->pixels);
     for (unsigned int y = 0 ; y < HEIGHT ; y++) {
         for (unsigned int x = 0 ; x < WIDTH ; x++) {
-            p_dest[rpos_32 + x] = reinterpret_cast<unsigned int*>(tmppal)[p_orig[rpos+x]];
+            auto pixel = p_orig[rpos + x];
+            unsigned int c = tmppal[pixel * 4]
+                | (tmppal[pixel * 4 + 1] << 8)
+                | (tmppal[pixel * 4 + 2] << 16)
+                | (tmppal[pixel * 4 + 3] << 24);
+            p_dest[rpos_32 + x] = c;
         }
         rpos += WIDTH;
         rpos_32 += (p_surface_32->pitch >> 2);
@@ -176,17 +181,14 @@ void Render (void)
     SDL_RenderPresent(p_renderer);
 }
 
-void tavola_colori (unsigned char *nuova_tavolozza,
+void tavola_colori (const unsigned char *nuova_tavolozza,
             unsigned int colore_di_partenza, unsigned int nr_colori,
             char filtro_rosso, char filtro_verde, char filtro_blu)
 {
     constexpr unsigned int K_FILTER = 63; // original is 63
     unsigned int c, cc = 0;
-    unsigned int temp;
     nr_colori *= 4; // using new padding in palette table
-    //nr_colori *= 3;
     colore_di_partenza *= 4; // new padding
-    //colore_di_partenza *= 3;
 
     int pad = 3;
     c = colore_di_partenza;
@@ -203,7 +205,7 @@ void tavola_colori (unsigned char *nuova_tavolozza,
 
     c = colore_di_partenza;
     while (c<nr_colori+colore_di_partenza) {
-        temp = tmppal[c];
+        unsigned short temp = tmppal[c];
         temp *= (unsigned char)filtro_rosso;
         temp /= K_FILTER;
         tmppal[c] = temp;
@@ -218,8 +220,6 @@ void tavola_colori (unsigned char *nuova_tavolozza,
         temp /= K_FILTER;
         tmppal[c] = temp;
         c+=2;
-        //tmppal[c] = 0;
-        //c++;
     }
 }
 

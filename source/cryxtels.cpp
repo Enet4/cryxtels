@@ -189,7 +189,7 @@ void lead_on ();
 void orig_on ();
 
 /// Generate the color palette
-void tinte (char satu);
+void tinte (unsigned char satu);
 
 /// Explode
 void scoppia (int nr_ogg, double potenza, int var);
@@ -822,7 +822,9 @@ noang:
         dsol = sqrt(cam_x*cam_x+cam_y*cam_y+cam_z*cam_z);
 
         if (dsol<15000) {
-            tinte (63-dsol/240);
+            // adjusted from (63-dsol/240)
+            // to account for new sample value range (0..256)
+            tinte (static_cast<unsigned char>(255 - dsol / 60.));
             yel = 1;
         }
         else {
@@ -1653,25 +1655,30 @@ inline bool allocation_farm()
     return true;
 }
 
-void tinte (char satu)
+void tinte (unsigned char satu)
 {
     constexpr unsigned char K = 255;
-    constexpr float F1 = 255.f / 48; // 1.333333;
-    constexpr float F2 = 255.f / 48; // 1.333333;
-    int i;
-        for (i=0; i<768; i++) buffer[i] = K;
-        for (i=0; i<48; i+=3) {
-                buffer[i] = buffer[i+1] = satu;
-                buffer[i+2] = (float)i*F1;
-        }
-        for (i=0; i<48; i+=3) {
-                int v = i*F2 + satu;
-                if (v > K) v = K;
-                buffer[i+48] = v;
-                buffer[i+49] = buffer[i+48];
-                buffer[i+50] = K;
-        }
-        tavola_colori (buffer, 0, 256, 63, 63, 63);
+    constexpr unsigned int GRAD_COUNT_1 = 48;
+    constexpr unsigned int GRAD_COUNT_2 = 48;
+
+    constexpr float F1 = 256.f / GRAD_COUNT_1;
+    constexpr float F2 = 256.f / GRAD_COUNT_2;
+
+    unsigned int i;
+    for (i=0; i < 768; i++) {
+        buffer[i] = K;
+    }
+    for (i=0; i < GRAD_COUNT_1; i += 3) {
+        buffer[i] = buffer[i + 1] = satu;
+        buffer[i + 2] = static_cast<float>(i) * F1;
+    }
+    for (i=0; i < GRAD_COUNT_2; i += 3) {
+        unsigned int v = static_cast<float>(i) * F2 + satu;
+        if (v > K) v = K;
+        buffer[i + GRAD_COUNT_1] = v;
+        buffer[i + GRAD_COUNT_1 + 1] = v;
+    }
+    tavola_colori (buffer, 0, 256, 63, 63, 63);
 }
 
 /// redefinition of random(int),

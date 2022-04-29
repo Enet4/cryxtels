@@ -84,7 +84,7 @@ void Render (void);
 void snapshot (void);
 
 /// Create a palette table based on new_palette.
-void tavola_colori (unsigned char *new_palette,
+void tavola_colori (const unsigned char *new_palette,
 		    unsigned int starting_color, unsigned int nr_colors,
 		    char red_filter, char green_filter, char blue_filter);
 /* Original prototype:
