@@ -22,48 +22,48 @@ char type_this = 0; // character to type in the keyboard
 
 /* Variabili di cima per allineamento e risparmio di istruzioni read/write. */
 
-short int nav_a = 0; // Inclinazione di The Fly.
-short int nav_b = 0;
+i16 nav_a = 0; // Inclinazione di The Fly.
+i16 nav_b = 0;
 
-char taking = 0; // Flag: tentativo di prelevamento di un oggetto.
-short int carry_type = -1; // Tipo oggetto trasportato (-1 = nessuno).
+u8 taking = 0; // Flag: tentativo di prelevamento di un oggetto.
+ObjectId carry_type = -1; // Tipo oggetto trasportato (-1 = nessuno).
 double trackframe = 0; // Nr. fotogramma della sequenza di attracco.
-char reset_trackframe = 0; // Flag: azzera trackframe, per favore.
+u8 reset_trackframe = 0; // Flag: azzera trackframe, per favore.
 double tracking = 0; // Incremento a trackframe.
-char req_end_extra = 0; /* Flag: si richiede la fine dell'attivit
+u8 req_end_extra = 0; /* Flag: si richiede la fine dell'attività
                            extraveicolare ed il rientro nella nave? */
 
-short int alfad = 0, betad = 0; // Velocit angolare su assi x ed y.
+short int alfad = 0, betad = 0; // Velocità angolare su assi x ed y.
 short int alfa90, beta90; // Supporti per alcuni calcoli.
 
-char fid = 0; // Flag: Orientamento nella direzione opposta a quella corrente...
-char lead = 0; // Flag: Orientamento in direzione d'avanzamento...
-char orig = 0; // Flag: Orientamento in direzione del Solicchio...
-char comera_m;
+u8 fid = 0; // Flag: Orientamento nella direzione opposta a quella corrente...
+u8 lead = 0; // Flag: Orientamento in direzione d'avanzamento...
+u8 orig = 0; // Flag: Orientamento in direzione del Solicchio...
+u8 comera_m;
 
-double spd_x = 0; // Componente x della velocit della nave.
-double spd_y = 0; // Componente y della velocit della nave.
-double spd_z = 0; // Componente z della velocit della nave.
+double spd_x = 0; // Componente x della velocità della nave.
+double spd_y = 0; // Componente y della velocità della nave.
+double spd_z = 0; // Componente z della velocità della nave.
 double spd = 0; // Accelerazione della nave.
 
 double rel_x, rel_y, rel_z; /* Coordinate relative al docksite per attivit
                                extraveicolare. */
 
-short int obj = -1; // Oggetto pi vicino da prelevare (-1 = nessuno).
-char m = 1; // Puntamento da mouse?
-char echo = 1; // Ecoscandaglio acceso?
+ObjectId obj = -1; // Oggetto più vicino da prelevare (-1 = nessuno).
+u8 m = 1; // Puntamento da mouse?
+u8 echo = 1; // Ecoscandaglio acceso?
 
-short int carried_pixel = -1; // Pixel trasportato (solo i DONI del Solicchio).
+PixelId carried_pixel = -1; // Pixel trasportato (solo i DONI del Solicchio).
 
 double disl = 0; // dislivello incontrato da un passo all'altro.
 
-short int cursore = 0; // Sulle lavagnette.
+u16 cursore = 0; // Sulle lavagnette.
 
-char explode_count = 0; // Durante gli scoppii.
+u8 explode_count = 0; // Durante gli scoppii.
 
 char repeat  = 0; // Ripetizione brani dai CD virtuali.
 char source  = 0; // Sorgente di registrazione selezionata.
-char quality = 0; // Qualit dell'incisione.
+char quality = 0; // Qualità dell'incisione.
 
 
 unsigned char ctk;
@@ -73,16 +73,16 @@ char subs = 1;
 double prevpixx;
 double prevpixz;
 
-short int existent_pixeltypes = 0; // Tipi di pixel esistenti (letti da disco).
-short int existent_objecttypes = 3; // Tipi di oggetto esistenti.
+u16 existent_pixeltypes = 0; // Tipi di pixel esistenti (letti da disco).
+u16 existent_objecttypes = 3; // Tipi di oggetto esistenti.
 
 /* Dati sui pixels. */
 
-short int pixels = 0; // Nr. totale dei pixels (non inizializzato).
+u16 pixels = 0; // Nr. totale dei pixels (non inizializzato).
 
-short int far *pixeltype; // Tipo di pixel, da 0 a existent_pixeltypes-1.
+PixelTypeId* pixeltype; // Tipo di pixel, da 0 a existent_pixeltypes-1.
 
-unsigned char far *pixel_rot; // Flag di rotazione attorno al Solicchio.
+u8* pixel_rot; // Flag di rotazione attorno al Solicchio.
 
 float far  *pixel_absd;    // Distanza assoluta dall'osservatore.
 double far *pixel_support; // Supporto per quel pixel (piccola memoria).
@@ -116,14 +116,14 @@ const int MEMORIA_RICHIESTA = 251901 + 81*ELEMS*BUFFERS + 3*BUFFERS;
 /* Descrizione dei tipi di pixel
    (<BUFFERS> tipi caricati per volta, <ELEMS> elementi per tipo). */
 
-unsigned char far *buffer; // Buffer per la ricerca degli Id.
+u8 *buffer; // Buffer per la ricerca degli Id.
 
-char loaded_pixeltypes;       // Tipi di pixel caricati.
+u8 loaded_pixeltypes;       // Tipi di pixel caricati.
 
-short int far *pixeltype_type;      // Che tipo di pixel ha questa definizione?
-unsigned char far *pixeltype_elements; // Quanti elementi contiene la definizione?
+PixelTypeId far *pixeltype_type;      // Che tipo di pixel ha questa definizione?
+u8 far *pixeltype_elements; // Quanti elementi contiene la definizione?
 
-const char *comspec[] = {
+const char* comspec[COMS] = {
 "ENDPIXEL", // FINEPIXEL
 "DETAIL", // DETTAGLIO
 "DOCK", // ATTRACCO
@@ -150,7 +150,8 @@ const char *comspec[] = {
 "SOLIDBOX" // new element in English version
 };
 
-char params[coms] = {
+/// The number of parameters expected for each primitive in a pixel definition.
+const u8 params[COMS] = {
 0,
 0,
 5,
@@ -177,7 +178,7 @@ char params[coms] = {
 6,
 };
 
-unsigned char far *pixel_elem_t;   // Tipo di elemento.
+u8* pixel_elem_t;   // Tipo di elemento.
 
 double far *pixel_elem_x; // Coordinate relative al pixel.
 double far *pixel_elem_y;
@@ -188,7 +189,7 @@ float  far *pixel_elem_3;
 float  far *pixel_elem_4;
 
 char far *pixel_elem_b;   /* Buffer testuale per la funzione TEXT (40 car.),
-                             il buffer contiene il testo, ma pu contenere
+                             il buffer contiene il testo, ma può contenere
                              l'id del pixel se nel testo viene inserito
                              il simbolo "%d", insieme ad eventuali caratteri.
                              Parametri per text, in ordine numerico da 0:
@@ -197,7 +198,7 @@ char far *pixel_elem_b;   /* Buffer testuale per la funzione TEXT (40 car.),
 float far *docksite_x;   // Posizione dei siti di attracco per ogni pixeltype.
 float far *docksite_y;
 float far *docksite_z;
-float far *docksite_w;   // Larghezza e Profondit.
+float far *docksite_w;   // Larghezza e Profondità.
 float far *docksite_h;
 
 float far *pixelmass; // Massa.
@@ -206,30 +207,30 @@ char far *subsignal; // Files per sottofondi audio.
 
 /* Dati sugli oggetti. */
 
-short int objects = 0; // Nr. totale degli oggetti (non inizializzato).
-short int _objects; // Variabile usata nei cicli come nr. totale di oggetti.
+u16 objects = 0; // Nr. totale degli oggetti (non inizializzato).
+u16 _objects; // Variabile usata nei cicli come nr. totale di oggetti.
 
-short int  *objecttype;      // Tipo d'oggetto.
+ObjectTypeId  *objecttype;      // Tipo d'oggetto.
 double far *relative_x;      // Posizione X (relativa a quella del Pixel).
 double far *relative_y;      // Posizione Y (relativa a quella del Pixel).
 double far *relative_z;      // Posizione Z (relativa a quella del Pixel).
 double far *absolute_x;      // Posizione X (assoluta per Pixel = -1).
 double far *absolute_y;      // Posizione Y (assoluta per Pixel = -1).
 double far *absolute_z;      // Posizione Z (assoluta per Pixel = -1).
-short int  *object_location; // Pixel su cui si trova l'oggetto.
+PixelId  *object_location; // Pixel su cui si trova l'oggetto.
 
 /* IMPORTANTE: elevazione sulla superficie del pixel
                per ogni tipo di oggetto.
-               I primi 3 sono gi definiti a zerozerouno. */
+               I primi 3 sono già definiti a zerozerouno. */
 
 double far object_elevation[203] = { 0.01, 0.01, 0.01 };
 double far object_collyblockshifting[203];
 
 // Supporti vari.
 
-short int  pix = 0; // Pixel pi vicino (ecoscandaglio, attracco automatico...)
+PixelId pix = 0; // Pixel più vicino (ecoscandaglio, attracco automatico...)
 
-char extra = 0; // Flag: attivit extraveicolare in corso?
+u8 extra = 0; // Flag: attività extraveicolare in corso?
 
 double r_x, r_y, r_z; // Posizioni relat. al pixel, per il fotogr. precedente.
 double dsx, dsy, dsz; // Posizioni reali del docksite del pixel-bersaglio.
@@ -245,7 +246,11 @@ double k1; // Costanti ausiliarie.
 int a, b, c; // Contatori ausiliari.
 
 int id; // 0, 1, 2 o 3. A seconda della distanza del pixel.
-int nopix; // Nr. Pixel.
+/// A general purpose variable, usually for keeping a Pixel ID.
+/// 
+/// This variable may be used by some functions to know which pixel
+/// is to be considered.
+int  nopix;
 
 //double ob = 15000, micro_x = 0, micro_y = 0;
 
@@ -255,14 +260,14 @@ char fermo_li = 0;
 
 int vicini = 0;
 int sta_suonando = -1;
-int pixel_sonante = -1;
+PixelId pixel_sonante = -1;
 
 FILE* recfile = nullptr;
 
 double cox = 0, coy = 0, coz = 0;
-char justloaded = 5;
+u8 justloaded = 5;
 
-char moving_last_object = 0; // Sta spostando l'ultimo oggetto lasciato.
+u8 moving_last_object = 0; // Sta spostando l'ultimo oggetto lasciato.
 double cfx, cfy, cfz; // Carried-Final-relative-X/Y/Z (dove deve andare /\).
 
 const char *source_name[] = { "SORG. PREIMPOSTATA", "C.D.", "MIC", "LINEA D'INGRESSO" };

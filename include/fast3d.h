@@ -21,6 +21,7 @@
 
 #include "SDL.h"
 #include <memory>
+#include "primitives.h"
 
 #ifndef far
 #define far
@@ -51,9 +52,9 @@ extern float *tcosy, *tsiny;
 extern double cam_x, cam_y, cam_z;
 
 /// Alpha and Beta (camera orientation)
-extern short int alfa,beta;
+extern i16 alfa,beta;
 
-/// Something...
+/// Distance to the closest pixel.
 extern double kk;
 
 /// Some position...
@@ -87,11 +88,6 @@ void snapshot (void);
 void tavola_colori (const unsigned char *new_palette,
 		    unsigned int starting_color, unsigned int nr_colors,
 		    char red_filter, char green_filter, char blue_filter);
-/* Original prototype:
-void tavola_colori (unsigned char *nuova_tavolozza,
-		    unsigned colore_di_partenza, unsigned nr_colori,
-		    char filtro_rosso, char filtro_verde, char filtro_blu);
-*/
 
 /// Copy a graphical page
 // Ultraveloce copia di pagina grafica.

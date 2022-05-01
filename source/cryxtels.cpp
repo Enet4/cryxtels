@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <cassert>
 #include "global.h"
+#include "primitives.h"
 #include "fast3d.h"
 #include "text3d.h"
 #include "input.h"
@@ -66,8 +67,10 @@ inline bool allocation_farm();
 void read_args(int argc, char** argv, char& flag, char& sit);
 
 // Aggiorna il buffer dei pixels caricati.
-/// Update buffer with loaded pixels
-void cerca_e_carica (int typ);
+/// Updates buffer with loaded pixels:
+/// Search for the pixel type of ID `typ`
+/// and load it if it is not loaded yet.
+void cerca_e_carica (PixelTypeId typ);
 
 /// build the cosmos
 void build_cosm(char& flag);
@@ -83,7 +86,7 @@ void dists ();
 void rot ();
 
 /// Fade out effect of the display.
-void fade (unsigned char speed = 1);
+void fade (u8 speed = 1);
 
 /// Docking effects.
 void dock_effects ();
@@ -189,7 +192,7 @@ void lead_on ();
 void orig_on ();
 
 /// Generate the color palette
-void tinte (unsigned char satu);
+void tinte (u8 satu);
 
 /// Explode
 void scoppia (int nr_ogg, double potenza, int var);
@@ -198,7 +201,7 @@ void scoppia (int nr_ogg, double potenza, int var);
 void chiudi_filedriver ();
 
 /// Fottifoh object model
-extern char fotty[277];
+extern i8 fotty[277];
 
 int main(int argc, char** argv)
 {
@@ -209,7 +212,6 @@ int main(int argc, char** argv)
     char flag = 0;
     //char sit = 'S'; // < the original would auto-load the default game save (Alex's save)
     char sit = 0;
-    int ptyp = 0;
     try {
         init_start();
 
@@ -217,7 +219,7 @@ int main(int argc, char** argv)
 
         read_args(argc, argv, flag, sit);
 
-        load_pixels_def(ptyp);
+        load_pixels_def();
 
         build_cosm(flag);
 
@@ -480,7 +482,7 @@ int main(int argc, char** argv)
             mpul = 0;
             mouse_input ();
 
-            if (m && grab_mouse) { // Keep the mouse on the screen
+            if (m && grab_mouse) {
                 mx += mdltx;
                 my += mdlty;
             }
@@ -1609,9 +1611,9 @@ inline bool allocation_farm()
     try {
     pixel_elem_b = x_farmalloc<char>(40*ELEMS*BUFFERS);
 
-    pixeltype = x_farmalloc<short> (MAX_PIXELS);
+    pixeltype = x_farmalloc<PixelTypeId> (MAX_PIXELS);
     pixelmass = x_farmalloc<float> (MAX_PIXEL_TYPES); // 2600
-    pixel_rot = x_farmalloc<unsigned char>(MAX_PIXELS * 2);
+    pixel_rot = x_farmalloc<u8>(MAX_PIXELS * 2);
 
     pixel_absd = x_farmalloc<float>(MAX_PIXELS);
     pixel_support = x_farmalloc<double> (MAX_PIXELS);
@@ -1891,12 +1893,9 @@ void save_situation(char i) {
     }
 }
 
-void cerca_e_carica (int typ)
-{
-    int iii;
-
+void cerca_e_carica (PixelTypeId typ) {
     if (loaded_pixeltypes) {
-        for (iii = 0; iii<loaded_pixeltypes; iii++) {
+        for (auto iii = 0u; iii<loaded_pixeltypes; iii++) {
             if (typ==pixeltype_type[iii])
                 return;
         }
@@ -3344,7 +3343,7 @@ void Object (int tipo)
 
 // Disegna la forma di un oggetto.
 
-char fotty[277] = {
+i8 fotty[277] = {
         -6, 0, +6,          -4, 0, +8,
         -4, 0, +8,          -2, 0, +8,
         -2, 0, +8,          -2, 0, +6,

@@ -43,17 +43,15 @@ double cam_x = 0;
 double cam_y = 0;
 double cam_z = 0;
 
-short int alfa  = 0;
-short int beta  = 0;
+i16 alfa  = 0;
+i16 beta  = 0;
 
 double kk;
 double rx, ry, rz;
 double x2, y2, z2;
 double ox, oy, oz;
 
-//#define lwx 3
 const int lwx = 3;
-//#define lwy 3
 const int lwy = 3;
 
 const int zbasex = WIDTH * 2 / 3, zbasey = 150*HEIGHT/200;
@@ -61,13 +59,8 @@ const int nav_zbasex = WIDTH-2, nav_zbasey = HEIGHT-2;
 const int lowerbound_y = -static_cast<int>(HEIGHT/2-lwy), upperbound_y = static_cast<int>(HEIGHT/2-lwy);
 const int lowerbound_x = -static_cast<int>(WIDTH/2-lwx), upperbound_x = static_cast<int>(WIDTH/2-lwx);
 
-//#define upx 317
-const int upx = WIDTH - 3;
-//#define upy 197
-const int upy = HEIGHT - 3;
-
-int x_centro = WIDTH/2;
-int y_centro = HEIGHT/2;
+const u32 x_centro = WIDTH/2;
+const u32 y_centro = HEIGHT/2;
 
 double uneg = 1;
 double mindiff = 0.01;
@@ -281,12 +274,8 @@ void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
 {
     // Pre-conditions
-    SDL_assert(x >= 0);
-    SDL_assert(y >= 0);
     SDL_assert(x < WIDTH);
     SDL_assert(y < HEIGHT);
-    SDL_assert(x2 >= 0);
-    SDL_assert(y2 >= 0);
     SDL_assert(x2 < WIDTH);
     SDL_assert(y2 < HEIGHT);
 

@@ -19,8 +19,9 @@
 
 #include <array>
 #include <memory>
+#include "global.h"
 
-extern std::array<unsigned char,2> ctrlkeys;
+extern std::array<u8, 2> ctrlkeys;
 //extern int fh;
 
 extern const char* loaded_background;
@@ -51,11 +52,11 @@ void Archivia_Situazione (char i);
 //void leggi_t_fino_a (char codcar, int ptyp);
 
 /// Load PIXELS.DEF
-void load_pixels_def(int& ptyp);
+void load_pixels_def(void);
 
 // Carica il tipo di pixel specificato.
 /// Load the specified pixel type
-void LoadPtyp (int ptyp);
+void LoadPtyp (PixelTypeId ptyp);
 
 
 /// Load a saved game
