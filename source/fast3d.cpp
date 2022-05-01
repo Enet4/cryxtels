@@ -27,7 +27,7 @@
 
 // Variables!
 //SDL_Surface * p_surface = nullptr;
-std::unique_ptr<unsigned char[]> video_buffer;
+std::unique_ptr<u8[]> video_buffer;
 
 SDL_Surface * p_surface_32 = nullptr;
 SDL_Surface * p_surface_scaled = nullptr;
@@ -66,7 +66,7 @@ double uneg = 1;
 double mindiff = 0.01;
 
 /// New Palette definition
-unsigned char tmppal[256 * 4]; // 256*4 bytes (RGBU)
+u8 tmppal[256 * 4]; // 256*4 bytes (RGBU)
 
 // Old Palette definition
 //unsigned char tmppal[768]; // 256*3 bytes (RGB)
@@ -119,7 +119,7 @@ void init_video () // inizializza grafica a 320x200x256 colori.
 }
 
 /// Darken the screen once.
-void darken_once (unsigned char inc) {
+void darken_once (u8 inc) {
     unsigned char* it = &video_buffer[0];
     unsigned int cx = WIDTH*HEIGHT;
 
@@ -174,9 +174,9 @@ void Render (void)
     SDL_RenderPresent(p_renderer);
 }
 
-void tavola_colori (const unsigned char *nuova_tavolozza,
+void tavola_colori (const u8 *nuova_tavolozza,
             unsigned int colore_di_partenza, unsigned int nr_colori,
-            char filtro_rosso, char filtro_verde, char filtro_blu)
+            i8 filtro_rosso, i8 filtro_verde, i8 filtro_blu)
 {
     constexpr unsigned int K_FILTER = 63; // original is 63
     unsigned int c, cc = 0;
@@ -198,18 +198,18 @@ void tavola_colori (const unsigned char *nuova_tavolozza,
 
     c = colore_di_partenza;
     while (c<nr_colori+colore_di_partenza) {
-        unsigned short temp = tmppal[c];
-        temp *= (unsigned char)filtro_rosso;
+        u16 temp = tmppal[c];
+        temp *= (u8)filtro_rosso;
         temp /= K_FILTER;
         tmppal[c] = temp;
         c++;
         temp = tmppal[c];
-        temp *= (unsigned char)filtro_verde;
+        temp *= (u8)filtro_verde;
         temp /= K_FILTER;
         tmppal[c] = temp;
         c++;
         temp = tmppal[c];
-        temp *= (unsigned char)filtro_blu;
+        temp *= (u8)filtro_blu;
         temp /= K_FILTER;
         tmppal[c] = temp;
         c+=2;
@@ -217,7 +217,7 @@ void tavola_colori (const unsigned char *nuova_tavolozza,
 }
 
 // This function is unsafe and should be removed
-void pcopy (unsigned char *dest, const unsigned char *sorg) {
+void pcopy (u8 *dest, const u8 *sorg) {
     // The old "it's assembly, so it's faster" ideology is
     // what will crack the skulls of future coders and is no
     // longer really true anyway.
@@ -228,7 +228,7 @@ void pcopy (unsigned char *dest, const unsigned char *sorg) {
 
 
 // This function is unsafe and should be removed
-void pclear (unsigned char *target, unsigned char pattern) {
+void pclear (u8 *target, u8 pattern) {
     // Again, let's just try something different.
     memset(target, pattern, WIDTH*HEIGHT*sizeof(*target));
 }
@@ -279,7 +279,7 @@ void Segmento (unsigned int x, unsigned int y,
     SDL_assert(x2 < WIDTH);
     SDL_assert(y2 < HEIGHT);
 
-    unsigned char* si = &video_buffer[0];
+    u8* si = &video_buffer[0];
 
     int temp;
     if (x==x2) {
@@ -290,7 +290,7 @@ void Segmento (unsigned int x, unsigned int y,
         unsigned int di = WIDTH*y + x;
         unsigned int _ax = WIDTH*y2;
         // now we're making a pointer to the scanline at y2
-        unsigned char* ax = si + _ax;
+        u8* ax = si + _ax;
         // now we'll make si point to the other scanline (y)
         si += di;
         while (si < ax) {

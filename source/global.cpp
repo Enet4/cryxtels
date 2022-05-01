@@ -33,8 +33,8 @@ double tracking = 0; // Incremento a trackframe.
 u8 req_end_extra = 0; /* Flag: si richiede la fine dell'attività
                            extraveicolare ed il rientro nella nave? */
 
-short int alfad = 0, betad = 0; // Velocità angolare su assi x ed y.
-short int alfa90, beta90; // Supporti per alcuni calcoli.
+i16 alfad = 0, betad = 0; // Velocità angolare su assi x ed y.
+i16 alfa90, beta90; // Supporti per alcuni calcoli.
 
 u8 fid = 0; // Flag: Orientamento nella direzione opposta a quella corrente...
 u8 lead = 0; // Flag: Orientamento in direzione d'avanzamento...

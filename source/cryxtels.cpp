@@ -319,16 +319,16 @@ int main(int argc, char** argv)
 //          pusha
 //          les di, dword ptr adapted
             auto di = &video_buffer[0];
-            unsigned short i = 0;
+            u16 i = 0;
 //          xor ah, ah
 //          int 1ah
             // this is used to get the clock ticks
 //          xor dh, dh
-            unsigned int dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
+            u32 dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
 //          add di, dx
             i = dx;
 //          mov cx, 16000 }
-            unsigned int cx = (WIDTH*HEIGHT) >> 2;
+            u32 cx = (WIDTH*HEIGHT) >> 2;
             do {
 //  _chic:
 //          asm {
@@ -1621,19 +1621,19 @@ inline bool allocation_farm()
     pixel_ydisloc = x_farmalloc<double> (MAX_PIXELS);
     pixel_zdisloc = x_farmalloc<double> (MAX_PIXELS);
 
-    objecttype = x_farmalloc<short> (MAX_OBJECTS);
+    objecttype = x_farmalloc<i16> (MAX_OBJECTS);
     relative_x = x_farmalloc<double> (MAX_OBJECTS);
     relative_y = x_farmalloc<double> (MAX_OBJECTS);
     relative_z = x_farmalloc<double> (MAX_OBJECTS);
     absolute_x = x_farmalloc<double> (MAX_OBJECTS);
     absolute_y = x_farmalloc<double> (MAX_OBJECTS);
     absolute_z = x_farmalloc<double> (MAX_OBJECTS);
-    object_location = x_farmalloc<short> (MAX_OBJECTS);
+    object_location = x_farmalloc<i16> (MAX_OBJECTS);
 
-    pixeltype_elements = x_farmalloc<unsigned char>(BUFFERS);
-    pixeltype_type = x_farmalloc<short> (BUFFERS);
+    pixeltype_elements = x_farmalloc<u8>(BUFFERS);
+    pixeltype_type = x_farmalloc<i16> (BUFFERS);
 
-    pixel_elem_t = x_farmalloc<unsigned char> (ELEMS*BUFFERS);
+    pixel_elem_t = x_farmalloc<u8> (ELEMS*BUFFERS);
     pixel_elem_x = x_farmalloc<double> (ELEMS*BUFFERS);
     pixel_elem_y = x_farmalloc<double> (ELEMS*BUFFERS);
     pixel_elem_z = x_farmalloc<double> (ELEMS*BUFFERS);
@@ -1650,7 +1650,7 @@ inline bool allocation_farm()
     docksite_h = x_farmalloc<float>(MAX_PIXEL_TYPES);
     subsignal = x_farmalloc<char> (9 * MAX_PIXEL_TYPES);
 
-    buffer = x_farmalloc<unsigned char> (1057);
+    buffer = x_farmalloc<u8> (1057);
     } catch (const int&) {
         return false;
     }
