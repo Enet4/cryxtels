@@ -2061,6 +2061,7 @@ void extra_stop_extra ()
         if (d<25) {
             req_end_extra = 1;
             type_mode = false;
+            mpul = 0;
             play (FLY_ON);
         }
     }
