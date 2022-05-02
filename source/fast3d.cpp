@@ -295,16 +295,25 @@ void Segmento (unsigned int x, unsigned int y,
         si += di;
         while (si < ax) {
             if (*si < 32) {
-                SDL_assert_paranoid(si-WIDTH >= &video_buffer[0]);
-                SDL_assert_paranoid(si+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
+                SDL_assert(si-WIDTH >= &video_buffer[0]);
+                SDL_assert(si+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
+                // left
                 *(si-1)       += 2;
+                // center
                 *si           += 4;
+                // right
                 *(si+1)       += 2;
+                // bottom-left
                 *(si+WIDTH-1) += 1;
+                // bottom
                 *(si+WIDTH)   += 2;
+                // bottom-right
                 *(si+WIDTH+1) += 1;
+                // top-left
                 *(si-WIDTH-1) += 1;
+                // top
                 *(si-WIDTH)   += 2;
+                // top-right
                 *(si-WIDTH+1) += 1;
             }
             si += WIDTH;
@@ -347,16 +356,25 @@ void Segmento (unsigned int x, unsigned int y,
         unsigned char* di2 = si + WIDTH*di + (global_x >> 16);
 
         if ( *di2 < 32 ) {
-            SDL_assert_paranoid(di2-WIDTH >= &video_buffer[0]);
-            SDL_assert_paranoid(di2+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
-            *(di2+1)       += 2;
+            SDL_assert(di2-WIDTH >= &video_buffer[0]);
+            SDL_assert(di2+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
+            // left
+            *(di2-1)       += 2;
+            // center
             *di2           += 4;
+            // right
             *(di2+1)       += 2;
+            // bottom-left
             *(di2+WIDTH-1) += 1;
+            // bottom
             *(di2+WIDTH)   += 2;
+            // bottom-right
             *(di2+WIDTH+1) += 1;
+            // top-left
             *(di2-WIDTH-1) += 1;
+            // top
             *(di2-WIDTH)   += 2;
+            // top-right
             *(di2-WIDTH+1) += 1;
         }
         global_y += b;
@@ -567,7 +585,6 @@ void aux_plot(unsigned int x, unsigned int y) {
         *(si-1) += 4;
         *(si+WIDTH) += 4;
         *(si-WIDTH) += 4;
-//    }
     }
 }
 
