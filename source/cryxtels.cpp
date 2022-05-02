@@ -299,8 +299,8 @@ int main(int argc, char** argv)
         if (!run_intro) break;
 
         Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-        Txt ("WRITTEN BETWEEN 1994 AND 1997", -100, 0, 80, 2, 4, 270, 0);
-        Txt ("BY ALESSANDRO GHIGNOLA.", -85, 0, 60, 2, 4, 270, 0);
+        Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
+        Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
         Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
         Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
         if (beta<360) {
