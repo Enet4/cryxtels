@@ -317,78 +317,35 @@ int main(int argc, char** argv)
             beta = bki1;
 //       asm {
 //          pusha
-//          les di, dword ptr adapted
-            auto di = &video_buffer[0];
             u16 i = 0;
-//          xor ah, ah
-//          int 1ah
             // this is used to get the clock ticks
-//          xor dh, dh
-            u32 dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
-//          add di, dx
+            u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
             i = dx;
-//          mov cx, 16000 }
-            u32 cx = (WIDTH*HEIGHT) >> 2;
+            u16 cx = WIDTH * 50;
             do {
-//  _chic:
-//          asm {
-//              cmp di, 64004
-//              jnb _zero
-                if (i >= WIDTH*HEIGHT) {
-                    //i -= WIDTH*HEIGHT;
-                    goto _zero;
+                if (i < WIDTH*HEIGHT) {
+                    // pixel value outside fottifoh row range
+                    if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
+                        video_buffer[i] >>= 1;
+                    }
                 }
-//              cmp di, 20804
-//              jb shift
-                if (i < DELTA_U*WIDTH+4) goto shift;
-//              cmp di, 43204
-//              jb _zero }
-                if (i < DELTA_L*WIDTH+4) goto _zero;
-    shift:
-//              asm
-//              shr byte ptr es:[di], 1
-                di[i] >>= 1;
-    _zero:
-//              asm {
-//              cmp cx, 8000
-//              jb subt
                 if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
-//                  add di, 321
                     i += WIDTH + 1;
-//                  jmp norm }
                 } else {
-// subt:
-//                  asm
-//                  add di, 319
                     i += WIDTH - 1;
                 }
-//  norm:       asm {
-//              loop _chic
             } while (--cx > 0);
-//          les di, dword ptr adapted
-            di = &video_buffer[0];
-//          add di, 20800
-            //di += WIDTH*(DELTA_U);// fottifoh upper limit
-//          mov cx, 22400 }
-            //cx = (DELTA_L-DELTA_U)*WIDTH; // fottifoh space
+
+            auto di = &video_buffer[0];
             cx = HEIGHT*WIDTH; // all space
-//___chic:
-                do {
-//              asm  {
-//              cmp byte ptr es:[di], 0
-//              je ___zero
+            do {
+                // fade out effect
                 if (*di != 0) {
-//                  dec byte ptr es:[di] }
                     *di -= 1;
                 }
-//___zero:asm  {
-//              inc di
                 di++;
-//          loop ___chic
             } while (--cx > 0);
-//          popa }
         }
-        //mouse_input();
         Render();
 
         unsigned long cticks = SDL_GetTicks();
@@ -396,7 +353,6 @@ int main(int argc, char** argv)
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }
-        //while (sync==clock());
     }
 
 //    ignesci: //pop_audiofile ();
