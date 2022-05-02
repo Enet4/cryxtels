@@ -8,33 +8,45 @@ Crystal Pixels (Cryxtels in short) is a simulator game where you live in a dark 
 
 Cryxtels was initially an MS-DOS game. Later on, a port was developed in order to be playable in modern systems such as Linux. This repository contains the latest development versions of this port.
 
-At the moment, this version was only tested to work on Windows 8 and Linux.
+At the moment, this version is known to work on Windows (8+) and Linux.
 
 ## Building
 
-SDL 2.0.3 must be installed in the system.
+Building this project requires:
 
-CMake 3.10 or greater is required.
+- A C++ compiler supporting standard C++11.
+- CMake 3.10 or greater is required.
+- The SDL 2 development library should be installed in the system,
+  either via a package manager in your system
+  or through [vcpkg](https://github.com/microsoft/vcpkg).
+
 Run `cmake` to generate the project scaffold
 (usually GNU Makefiles on Linux platforms),
 then build the project.
 
-Example on Linux:
+On Linux:
 
 ```sh
-mkdir Release
-cd Release
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+mkdir build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+On Windows using vcpkg:
+
+```bat
+vcpkg install sdl2:x86-windows
+mkdir build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -A win32 -DCMAKE_TOOLCHAIN_FILE=C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
 The output is the executable file `cryxtels`.
 
-The compiler must support standard C++11.
-
 ## Installing
 
-Place the compiled executable in the bin directory. Symlinks for running cryxtels in the console can be made manually.
+Place the compiled executable in the bin directory.
+Symlinks for running cryxtels in the console can be made manually.
 
 ## Running
 
