@@ -21,6 +21,7 @@
 
 #include "SDL.h"
 #include <memory>
+#include "primitives.h"
 
 #ifndef far
 #define far
@@ -29,7 +30,7 @@
 constexpr double Pi = 3.141592653589793238462643383;
 
 /// The software membory buffer to perform all rendering in.
-extern std::unique_ptr<unsigned char[]> video_buffer;
+extern std::unique_ptr<u8[]> video_buffer;
 
 ///// The SDL surface to show a scaled result.
 //extern SDL_Surface * p_surface_scaled;
@@ -51,9 +52,9 @@ extern float *tcosy, *tsiny;
 extern double cam_x, cam_y, cam_z;
 
 /// Alpha and Beta (camera orientation)
-extern short int alfa,beta;
+extern i16 alfa,beta;
 
-/// Something...
+/// Distance to the closest pixel.
 extern double kk;
 
 /// Some position...
@@ -75,7 +76,7 @@ void toggle_fullscreen();
 inline void _80_25_C () {} // modo grafico 80x25 testo a colori.
 
 /// Darken the screen once.
-void darken_once(unsigned char inc = 1);
+void darken_once(u8 inc = 1);
 
 /// Render
 void Render (void);
@@ -84,22 +85,17 @@ void Render (void);
 void snapshot (void);
 
 /// Create a palette table based on new_palette.
-void tavola_colori (const unsigned char *new_palette,
+void tavola_colori (const u8 *new_palette,
 		    unsigned int starting_color, unsigned int nr_colors,
-		    char red_filter, char green_filter, char blue_filter);
-/* Original prototype:
-void tavola_colori (unsigned char *nuova_tavolozza,
-		    unsigned colore_di_partenza, unsigned nr_colori,
-		    char filtro_rosso, char filtro_verde, char filtro_blu);
-*/
+		    i8 red_filter, i8 green_filter, i8 blue_filter);
 
 /// Copy a graphical page
 // Ultraveloce copia di pagina grafica.
-void pcopy (unsigned char *dest, const unsigned char *sorg);
+void pcopy (u8 *dest, const u8 *sorg);
 
 /// Clear a graphical page with a pattern
 // Ultraveloce cancella pagina grafica.
-void pclear (unsigned char far *target, unsigned char pattern);
+void pclear (u8 far *target, u8 pattern);
 
 /// Initialization of a table of trigonometric calculation results.
 // Inizializzazione.

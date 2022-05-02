@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <cassert>
 #include "global.h"
+#include "primitives.h"
 #include "fast3d.h"
 #include "text3d.h"
 #include "input.h"
@@ -66,8 +67,10 @@ inline bool allocation_farm();
 void read_args(int argc, char** argv, char& flag, char& sit);
 
 // Aggiorna il buffer dei pixels caricati.
-/// Update buffer with loaded pixels
-void cerca_e_carica (int typ);
+/// Updates buffer with loaded pixels:
+/// Search for the pixel type of ID `typ`
+/// and load it if it is not loaded yet.
+void cerca_e_carica (PixelTypeId typ);
 
 /// build the cosmos
 void build_cosm(char& flag);
@@ -83,7 +86,7 @@ void dists ();
 void rot ();
 
 /// Fade out effect of the display.
-void fade (unsigned char speed = 1);
+void fade (u8 speed = 1);
 
 /// Docking effects.
 void dock_effects ();
@@ -189,7 +192,7 @@ void lead_on ();
 void orig_on ();
 
 /// Generate the color palette
-void tinte (unsigned char satu);
+void tinte (u8 satu);
 
 /// Explode
 void scoppia (int nr_ogg, double potenza, int var);
@@ -198,7 +201,7 @@ void scoppia (int nr_ogg, double potenza, int var);
 void chiudi_filedriver ();
 
 /// Fottifoh object model
-extern char fotty[277];
+extern i8 fotty[277];
 
 int main(int argc, char** argv)
 {
@@ -209,7 +212,6 @@ int main(int argc, char** argv)
     char flag = 0;
     //char sit = 'S'; // < the original would auto-load the default game save (Alex's save)
     char sit = 0;
-    int ptyp = 0;
     try {
         init_start();
 
@@ -217,7 +219,7 @@ int main(int argc, char** argv)
 
         read_args(argc, argv, flag, sit);
 
-        load_pixels_def(ptyp);
+        load_pixels_def();
 
         build_cosm(flag);
 
@@ -317,16 +319,16 @@ int main(int argc, char** argv)
 //          pusha
 //          les di, dword ptr adapted
             auto di = &video_buffer[0];
-            unsigned short i = 0;
+            u16 i = 0;
 //          xor ah, ah
 //          int 1ah
             // this is used to get the clock ticks
 //          xor dh, dh
-            unsigned int dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
+            u32 dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
 //          add di, dx
             i = dx;
 //          mov cx, 16000 }
-            unsigned int cx = (WIDTH*HEIGHT) >> 2;
+            u32 cx = (WIDTH*HEIGHT) >> 2;
             do {
 //  _chic:
 //          asm {
@@ -480,7 +482,7 @@ int main(int argc, char** argv)
             mpul = 0;
             mouse_input ();
 
-            if (m && grab_mouse) { // Keep the mouse on the screen
+            if (m && grab_mouse) {
                 mx += mdltx;
                 my += mdlty;
             }
@@ -1305,13 +1307,13 @@ noang:
     sprintf (dist, "F=%04d/CGR", (int)spd);
     nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
 
-    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", (float)veloc*1.9656);
+    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
     else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
     nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "ASC=%03d`", nav_b);
+    sprintf (dist, "ASC=%03hd`", nav_b);
     nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "DEC=%03d`", nav_a);
+    sprintf (dist, "DEC=%03hd`", nav_a);
     nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
 
     sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
@@ -1609,9 +1611,9 @@ inline bool allocation_farm()
     try {
     pixel_elem_b = x_farmalloc<char>(40*ELEMS*BUFFERS);
 
-    pixeltype = x_farmalloc<short> (MAX_PIXELS);
+    pixeltype = x_farmalloc<PixelTypeId> (MAX_PIXELS);
     pixelmass = x_farmalloc<float> (MAX_PIXEL_TYPES); // 2600
-    pixel_rot = x_farmalloc<unsigned char>(MAX_PIXELS * 2);
+    pixel_rot = x_farmalloc<u8>(MAX_PIXELS * 2);
 
     pixel_absd = x_farmalloc<float>(MAX_PIXELS);
     pixel_support = x_farmalloc<double> (MAX_PIXELS);
@@ -1619,19 +1621,19 @@ inline bool allocation_farm()
     pixel_ydisloc = x_farmalloc<double> (MAX_PIXELS);
     pixel_zdisloc = x_farmalloc<double> (MAX_PIXELS);
 
-    objecttype = x_farmalloc<short> (MAX_OBJECTS);
+    objecttype = x_farmalloc<i16> (MAX_OBJECTS);
     relative_x = x_farmalloc<double> (MAX_OBJECTS);
     relative_y = x_farmalloc<double> (MAX_OBJECTS);
     relative_z = x_farmalloc<double> (MAX_OBJECTS);
     absolute_x = x_farmalloc<double> (MAX_OBJECTS);
     absolute_y = x_farmalloc<double> (MAX_OBJECTS);
     absolute_z = x_farmalloc<double> (MAX_OBJECTS);
-    object_location = x_farmalloc<short> (MAX_OBJECTS);
+    object_location = x_farmalloc<i16> (MAX_OBJECTS);
 
-    pixeltype_elements = x_farmalloc<unsigned char>(BUFFERS);
-    pixeltype_type = x_farmalloc<short> (BUFFERS);
+    pixeltype_elements = x_farmalloc<u8>(BUFFERS);
+    pixeltype_type = x_farmalloc<i16> (BUFFERS);
 
-    pixel_elem_t = x_farmalloc<unsigned char> (ELEMS*BUFFERS);
+    pixel_elem_t = x_farmalloc<u8> (ELEMS*BUFFERS);
     pixel_elem_x = x_farmalloc<double> (ELEMS*BUFFERS);
     pixel_elem_y = x_farmalloc<double> (ELEMS*BUFFERS);
     pixel_elem_z = x_farmalloc<double> (ELEMS*BUFFERS);
@@ -1648,7 +1650,7 @@ inline bool allocation_farm()
     docksite_h = x_farmalloc<float>(MAX_PIXEL_TYPES);
     subsignal = x_farmalloc<char> (9 * MAX_PIXEL_TYPES);
 
-    buffer = x_farmalloc<unsigned char> (1057);
+    buffer = x_farmalloc<u8> (1057);
     } catch (const int&) {
         return false;
     }
@@ -1891,12 +1893,9 @@ void save_situation(char i) {
     }
 }
 
-void cerca_e_carica (int typ)
-{
-    int iii;
-
+void cerca_e_carica (PixelTypeId typ) {
     if (loaded_pixeltypes) {
-        for (iii = 0; iii<loaded_pixeltypes; iii++) {
+        for (auto iii = 0u; iii<loaded_pixeltypes; iii++) {
             if (typ==pixeltype_type[iii])
                 return;
         }
@@ -3247,7 +3246,7 @@ void Object (int tipo)
                 memset (buffer, ' ', 512);
                 // safeguard buffer from reading beyond the end of the text
                 buffer[512] = '\0';
-                sprintf (autore_forme, "TEXT-%03u.FIX", tipo-3);
+                sprintf (autore_forme, "TEXT-%03d.FIX", tipo-3);
                 th = std::fopen (autore_forme, "r+b");
                 if (th) {
                     buffer[32] = '\0';
@@ -3344,7 +3343,7 @@ void Object (int tipo)
 
 // Disegna la forma di un oggetto.
 
-char fotty[277] = {
+i8 fotty[277] = {
         -6, 0, +6,          -4, 0, +8,
         -4, 0, +8,          -2, 0, +8,
         -2, 0, +8,          -2, 0, +6,

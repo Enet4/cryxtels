@@ -31,7 +31,7 @@
 
 using namespace std;
 
-std::array<unsigned char,2> ctrlkeys = {{0,0}};
+std::array<u8, 2> ctrlkeys = {{0,0}};
 
 const char* loaded_background = nullptr;
 
@@ -267,8 +267,7 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
     t[79] = '\0';
 }
 
-void load_pixels_def(int& ptyp)
-{
+void load_pixels_def(void) {
     FILE* fh = std::fopen ("PIXELS.DEF", "rb");
     if (fh) {
         if (!trova_id (fh, "SEED")) {
@@ -292,6 +291,7 @@ void load_pixels_def(int& ptyp)
         eol = 0; leggi_t_fino_a (fh, ';', -1);
         strcpy (autore_forme, t);
         std::fseek (fh, 0, SEEK_SET);
+        int ptyp = 0;
         sprintf (t, "TYPE %d;\r\n", ptyp);
         while (trova_id (fh, t)) {
             existent_pixeltypes++;
@@ -330,7 +330,7 @@ void load_pixels_def(int& ptyp)
 
 // Carica il tipo di pixel specificato.
 
-void LoadPtyp (int ptyp) {
+void LoadPtyp (PixelTypeId ptyp) {
     int c;
     unsigned int jjj;
 
@@ -343,8 +343,8 @@ void LoadPtyp (int ptyp) {
         exit (255);
     }
 
-    pixeltype_elements[static_cast<int>(loaded_pixeltypes)] = 0;
-    pixeltype_type[static_cast<int>(loaded_pixeltypes)] = ptyp;
+    pixeltype_elements[loaded_pixeltypes] = 0;
+    pixeltype_type[loaded_pixeltypes] = ptyp;
     pixelmass[ptyp] = 10000;
 
     FILE* fh = std::fopen("PIXELS.DEF", "rb");
@@ -356,16 +356,16 @@ void LoadPtyp (int ptyp) {
         trova_id (fh, t);
         do {
             eol = 0;
-            jjj = ELEMS * loaded_pixeltypes + pixeltype_elements[static_cast<int>(loaded_pixeltypes)];
+            jjj = ELEMS * loaded_pixeltypes + pixeltype_elements[loaded_pixeltypes];
             leggi_t_fino_a (fh, ',', ptyp);
             pixel_elem_t[jjj] = 0;
-            while (pixel_elem_t[jjj]<coms && strcasecmp(t, comspec[pixel_elem_t[jjj]]))
+            while (pixel_elem_t[jjj]<COMS && strcasecmp(t, comspec[pixel_elem_t[jjj]]))
                 (pixel_elem_t[jjj])++;
-            if (pixel_elem_t[jjj] == coms) {
+            if (pixel_elem_t[jjj] == COMS) {
                 std::fclose (fh);
                 //alfin (0);
                 cerr << "Command not recognized.\nElement "
-                    << (pixeltype_elements[static_cast<int>(loaded_pixeltypes)]+1)
+                    << (pixeltype_elements[loaded_pixeltypes]+1)
                     << " in model nr. " << ptyp << "." << endl;
                 //printf ("Comando specificato nel file: %s.", t);
                 exit (1);
@@ -411,11 +411,11 @@ void LoadPtyp (int ptyp) {
                 }
             }
 //count_:
-            pixeltype_elements[static_cast<int>(loaded_pixeltypes)]++;
+            pixeltype_elements[loaded_pixeltypes]++;
 //pros:
-        } while (pixeltype_elements[static_cast<int>(loaded_pixeltypes)] < ELEMS);
+        } while (pixeltype_elements[loaded_pixeltypes] < ELEMS);
         std::fclose (fh);
-        if (pixeltype_elements[static_cast<int>(loaded_pixeltypes)]==ELEMS) {
+        if (pixeltype_elements[loaded_pixeltypes]==ELEMS) {
             //alfin (0);
             cerr << "Definition too long.\nModel nr. " << ptyp << endl;
             exit (1); // FIXME exit bomb
@@ -434,7 +434,7 @@ void load_game (char i)
 
     FILE* fh = std::fopen(t, "rb");
     if (fh) {
-        short tmp_pixels = 0;
+        u16 tmp_pixels = 0;
         std::fread (&tmp_pixels, sizeof(tmp_pixels), 1, fh);
         if (tmp_pixels == 0) {
             cerr << "Failed to read game from \"" << t << "\": Invalid situation file." << endl;
@@ -442,60 +442,60 @@ void load_game (char i)
             return;
         }
         pixels = tmp_pixels;
-        std::fread (&pixel_support[0], sizeof(double), pixels, fh);
-        std::fread (&pixel_xdisloc[0], sizeof(double), pixels, fh);
-        std::fread (&pixel_ydisloc[0], sizeof(double), pixels, fh);
-        std::fread (&pixel_zdisloc[0], sizeof(double), pixels, fh);
-        std::fread (&objects, sizeof(short), 1, fh);
+        std::fread (&pixel_support[0], sizeof(f64), pixels, fh);
+        std::fread (&pixel_xdisloc[0], sizeof(f64), pixels, fh);
+        std::fread (&pixel_ydisloc[0], sizeof(f64), pixels, fh);
+        std::fread (&pixel_zdisloc[0], sizeof(f64), pixels, fh);
+        std::fread (&objects, sizeof(u16), 1, fh);
         _objects = objects;
-        std::fread (&objecttype[0], sizeof(short), objects, fh);
-        std::fread (&relative_x[0], sizeof(double), objects, fh);
-        std::fread (&relative_y[0], sizeof(double), objects, fh);
-        std::fread (&relative_z[0], sizeof(double), objects, fh);
-        std::fread (&absolute_x[0], sizeof(double), objects, fh);
-        std::fread (&absolute_y[0], sizeof(double), objects, fh);
-        std::fread (&absolute_z[0], sizeof(double), objects, fh);
-        std::fread (&object_location[0], sizeof(short), objects, fh);
-        std::fread (&cam_x, sizeof(double), 1, fh);
-        std::fread (&cam_y, sizeof(double), 1, fh);
-        std::fread (&cam_z, sizeof(double), 1, fh);
-        std::fread (&alfa, sizeof(short), 1, fh);
-        std::fread (&beta, sizeof(short), 1, fh);
-        std::fread (&nav_a, sizeof(short), 1, fh);
-        std::fread (&nav_b, sizeof(short), 1, fh);
+        std::fread (&objecttype[0], sizeof(ObjectTypeId), objects, fh);
+        std::fread (&relative_x[0], sizeof(f64), objects, fh);
+        std::fread (&relative_y[0], sizeof(f64), objects, fh);
+        std::fread (&relative_z[0], sizeof(f64), objects, fh);
+        std::fread (&absolute_x[0], sizeof(f64), objects, fh);
+        std::fread (&absolute_y[0], sizeof(f64), objects, fh);
+        std::fread (&absolute_z[0], sizeof(f64), objects, fh);
+        std::fread (&object_location[0], sizeof(PixelId), objects, fh);
+        std::fread (&cam_x, sizeof(f64), 1, fh);
+        std::fread (&cam_y, sizeof(f64), 1, fh);
+        std::fread (&cam_z, sizeof(f64), 1, fh);
+        std::fread (&alfa, sizeof(i16), 1, fh);
+        std::fread (&beta, sizeof(i16), 1, fh);
+        std::fread (&nav_a, sizeof(i16), 1, fh);
+        std::fread (&nav_b, sizeof(i16), 1, fh);
         std::fread (&taking, 1, 1, fh);
-        std::fread (&carry_type, sizeof(short),1 ,fh);
-        std::fread (&trackframe, sizeof(double), 1, fh);
+        std::fread (&carry_type, sizeof(ObjectId),1 ,fh);
+        std::fread (&trackframe, sizeof(f64), 1, fh);
         std::fread (&reset_trackframe, 1, 1, fh);
-        std::fread (&tracking, sizeof(double), 1, fh);
+        std::fread (&tracking, sizeof(f64), 1, fh);
         std::fread (&req_end_extra, 1, 1, fh);
-        std::fread (&alfad, sizeof(short), 1, fh);
-        std::fread (&betad, sizeof(short), 1, fh);
-        std::fread (&pix, sizeof(short), 1, fh);
-        std::fread (&alfa90, sizeof(short), 1, fh);
-        std::fread (&beta90, sizeof(short), 1, fh);
+        std::fread (&alfad, sizeof(i16), 1, fh);
+        std::fread (&betad, sizeof(i16), 1, fh);
+        std::fread (&pix, sizeof(i16), 1, fh);
+        std::fread (&alfa90, sizeof(i16), 1, fh);
+        std::fread (&beta90, sizeof(i16), 1, fh);
         std::fread (&fid, 1, 1, fh);
         std::fread (&lead, 1, 1, fh);
         std::fread (&orig, 1, 1, fh);
         std::fread (&comera_m, 1, 1, fh);
-        std::fread (&spd_x, sizeof(double), 1, fh);
-        std::fread (&spd_y, sizeof(double), 1, fh);
-        std::fread (&spd_z, sizeof(double), 1, fh);
-        std::fread (&spd, sizeof(double), 1, fh);
+        std::fread (&spd_x, sizeof(f64), 1, fh);
+        std::fread (&spd_y, sizeof(f64), 1, fh);
+        std::fread (&spd_z, sizeof(f64), 1, fh);
+        std::fread (&spd, sizeof(f64), 1, fh);
         std::fread (&extra, 1, 1, fh);
-        std::fread (&rel_x, sizeof(double), 1, fh);
-        std::fread (&rel_y, sizeof(double), 1, fh);
-        std::fread (&rel_z, sizeof(double), 1, fh);
-        std::fread (&obj, sizeof(short), 1, fh);
+        std::fread (&rel_x, sizeof(f64), 1, fh);
+        std::fread (&rel_y, sizeof(f64), 1, fh);
+        std::fread (&rel_z, sizeof(f64), 1, fh);
+        std::fread (&obj, sizeof(ObjectId), 1, fh);
         std::fread (&m, 1, 1, fh);
         std::fread (&echo, 1, 1, fh);
-        std::fread (&carried_pixel, sizeof(short), 1, fh);
-        std::fread (&disl, sizeof(double), 1, fh);
-        std::fread (&cursore, sizeof(short), 1, fh);
-        std::fread (&explode_count, 1, 1, fh);
+        std::fread (&carried_pixel, sizeof(carried_pixel), 1, fh);
+        std::fread (&disl, sizeof(disl), 1, fh);
+        std::fread (&cursore, sizeof(cursore), 1, fh);
+        std::fread (&explode_count, sizeof(explode_count), 1, fh);
         std::fread (&ctrlkeys[0], 1, 1, fh);
         std::fread (&pixel_rot[0], 1, pixels, fh);
-        std::fread (&pixeltype[0], sizeof(short), pixels, fh);
+        std::fread (&pixeltype[0], sizeof(PixelTypeId), pixels, fh);
         std::fread (&repeat, 1, 1, fh);
         std::fread (&source, 1, 1, fh);
         std::fread (&quality, 1, 1, fh);
@@ -519,63 +519,65 @@ void save_game (char i)
     sprintf (t, "CRYXTELS.%cIT", i);
     FILE* fh = std::fopen (t, "wb");
     if (fh) {
-        unsigned char a;
 
-        std::fwrite (&pixels, sizeof(short), 1, fh);
-        std::fwrite (&pixel_support[0], sizeof(double), pixels, fh);
-        std::fwrite (&pixel_xdisloc[0], sizeof(double), pixels, fh);
-        std::fwrite (&pixel_ydisloc[0], sizeof(double), pixels, fh);
-        std::fwrite (&pixel_zdisloc[0], sizeof(double), pixels, fh);
-        std::fwrite (&objects, sizeof(short), 1, fh);
-        std::fwrite (&objecttype[0], sizeof(short), objects, fh);
-        std::fwrite (&relative_x[0], sizeof(double), objects, fh);
-        std::fwrite (&relative_y[0], sizeof(double), objects, fh);
-        std::fwrite (&relative_z[0], sizeof(double), objects, fh);
-        std::fwrite (&absolute_x[0], sizeof(double), objects, fh);
-        std::fwrite (&absolute_y[0], sizeof(double), objects, fh);
-        std::fwrite (&absolute_z[0], sizeof(double), objects, fh);
-        std::fwrite (&object_location[0], sizeof(short int), objects, fh);
-        std::fwrite (&cam_x, sizeof(double), 1, fh);
-        std::fwrite (&cam_y, sizeof(double), 1, fh);
-        std::fwrite (&cam_z, sizeof(double), 1, fh);
-        std::fwrite (&alfa, sizeof(short), 1, fh);
-        std::fwrite (&beta, sizeof(short), 1, fh);
-        std::fwrite (&nav_a, sizeof(short), 1, fh);
-        std::fwrite (&nav_b, sizeof(short), 1, fh);
-        std::fwrite (&taking, sizeof(char), 1, fh);
-        std::fwrite (&carry_type, sizeof(short), 1, fh);
-        std::fwrite (&trackframe, sizeof(double), 1, fh);
-        std::fwrite (&reset_trackframe, sizeof(char), 1, fh);
-        std::fwrite (&tracking, sizeof(double), 1, fh);
-        std::fwrite (&req_end_extra, sizeof(char), 1, fh);
-        std::fwrite (&alfad, sizeof(short), 1, fh);
-        std::fwrite (&betad, sizeof(short), 1, fh);
-        std::fwrite (&pix, sizeof(short), 1, fh);
-        std::fwrite (&alfa90, sizeof(short), 1, fh);
-        std::fwrite (&beta90, sizeof(short), 1, fh);
+        std::fwrite (&pixels, sizeof(u16), 1, fh);
+        std::fwrite (&pixel_support[0], sizeof(f64), pixels, fh);
+        std::fwrite (&pixel_xdisloc[0], sizeof(f64), pixels, fh);
+        std::fwrite (&pixel_ydisloc[0], sizeof(f64), pixels, fh);
+        std::fwrite (&pixel_zdisloc[0], sizeof(f64), pixels, fh);
+        std::fwrite (&objects, sizeof(i16), 1, fh);
+        std::fwrite (&objecttype[0], sizeof(i16), objects, fh);
+        std::fwrite (&relative_x[0], sizeof(f64), objects, fh);
+        std::fwrite (&relative_y[0], sizeof(f64), objects, fh);
+        std::fwrite (&relative_z[0], sizeof(f64), objects, fh);
+        std::fwrite (&absolute_x[0], sizeof(f64), objects, fh);
+        std::fwrite (&absolute_y[0], sizeof(f64), objects, fh);
+        std::fwrite (&absolute_z[0], sizeof(f64), objects, fh);
+        std::fwrite (&object_location[0], sizeof(i16), objects, fh);
+        std::fwrite (&cam_x, sizeof(f64), 1, fh);
+        std::fwrite (&cam_y, sizeof(f64), 1, fh);
+        std::fwrite (&cam_z, sizeof(f64), 1, fh);
+        std::fwrite (&alfa, sizeof(i16), 1, fh);
+        std::fwrite (&beta, sizeof(i16), 1, fh);
+        std::fwrite (&nav_a, sizeof(i16), 1, fh);
+        std::fwrite (&nav_b, sizeof(i16), 1, fh);
+        std::fwrite (&taking, sizeof(u8), 1, fh);
+        std::fwrite (&carry_type, sizeof(ObjectId), 1, fh);
+        std::fwrite (&trackframe, sizeof(f64), 1, fh);
+        std::fwrite (&reset_trackframe, sizeof(u8), 1, fh);
+        std::fwrite (&tracking, sizeof(f64), 1, fh);
+        std::fwrite (&req_end_extra, sizeof(u8), 1, fh);
+        std::fwrite (&alfad, sizeof(i16), 1, fh);
+        std::fwrite (&betad, sizeof(i16), 1, fh);
+        std::fwrite (&pix, sizeof(PixelId), 1, fh);
+        std::fwrite (&alfa90, sizeof(i16), 1, fh);
+        std::fwrite (&beta90, sizeof(i16), 1, fh);
         std::fwrite (&fid, 1, 1, fh);
         std::fwrite (&lead, 1, 1, fh);
         std::fwrite (&orig, 1, 1, fh);
         std::fwrite (&comera_m, 1, 1, fh);
-        std::fwrite (&spd_x, sizeof(double), 1, fh);
-        std::fwrite (&spd_y, sizeof(double), 1, fh);
-        std::fwrite (&spd_z, sizeof(double), 1, fh);
-        std::fwrite (&spd, sizeof(double), 1, fh);
+        std::fwrite (&spd_x, sizeof(f64), 1, fh);
+        std::fwrite (&spd_y, sizeof(f64), 1, fh);
+        std::fwrite (&spd_z, sizeof(f64), 1, fh);
+        std::fwrite (&spd, sizeof(f64), 1, fh);
         std::fwrite (&extra, 1, 1, fh);
-        std::fwrite (&rel_x, sizeof(double), 1, fh);
-        std::fwrite (&rel_y, sizeof(double), 1, fh);
-        std::fwrite (&rel_z, sizeof(double), 1, fh);
-        std::fwrite (&obj, sizeof(short), 1, fh);
+        std::fwrite (&rel_x, sizeof(f64), 1, fh);
+        std::fwrite (&rel_y, sizeof(f64), 1, fh);
+        std::fwrite (&rel_z, sizeof(f64), 1, fh);
+        std::fwrite (&obj, sizeof(ObjectId), 1, fh);
         std::fwrite (&m, 1, 1, fh);
         std::fwrite (&echo, 1, 1, fh);
-        std::fwrite (&carried_pixel, sizeof(short), 1, fh);
-        std::fwrite (&disl, sizeof(double), 1, fh);
-        std::fwrite (&cursore, sizeof(short), 1, fh);
+        std::fwrite (&carried_pixel, sizeof(PixelId), 1, fh);
+        std::fwrite (&disl, sizeof(f64), 1, fh);
+        std::fwrite (&cursore, sizeof(u16), 1, fh);
         std::fwrite (&explode_count, 1, 1, fh);
-        a = ctrlkeys[0]; if (a&2) a ^= 2;
-        std::fwrite (&a, 1, 1, fh);
+
+        // drop left shift flag,
+        // otherwise it could try to save immediately on load
+        u8 crtkey_0 = ctrlkeys[0] & (~2u);
+        std::fwrite (&crtkey_0, 1, 1, fh);
         std::fwrite (&pixel_rot[0], 1, pixels, fh);
-        std::fwrite (&pixeltype[0], sizeof(short), pixels, fh);
+        std::fwrite (&pixeltype[0], sizeof(PixelTypeId), pixels, fh);
         std::fwrite (&repeat, 1, 1, fh);
         std::fwrite (&source, 1, 1, fh);
         auto conta = std::fwrite (&quality, 1, 1, fh);

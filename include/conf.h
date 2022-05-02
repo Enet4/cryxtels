@@ -20,17 +20,19 @@
 #define CONF_H_INCLUDED
 
 #include "SDL.h"
-constexpr int INTRO_FRAMES_PER_SECOND = 20;
-constexpr int FRAMES_PER_SECOND = 30;
+#include "primitives.h"
 
-constexpr unsigned int WIDTH = 320;
-constexpr unsigned int HEIGHT = 200;
+constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
+constexpr u32 FRAMES_PER_SECOND = 30;
 
-constexpr unsigned int WIDTH_SC = 2;
-constexpr unsigned int HEIGHT_SC = 2;
+constexpr u32 WIDTH = 320;
+constexpr u32 HEIGHT = 200;
 
-constexpr unsigned int WIDTH_SCALED = WIDTH*WIDTH_SC;
-constexpr unsigned int HEIGHT_SCALED = HEIGHT*HEIGHT_SC;
+constexpr u32 WIDTH_SC = 2;
+constexpr u32 HEIGHT_SC = 2;
+
+constexpr u32 WIDTH_SCALED = WIDTH*WIDTH_SC;
+constexpr u32 HEIGHT_SCALED = HEIGHT*HEIGHT_SC;
 
 constexpr auto keymap_thrust    = SDLK_a;
 constexpr auto keymap_back      = SDLK_z;
@@ -41,14 +43,14 @@ constexpr auto keymap_right     = SDLK_RIGHT;
 
 /// The maximum number of pixels allowed ingame.
 /// This was hardcoded to 500 in the original version.
-constexpr auto MAX_PIXELS = 500;
+constexpr u32 MAX_PIXELS = 500;
 
 /// The maximum number of objects allowed ingame.
 /// This was hardcoded to 500 in the original version.
-constexpr auto MAX_OBJECTS = 500;
+constexpr u32 MAX_OBJECTS = 500;
 
 /// The maximum number of pixel types allowed ingame.
 /// This was hardcoded to 600 in the original version.
-constexpr auto MAX_PIXEL_TYPES = 650;
+constexpr u32 MAX_PIXEL_TYPES = 650;
 
 #endif // CONF_H_INCLUDED

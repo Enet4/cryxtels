@@ -31,30 +31,54 @@
 #endif
 
 #include <cstdio>
+#include "primitives.h"
 
-constexpr unsigned int coms = 24; // new element included
-//#define coms 23
+/// Identifier for a pixel in the game
+/// (from 0 to 32768, -1 means no pixel or not defined).
+using PixelId = i16;
+
+/// Identifier for an object in the game
+/// (from 0 to 32768, -1 means no object or not defined).
+using ObjectId = i16;
+
+/// Identifier for a pixel type in the game
+/// (from 0 to 32768, -1 means no pixel type or not defined).
+using PixelTypeId = i16;
+
+/// Identifier for an object type in the game (from 0 to 32768, -1 means no object type).
+using ObjectTypeId = i16;
+
+/// The total number of different pixel primitives.
+/// (updated from the original 23, to include SOLIDBOX)
+constexpr unsigned int COMS = 24;
 
 extern bool type_mode; // using type mode flag instead of scroll lock
 extern char type_this; // character to type in the keyboard
 
-extern short int nav_a, nav_b;
+/// alpha angle of the Fly
+extern i16 nav_a;
+/// beta angle of the Fly
+extern i16 nav_b;
 
-extern char taking; // Flag: attempt of taking an object.
-extern short int carry_type; // Object type being carried (-1 = none).
+extern u8 taking; // Flag: attempt of taking an object.
+extern ObjectId carry_type; // Object type being carried (-1 = none).
 extern double trackframe; // Number of frames of the docking sequence.
-extern char reset_trackframe; // Flag: reset trackframe, please.
+extern u8 reset_trackframe; // Flag: reset trackframe, please.
 extern double tracking; // Increment value to trackframe.
-extern char req_end_extra; /* Flag: si richiede la fine dell'attivit
-                                 extraveicolare ed il rientro nella nave? */
+/// Counter for the number of frames of the Fly reentering sequence.
+extern u8 req_end_extra;
 
-extern short int alfad, betad; // Angular speed of x and y.
-extern short int alfa90, beta90; // Support for some calculations.
+extern i16 alfad, betad; // Angular speed of x and y.
+extern i16 alfa90, beta90; // Support for some calculations.
 
-extern char fid; // Flag: Orientation of the direction opposite to the current one...
-extern char lead; // Flag: Orientation of the leading direction...
-extern char orig; // Flag: Orientation towards Sunny (Solicchio)...
-extern char comera_m;
+extern u8 fid; // Flag: Orientation of the direction opposite to the current one...
+extern u8 lead; // Flag: Orientation of the leading direction...
+extern u8 orig; // Flag: Orientation towards Sunny (Solicchio)...
+
+// Mouse flags
+extern u8 m;
+/// Previous mouse flags
+extern u8 comera_m;
 
 extern double spd_x; // x component of the ship's velocity.
 extern double spd_y; // y component of the ship's velocity.
@@ -64,21 +88,22 @@ extern double spd; // ship's acceleration.
 extern double rel_x, rel_y, rel_z; /* Coordinates relative to the docking site,
                                extra-vehicular activities. */
 
-extern short int obj; // Nearest object for taking (-1 = none).
-extern char m; // Mouse pointer?
-extern char echo; // Echo flags
+extern ObjectId obj; // Nearest object for taking (-1 = none).
+extern u8 echo; // Echo flags
 
-extern short int carried_pixel; // Pixel being carried (only considered in Sunny (Solicchio)).
+extern PixelId carried_pixel; // Pixel being carried (only considered in Sunny (Solicchio)).
 
 extern double disl; // dislivello incontrato da un passo all'altro.
 
-extern short int cursore; // Sulle lavagnette.
+/// Cursor position on a text board.
+extern u16 cursore;
 
-extern char explode_count; // Durante gli scoppii.
+/// Counter for explosion sequence.
+extern u8 explode_count;
 
 extern char repeat; // Ripetizione brani dai CD virtuali.
 extern char source; // Sorgente di registrazione selezionata.
-extern char quality; // Qualit dell'incisione.
+extern char quality; // Qualità dell'incisione.
 
 
 extern unsigned char ctk;
@@ -88,16 +113,20 @@ extern char subs;
 extern double prevpixx;
 extern double prevpixz;
 
-extern short int existent_pixeltypes; // Existent pixel types.
-extern short int existent_objecttypes; // Existent object types.
+/// Total number of existent pixel types
+/// according to the pixel definitions.
+extern u16 existent_pixeltypes;
+// Total number of existent object types
+/// according to the pixel definitions.
+extern u16 existent_objecttypes;
 
 /* Dati sui pixels. */
 
-extern short int pixels; // Total nr. of pixels (not initialized).
+extern u16 pixels; // Total nr. of pixels (not initialized).
 
-extern short int far *pixeltype; // Pixel type array, from 0 to existent_pixeltypes-1.
+extern PixelTypeId far *pixeltype; // Pixel type array, from 0 to existent_pixeltypes-1.
 
-extern unsigned char far *pixel_rot; // Rotation around Sunny flag.
+extern u8 far *pixel_rot; // Rotation amount around Sunny flag.
 
 extern float far  *pixel_absd;    // Absolute distance from the observer.
 extern double far *pixel_support; // Support for which pixel (in memory).
@@ -125,18 +154,20 @@ extern const int MEMORIA_RICHIESTA;
 /* Descriptions of each pixel type
    (<BUFFERS> tipi caricati per volta, <ELEMS> element per type). */
 
-extern unsigned char far *buffer; // Buffer for retrieving Id's.
+extern u8* buffer; // A multi-purpose piece of memory.
 
-extern char loaded_pixeltypes;       // Loaded pixel types.
+/// Number of loaded pixel types.
+extern u8 loaded_pixeltypes;
 
-extern short int far *pixeltype_type;      // What pixel type is defined for that pixel?
-extern unsigned char far *pixeltype_elements; // How many elements are defined for that pixel?
+extern PixelTypeId* pixeltype_type;      // What pixel type is defined for that pixel?
+extern u8*  pixeltype_elements; // How many elements are defined for that pixel type?
 
-extern const char *comspec[];
+/// The names of the primitives.
+extern const char *comspec[COMS];
 
-extern char params[coms];
+extern const u8 params[COMS];
 
-extern unsigned char far *pixel_elem_t;   // Element types. size = ELEMS*BUFFERS
+extern u8 far *pixel_elem_t;   // Element types. size = ELEMS*BUFFERS
 
 extern double far *pixel_elem_x; // Coordinates relative to pixel.
 extern double far *pixel_elem_y;
@@ -155,11 +186,16 @@ extern float  far *pixel_elem_4;
 extern char far *pixel_elem_b;
 
 // Position of the docking type for each pixel type.
-extern float far *docksite_x;  
+
+/// X coordinate of each pixel's dock site
+extern float far *docksite_x;
+/// Y coordinate of each pixel's dock site
 extern float far *docksite_y;
+/// Z coordinate of each pixel's dock site
 extern float far *docksite_z;
-// Width and Depth.
+/// Dock site width for each pixel.
 extern float far *docksite_w;
+/// Dock site height for each pixel.
 extern float far *docksite_h;
 
 // Pixel mass
@@ -170,17 +206,17 @@ extern char far *subsignal;
 
 /* Concerning objects. */
 
-extern short int objects; // Total nr. of objects (not initialized).
-extern short int _objects; // Variable used when cycling for the total number of objects.
+extern u16 objects; // Total nr. of objects (not initialized).
+extern u16 _objects; // Variable used when cycling for the total number of objects.
 
-extern short int  *objecttype;      // Object type.
+extern ObjectTypeId  *objecttype;      // Object type.
 extern double far *relative_x;      // Position X (relative to pixel).
 extern double far *relative_y;      // Position Y (relative to pixel).
 extern double far *relative_z;      // Position Z (relative to pixel).
 extern double far *absolute_x;      // Position X (absolute for Pixel = -1).
 extern double far *absolute_y;      // Position Y (absolute for Pixel = -1).
 extern double far *absolute_z;      // Position Z (absolute for Pixel = -1).
-extern short int  *object_location; // Pixel where the object can be retrieved.
+extern PixelId  *object_location; // Pixel where the object can be retrieved.
 
 /* IMPORTANT: the object's elevation at the pixel's surface for each object type.
  */
@@ -190,17 +226,22 @@ extern double object_collyblockshifting[203];
 
 // Varied support.
 
-extern short int pix; // Pixel pi vicino (ecoscandaglio, attracco automatico...)
+/// ID of the current closest pixel.
+extern PixelId pix;
 
-extern char extra; // Flag: attivit extraveicolare in corso?
+/// Flag: 1 = extravehicular activity (walking on a pixel); 0 = on Fly
+extern u8 extra;
 
 extern double r_x, r_y, r_z; // Posizioni relat. al pixel, per il fotogr. precedente.
 extern double dsx, dsy, dsz; // Posizioni reali del docksite del pixel-bersaglio.
 extern double cam_xt, cam_yt, cam_zt; // Posizioni <teoriche> dell'osservatore.
 extern double _x, _y, _z, _ox, _oy, _oz; // Temporanee nei disegni.
 
-extern double nav_x; // Coordinate di The Fly.
+/// X coordinate of The Fly
+extern double nav_x;
+/// Y coordinate of The Fly
 extern double nav_y;
+/// Z coordinate of The Fly
 extern double nav_z;
 
 extern double d; // Distanza generica.
@@ -214,16 +255,19 @@ extern char globalvocfile[13]; // sottofondi sui pixels.
 
 extern char fermo_li;
 
+/// whether the sound emitting object is close
 extern int vicini;
 extern int sta_suonando;
-extern int pixel_sonante;
+/// ID of the pixel emitting sound.
+extern PixelId pixel_sonante;
 
 extern FILE* recfile;
 
 extern double cox, coy, coz;
-extern char justloaded;
+extern u8 justloaded;
 
-extern char moving_last_object; // Sta spostando l'ultimo oggetto lasciato.
+/// Whether the last object moved is still being dropped.
+extern u8 moving_last_object; // Sta spostando l'ultimo oggetto lasciato.
 extern double cfx, cfy, cfz; // Carried-Final-relative-X/Y/Z (dove deve andare /\).
 
 extern const char *source_name[];
