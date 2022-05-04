@@ -1788,7 +1788,7 @@ void fade (unsigned char speed) {
             cticks = SDL_GetTicks();
         }
     }
-    while(!skip && dx++ < (100 / speed));
+    while(!skip && dx++ < (70 / speed));
 /*
 rip:    mpul = 0; mouse_input ();
         _BL = tasto_premuto ();
@@ -1820,7 +1820,7 @@ void load_situation(char i, bool skip_fade) {
         load_game(i);
         cout << "Game [" << i << "] successfully loaded." << endl;
         if (!skip_fade) {
-            fade (2);
+            fade (4);
         }
         rot ();
         dists ();
