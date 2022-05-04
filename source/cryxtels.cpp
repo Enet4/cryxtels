@@ -1616,8 +1616,8 @@ inline bool allocation_farm()
 void tinte (unsigned char satu)
 {
     constexpr unsigned char K = 255;
-    constexpr unsigned int GRAD_COUNT_1 = 48;
-    constexpr unsigned int GRAD_COUNT_2 = 48;
+    constexpr unsigned int GRAD_COUNT_1 = 16 * 3;
+    constexpr unsigned int GRAD_COUNT_2 = 16 * 3;
 
     constexpr float F1 = 256.f / GRAD_COUNT_1;
     constexpr float F2 = 256.f / GRAD_COUNT_2;
