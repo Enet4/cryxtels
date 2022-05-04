@@ -299,8 +299,8 @@ int main(int argc, char** argv)
         if (!run_intro) break;
 
         Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-        Txt ("WRITTEN BETWEEN 1994 AND 1997", -100, 0, 80, 2, 4, 270, 0);
-        Txt ("BY ALESSANDRO GHIGNOLA.", -85, 0, 60, 2, 4, 270, 0);
+        Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
+        Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
         Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
         Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
         if (beta<360) {
@@ -317,78 +317,35 @@ int main(int argc, char** argv)
             beta = bki1;
 //       asm {
 //          pusha
-//          les di, dword ptr adapted
-            auto di = &video_buffer[0];
             u16 i = 0;
-//          xor ah, ah
-//          int 1ah
             // this is used to get the clock ticks
-//          xor dh, dh
-            u32 dx = (SDL_GetTicks()/TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
-//          add di, dx
+            u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
             i = dx;
-//          mov cx, 16000 }
-            u32 cx = (WIDTH*HEIGHT) >> 2;
+            u16 cx = WIDTH * 50;
             do {
-//  _chic:
-//          asm {
-//              cmp di, 64004
-//              jnb _zero
-                if (i >= WIDTH*HEIGHT) {
-                    //i -= WIDTH*HEIGHT;
-                    goto _zero;
+                if (i < WIDTH*HEIGHT) {
+                    // pixel value outside fottifoh row range
+                    if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
+                        video_buffer[i] >>= 1;
+                    }
                 }
-//              cmp di, 20804
-//              jb shift
-                if (i < DELTA_U*WIDTH+4) goto shift;
-//              cmp di, 43204
-//              jb _zero }
-                if (i < DELTA_L*WIDTH+4) goto _zero;
-    shift:
-//              asm
-//              shr byte ptr es:[di], 1
-                di[i] >>= 1;
-    _zero:
-//              asm {
-//              cmp cx, 8000
-//              jb subt
                 if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
-//                  add di, 321
                     i += WIDTH + 1;
-//                  jmp norm }
                 } else {
-// subt:
-//                  asm
-//                  add di, 319
                     i += WIDTH - 1;
                 }
-//  norm:       asm {
-//              loop _chic
             } while (--cx > 0);
-//          les di, dword ptr adapted
-            di = &video_buffer[0];
-//          add di, 20800
-            //di += WIDTH*(DELTA_U);// fottifoh upper limit
-//          mov cx, 22400 }
-            //cx = (DELTA_L-DELTA_U)*WIDTH; // fottifoh space
+
+            auto di = &video_buffer[0];
             cx = HEIGHT*WIDTH; // all space
-//___chic:
-                do {
-//              asm  {
-//              cmp byte ptr es:[di], 0
-//              je ___zero
+            do {
+                // fade out effect
                 if (*di != 0) {
-//                  dec byte ptr es:[di] }
                     *di -= 1;
                 }
-//___zero:asm  {
-//              inc di
                 di++;
-//          loop ___chic
             } while (--cx > 0);
-//          popa }
         }
-        //mouse_input();
         Render();
 
         unsigned long cticks = SDL_GetTicks();
@@ -396,7 +353,6 @@ int main(int argc, char** argv)
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }
-        //while (sync==clock());
     }
 
 //    ignesci: //pop_audiofile ();
@@ -1335,7 +1291,7 @@ noang:
         nTxt ("N", -4, -4.5, 12.01, 0.07, 0.07);
         nTxt ("S", -4, -3.5, 12.01, 0.07, 0.07);
         nTxt ("E", -3.5, -4, 12.01, 0.07, 0.07);
-        nTxt ("O", -4.5, -4, 12.01, 0.07, 0.07);
+        nTxt ("W", -4.5, -4, 12.01, 0.07, 0.07);
         n (-4-tcos[nav_b+270]/2, -4-tsin[nav_b+270]/2, 12.01, -4+tcos[nav_b+270], -4+tsin[nav_b+270], 12.01);
         n (-4-tcos[nav_b+180]/2, -4-tsin[nav_b+180]/2, 12.01, -4+tcos[nav_b+180]/2, -4+tsin[nav_b+180]/2, 12.01);
         nTxt ("Z", 4, -4.5, 12.01, 0.07, 0.07);
@@ -1660,8 +1616,8 @@ inline bool allocation_farm()
 void tinte (unsigned char satu)
 {
     constexpr unsigned char K = 255;
-    constexpr unsigned int GRAD_COUNT_1 = 48;
-    constexpr unsigned int GRAD_COUNT_2 = 48;
+    constexpr unsigned int GRAD_COUNT_1 = 16 * 3;
+    constexpr unsigned int GRAD_COUNT_2 = 16 * 3;
 
     constexpr float F1 = 256.f / GRAD_COUNT_1;
     constexpr float F2 = 256.f / GRAD_COUNT_2;
