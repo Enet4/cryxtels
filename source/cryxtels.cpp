@@ -377,6 +377,9 @@ int main(int argc, char** argv)
         SDL_SetRelativeMouseMode(SDL_TRUE);
     }
 
+    // discard relativa mouse movements up to now
+    SDL_GetRelativeMouseState(&mdltx, &mdlty);
+
     // Ciclo principale.
     bool quit_now = false;
 	do
