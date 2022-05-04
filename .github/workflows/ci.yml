@@ -29,6 +29,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    - name: Cache vcpkg packages
+      uses: actions/cache@v3
+      env:
+        cache-name: vcpkg-packages
+      with:
+        path: |
+         C:/vcpkg/archives
+         C:/vcpkg/packages
+         C:/vcpkg/installed
+        key: ${{ env.cache-name }}-v1
+
     - name: Install SDL2
       run: vcpkg install sdl2:x86-windows
 
