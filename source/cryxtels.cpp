@@ -1654,13 +1654,11 @@ int random(int max_num) {
 
 void build_cosm(char& flag)
 {
-    int p;
-
     /* Costruisce il microcosmo, assegnando una posizione, casuale ma costante,
         ad ogni pixel e ad ogni oggetto. Inoltre, vengono scelte le
         forme di ogni corpo del microcosmo. */
 
-    for (p=0; p<MAX_PIXELS; p++) {
+    for (u32 p = 0; p < MAX_PIXELS; p++) {
             //pixelmass[p] = 0;
             pixeltype[p] = p % existent_pixeltypes;
             pixel_xdisloc[p] = (double)(random(10000) - random(10000)) * 150.0;
@@ -1674,8 +1672,8 @@ void build_cosm(char& flag)
     //ctk = ctrlkeys[0];
 
     cout << "Loading pixels..." << endl;
-    for (p=0; p<existent_pixeltypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existent_pixeltypes << "\r";
+    for (u16 p=0; p<existent_pixeltypes; p++) {
+        cout << "Percentage complete: " << 100 * p / existent_pixeltypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p);
     }
     cout << "Percentage complete: 100";
@@ -1683,8 +1681,8 @@ void build_cosm(char& flag)
     pixelmass[FRONTIER_M3] = 100; // Massa del fottifoh.
     pixelmass[FRONTIER_M2] = 100; // del motore orbitale.
     pixelmass[FRONTIER_M1] = 100; // del lettore di cd.
-    for (p=3; p<existent_objecttypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existent_objecttypes << "\r";
+    for (u16 p = 3; p < existent_objecttypes; p++) {
+        cout << "Percentage complete: " << 100* p / existent_objecttypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p+FRONTIER_M3);
     }
     cout << "Percentage complete: 100\n" << endl;
