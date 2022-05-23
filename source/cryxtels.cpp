@@ -203,6 +203,9 @@ void chiudi_filedriver ();
 /// Fottifoh object model
 extern i8 fotty[277];
 
+/// Run one frame of intro loop logic
+bool intro_loop();
+
 int main(int argc, char** argv)
 {
     cout << "Crystal Pixels" << endl
@@ -247,22 +250,7 @@ int main(int argc, char** argv)
 
     char yel = 0;
 
-    int i = -1, bki = -1, bki0, bki1, bki2, bki3, bki4; // Button pressed.
-
-    char blink = 0; // flag per lampeggo.
-    char dist[20]; // Stringhe usate per conversioni.
-
-    double veloc, dsol=0;
-
     int alfax;
-
-
-    //double sc = 0;
-
-    unsigned long sync;
-
-    const int DELTA_U = (HEIGHT-70)/2; // 65
-    const int DELTA_L = (HEIGHT+70)/2; // 135
 
     // Don't run the intro if a game is loaded by the user.
     bool run_intro = (argc!=2);
@@ -277,83 +265,13 @@ int main(int argc, char** argv)
     //}
     //while (!tasto_premuto() && !mpul) {
     while (run_intro) {
-        //if (!sbp_stat) play (0);
-        sync = SDL_GetTicks(); //clock();
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-              case SDL_WINDOWEVENT_RESIZED:
-                break;
-              case SDL_QUIT:
-                alfin (1);
-                exit(0);
-                break;
-              case SDL_KEYDOWN:
-              case SDL_MOUSEBUTTONDOWN:
-                run_intro = false; // Get out of here.
-                break;
-              default: break;
-            }
-        }
-        if (!run_intro) break;
-
-        Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-        Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
-        Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
-        Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
-        Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
-        if (beta<360) {
-            cam_y += 25;
-            beta += 2;
-            darken_once();
-        }
-        else {
-            c = (c+1)%360;
-            bki1 = beta; beta = c;
-            cam_y += 140;
-            Object (0);
-            cam_y -= 140;
-            beta = bki1;
-//       asm {
-//          pusha
-            u16 i = 0;
-            // this is used to get the clock ticks
-            u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
-            i = dx;
-            u16 cx = WIDTH * 50;
-            do {
-                if (i < WIDTH*HEIGHT) {
-                    // pixel value outside fottifoh row range
-                    if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
-                        video_buffer[i] >>= 1;
-                    }
-                }
-                if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
-                    i += WIDTH + 1;
-                } else {
-                    i += WIDTH - 1;
-                }
-            } while (--cx > 0);
-
-            auto di = &video_buffer[0];
-            cx = HEIGHT*WIDTH; // all space
-            do {
-                // fade out effect
-                if (*di != 0) {
-                    *di -= 1;
-                }
-                di++;
-            } while (--cx > 0);
-        }
-        Render();
-
-        unsigned long cticks = SDL_GetTicks();
-        while (sync + INTRO_TICKS_PER_FRAME > cticks) {
-            SDL_Delay(3);
-            cticks = SDL_GetTicks();
-        }
+        run_intro = intro_loop();
     }
+
+    int i = -1, bki = -1, bki0, bki1, bki2, bki3, bki4; // Button pressed.
+
+    char blink = 0; // flag per lampeggo.
+    char dist[20]; // Stringhe usate per conversioni.
 
 //    ignesci: //pop_audiofile ();
 //    ignentra: //push_audiofile ("ECHO");
@@ -365,14 +283,6 @@ int main(int argc, char** argv)
             fade (3);
     }
 
-    int rclick = 0;
-    //long stso = 0;
-    //long gap = 0;
-
-    // key hold variables
-    auto thrust_keyhold = false;
-    auto back_keyhold = false;
-
     if (grab_mouse) {
         SDL_SetRelativeMouseMode(SDL_TRUE);
     }
@@ -380,11 +290,20 @@ int main(int argc, char** argv)
     // discard relativa mouse movements up to now
     SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
+
+    //double sc = 0;
+    double veloc, dsol = 0;
+
+    bool thrust_keyhold = false;
+    bool back_keyhold = false;
+
+    int rclick = -1;
+
     // Ciclo principale.
     bool quit_now = false;
 	do
 	{
-        sync = SDL_GetTicks();
+        u32 sync = SDL_GetTicks();
         /*
 	    if (blink) {
             sync = clock();
@@ -1478,6 +1397,94 @@ noang:
 
     cout << "Quitting." << endl;
     return 0;
+}
+
+/**
+ * The game introduction loop logic, called once per frame.
+ * 
+ * @return true if the introduction should continue normally,
+ * false to end the introduction
+ */
+bool intro_loop() {
+    const int DELTA_U = (HEIGHT-70)/2; // 65
+    const int DELTA_L = (HEIGHT+70)/2; // 135
+
+    //if (!sbp_stat) play (0);
+    u32 sync = SDL_GetTicks(); //clock();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_WINDOWEVENT_RESIZED:
+            break;
+            case SDL_QUIT:
+                alfin (1);
+                exit(0);
+            break;
+            case SDL_KEYDOWN:
+            case SDL_MOUSEBUTTONDOWN:
+                return false; // Get out of here.
+            default:
+                break;
+        }
+    }
+
+    Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
+    Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
+    Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
+    Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
+    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
+    if (beta<360) {
+        cam_y += 25;
+        beta += 2;
+        darken_once();
+    }
+    else {
+        c = (c+1)%360;
+        i16 tmp = beta; beta = c;
+        cam_y += 140;
+        Object (0);
+        cam_y -= 140;
+        beta = tmp;
+
+        u16 i = 0;
+        // this is used to get the clock ticks
+        u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
+        i = dx;
+        u16 cx = WIDTH * 50;
+        do {
+            if (i < WIDTH*HEIGHT) {
+                // pixel value outside fottifoh row range
+                if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
+                    video_buffer[i] >>= 1;
+                }
+            }
+            if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
+                i += WIDTH + 1;
+            } else {
+                i += WIDTH - 1;
+            }
+        } while (--cx > 0);
+
+        auto di = &video_buffer[0];
+        cx = HEIGHT*WIDTH; // all space
+        do {
+            // fade out effect
+            if (*di != 0) {
+                *di -= 1;
+            }
+            di++;
+        } while (--cx > 0);
+    }
+    Render();
+
+    unsigned long cticks = SDL_GetTicks();
+    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
+        SDL_Delay(3);
+        cticks = SDL_GetTicks();
+    }
+
+    return true;
 }
 
 inline void init_start()
