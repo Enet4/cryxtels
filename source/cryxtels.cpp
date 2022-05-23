@@ -365,6 +365,8 @@ int main(int argc, char** argv)
                 my += mdlty;
             }
 
+            bool update_angles = true;
+
             if (!extra) {
                 if (trackframe) {
                     my = 0;
@@ -376,22 +378,24 @@ int main(int argc, char** argv)
                         if (mx<0) mx += 1800;
                         beta = mx / 5;
                     }
-                    goto noang;
+                    update_angles = false;
                 }
             }
 
-            mx -= 2*mdltx;
-            my -= 2*mdlty;
+            if (update_angles) {
+                mx -= 2*mdltx;
+                my -= 2*mdlty;
 
-            while (mx>=1800) mx -= 1800;
-            while (mx<0) mx += 1800;
-            while (my>=1800) my -= 1800;
-            while (my<0) my += 1800;
+                while (mx>=1800) mx -= 1800;
+                while (mx<0) mx += 1800;
+                while (my>=1800) my -= 1800;
+                while (my<0) my += 1800;
 
-            beta = mx / 5;
-            alfa = my / 5;
+                beta = mx / 5;
+                alfa = my / 5;
+            }
         }
-noang:
+
         // Mod keys array update
         update_ctrlkeys();
 
