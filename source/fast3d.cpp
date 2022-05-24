@@ -356,8 +356,8 @@ void Segmento (unsigned int x, unsigned int y,
         unsigned char* di2 = si + WIDTH*di + (global_x >> 16);
 
         if ( *di2 < 32 ) {
-            SDL_assert(di2-WIDTH >= &video_buffer[0]);
-            SDL_assert(di2+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
+            SDL_assert(di2-WIDTH-1 >= &video_buffer[0]);
+            SDL_assert(di2+WIDTH+1 < &video_buffer[0]+WIDTH*HEIGHT);
             // left
             *(di2-1)       += 2;
             // center
