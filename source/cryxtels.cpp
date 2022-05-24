@@ -275,28 +275,6 @@ int main(int argc, char** argv)
     // discard relativa mouse movements up to now
     SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
-    // declaration of main variables
-    char bkecho = 1; // bk-up per l'ecoscandaglio
-    /// triggered when the player is close enough to Sunny,
-    /// so that the palette is tweaked accordingly
-    bool yel = false;
-
-    int bki = -1; // Button pressed.
-
-    char blink = 0; // flag per lampeggìo.
-
-    /// persistent distance to Sunny,
-    /// calculated each frame
-    double dsol = 0;
-
-    /// tracker for whether the thrust key is held
-    bool thrust_keyhold = false;
-    /// tracker for whether the back key is held
-    bool back_keyhold = false;
-
-    /// tracker for right click holding duration
-    int rclick = -1;
-
     // Ciclo principale.
     bool running = true;
 	do
