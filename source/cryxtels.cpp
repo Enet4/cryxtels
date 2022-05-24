@@ -242,16 +242,6 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    // declaration of main variables
-    int p; // Contatore generico.
-    int o; // Idem.
-
-    char bkecho = 1; // bk-up per l'ecoscandaglio
-
-    char yel = 0;
-
-    int alfax;
-
     // Don't run the intro if a game is loaded by the user.
     bool run_intro = (argc!=2);
 
@@ -267,11 +257,6 @@ int main(int argc, char** argv)
     while (run_intro) {
         run_intro = intro_loop();
     }
-
-    int i = -1, bki = -1, bki0, bki1, bki2, bki3, bki4; // Button pressed.
-
-    char blink = 0; // flag per lampeggo.
-    char dist[20]; // Stringhe usate per conversioni.
 
 //    ignesci: //pop_audiofile ();
 //    ignentra: //push_audiofile ("ECHO");
@@ -290,20 +275,36 @@ int main(int argc, char** argv)
     // discard relativa mouse movements up to now
     SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
+    // declaration of main variables
+    char bkecho = 1; // bk-up per l'ecoscandaglio
+    /// triggered when the player is close enough to Sunny,
+    /// so that the palette is tweaked accordingly
+    bool yel = false;
 
-    //double sc = 0;
-    double veloc, dsol = 0;
+    int bki = -1; // Button pressed.
 
+    char blink = 0; // flag per lampeggìo.
+
+    /// persistent distance to Sunny,
+    /// calculated each frame
+    double dsol = 0;
+
+    /// tracker for whether the thrust key is held
     bool thrust_keyhold = false;
+    /// tracker for whether the back key is held
     bool back_keyhold = false;
 
+    /// tracker for right click holding duration
     int rclick = -1;
 
     // Ciclo principale.
-    bool quit_now = false;
+    bool running = true;
 	do
 	{
         u32 sync = SDL_GetTicks();
+
+        int i = -1;
+
         /*
 	    if (blink) {
             sync = clock();
@@ -343,7 +344,7 @@ int main(int argc, char** argv)
 
         if (!trackframe&&!explode_count) {
             pix = 0;
-            for (p=0; p<pixels; p++)
+            for (u16 p = 0; p < pixels ; p++)
                 if (pixel_absd[pix]>pixel_absd[p]) {
                     if (carried_pixel>-1&&p==pixels-1) break;
                     pix = p;
@@ -401,8 +402,8 @@ int main(int argc, char** argv)
 
         // Sezione interazione da tastiera.
         //if (fermo_li) goto no_keys;
+        bool quit_now = false;
 
-        //i = 0;
         SDL_Event sdlevent;
         while (SDL_PollEvent(&sdlevent)) {
             switch (sdlevent.type) {
@@ -559,6 +560,9 @@ int main(int argc, char** argv)
                             SDL_GetRelativeMouseState(&mdltx, &mdlty);
                         }
                         break;
+                    case SDLK_ESCAPE:
+                        running = false;
+                        break;
                     default:
                         break;
                     }
@@ -701,20 +705,21 @@ int main(int argc, char** argv)
 
 //    nonpul:
 
-        // Calcolo della velocit e della distanza dal Solicchio.
-        veloc = sqrt(spd_x*spd_x+spd_y*spd_y+spd_z*spd_z);
+        // calculate speed and distance from Sunny
+        double veloc = sqrt(spd_x*spd_x+spd_y*spd_y+spd_z*spd_z);
         dsol = sqrt(cam_x*cam_x+cam_y*cam_y+cam_z*cam_z);
 
         if (dsol<15000) {
             // adjusted from (63-dsol/240)
             // to account for new sample value range (0..256)
             tinte (static_cast<unsigned char>(255 - dsol / 60.));
-            yel = 1;
+            yel = true;
         }
         else {
             if (yel) {
+                // reset to no yellow if last game frame had some yellow
                 tinte (0);
-                yel = 0;
+                yel = false;
             }
         }
 
@@ -801,6 +806,8 @@ int main(int argc, char** argv)
             rz = pixel_zdisloc[pix] - cam_z;
             d = sqrt (rx*rx + ry*ry + rz*rz);
             if (subsignal[9*pixeltype[pix]]&&d<628) {
+                char dist[20];
+
                 // backdrop
                 strcpy (dist, &subsignal[9*pixeltype[pix]]);
                 strcat (dist, ".ATM");
@@ -925,7 +932,7 @@ int main(int argc, char** argv)
 
         vicini = 0;
 
-        for (p=0; p<pixels; p++) { // Disegna tutti i pixels.
+        for (u16 p = 0; p < pixels; p++) { // Disegna tutti i pixels.
             nopix = p;
             Pixel (pixeltype[p]);
             Oggetti_sul_Pixel (0);
@@ -943,7 +950,7 @@ int main(int argc, char** argv)
         else
             justloaded = 1;
 
-        for (o=0; o<_objects; o++) { // Per gli oggetti vagabondi.
+        for (u16 o=0; o<_objects; o++) { // Per gli oggetti vagabondi.
             if (object_location[o]==-1) {
                 ox = absolute_x[o];
                 oy = absolute_y[o];
@@ -983,7 +990,7 @@ int main(int argc, char** argv)
         if (taking&&!extra) {
             kk = 500;
             obj = -1;
-            for (o=_objects-1; o>=0; o--) {
+            for (u16 o=_objects-1; o>=0; o--) {
                 if (object_location[o]==-1) {
                     _x = absolute_x[o] - cam_x;
                     _y = absolute_y[o] - cam_y;
@@ -1087,159 +1094,163 @@ int main(int argc, char** argv)
         }
     }
 
-    no_ind: if (echo&2) goto no_nav;
+    no_ind:
+    
+    // draw navigation HUD if enabled
+    if (!(echo&2)) {
 
-    if (!extra) {
-        tsinx += 361;
-        tcosx += 361;
-        tsiny += 361;
-        tcosy += 361;
-    }
+        if (!extra) {
+            tsinx += 361;
+            tcosx += 361;
+            tsiny += 361;
+            tcosy += 361;
+        }
 
-    // Pannello informativo.
-    nrect (0, 4.95, 12.01, 6, 0.95);
+        // Pannello informativo.
+        nrect (0, 4.95, 12.01, 6, 0.95);
 
-    nrect (0, 4.95, 14, 6, 0.95);
-    n (-6, 4, 12.01, -6, 4, 14);
-    n ( 6, 4, 12.01,  6, 4, 14);
-    n (-6, 5.9, 12.01, -6, 5.9, 14);
-    n ( 6, 5.9, 12.01,  6, 5.9, 14);
+        nrect (0, 4.95, 14, 6, 0.95);
+        n (-6, 4, 12.01, -6, 4, 14);
+        n ( 6, 4, 12.01,  6, 4, 14);
+        n (-6, 5.9, 12.01, -6, 5.9, 14);
+        n ( 6, 5.9, 12.01,  6, 5.9, 14);
 
-    // Parte anteriore della navicella.
-    nrect (0, 13.5, 58, 4, 2.5);
+        // Parte anteriore della navicella.
+        nrect (0, 13.5, 58, 4, 2.5);
 
-    n (-10, 16, 16,  10, 16, 16);
-    n (-10, -5, 16, -10, 16, 16);
-    n ( 10, -5, 16,  10, 16, 16);
-    n (-10,  1, 25,  -4, 11, 58); //
-    n (-10,  1, 25, -10, -5, 16); ////
-    n (-10,  1, 25,-8.7, 16, 25); //////
-    //n ( -4, 11, 58,   4, 11, 58);
-    //n (  4, 11, 58,   4, 16, 58);
-    //n ( -4, 11, 58,  -4, 16, 58);
-    //n (  4, 16, 58,  -4, 16, 58);
-    n (  4, 11, 58,  10,  1, 25); //
-    n ( 10,  1, 25,  10, -5, 16); ////
-    n ( 10,  1, 25, 8.7, 16, 25); //////
-    n (  4, 16, 58,  10, 16, 16);
-    n ( -4, 16, 58, -10, 16, 16);
-    n ( -4, 16, 58,   0, 16, 83);
-    n (  0, 16, 83,   4, 16, 58);
-    n (  0, 16, 83,  -4, 11, 58);
-    n (  0, 16, 83,   4, 11, 58);
-    n (  0, 13, 64,  -4, 11, 58);
-    n (  0, 13, 64,   4, 11, 58);
-    n (  0, 13, 64,  -4, 16, 58);
-    n (  0, 13, 64,   4, 16, 58);
+        n (-10, 16, 16,  10, 16, 16);
+        n (-10, -5, 16, -10, 16, 16);
+        n ( 10, -5, 16,  10, 16, 16);
+        n (-10,  1, 25,  -4, 11, 58); //
+        n (-10,  1, 25, -10, -5, 16); ////
+        n (-10,  1, 25,-8.7, 16, 25); //////
+        //n ( -4, 11, 58,   4, 11, 58);
+        //n (  4, 11, 58,   4, 16, 58);
+        //n ( -4, 11, 58,  -4, 16, 58);
+        //n (  4, 16, 58,  -4, 16, 58);
+        n (  4, 11, 58,  10,  1, 25); //
+        n ( 10,  1, 25,  10, -5, 16); ////
+        n ( 10,  1, 25, 8.7, 16, 25); //////
+        n (  4, 16, 58,  10, 16, 16);
+        n ( -4, 16, 58, -10, 16, 16);
+        n ( -4, 16, 58,   0, 16, 83);
+        n (  0, 16, 83,   4, 16, 58);
+        n (  0, 16, 83,  -4, 11, 58);
+        n (  0, 16, 83,   4, 11, 58);
+        n (  0, 13, 64,  -4, 11, 58);
+        n (  0, 13, 64,   4, 11, 58);
+        n (  0, 13, 64,  -4, 16, 58);
+        n (  0, 13, 64,   4, 16, 58);
 
-    if (extra) {
-        // Attracchi.
+        if (extra) {
+            // Attracchi.
 
-/*                  _x = pixel_xdisloc[pix]+docksite_x[pixeltype[pix]];
-                    _y = pixel_ydisloc[pix]+docksite_y[pixeltype[pix]];
-                    _z = pixel_zdisloc[pix]+docksite_z[pixeltype[pix]];
+    /*                  _x = pixel_xdisloc[pix]+docksite_x[pixeltype[pix]];
+                        _y = pixel_ydisloc[pix]+docksite_y[pixeltype[pix]];
+                        _z = pixel_zdisloc[pix]+docksite_z[pixeltype[pix]];
 
-                    Line3D (nav_x-10, nav_y-5, nav_z+16, _x-50, _y, _z+50);
-                    Line3D (nav_x+10, nav_y-5, nav_z+16, _x+50, _y, _z+50);
-                    Line3D (nav_x-14, nav_y-10, nav_z-31, _x-50, _y, _z-50);
-                    Line3D (nav_x+14, nav_y-10, nav_z-31, _x+50, _y, _z-50); */
+                        Line3D (nav_x-10, nav_y-5, nav_z+16, _x-50, _y, _z+50);
+                        Line3D (nav_x+10, nav_y-5, nav_z+16, _x+50, _y, _z+50);
+                        Line3D (nav_x-14, nav_y-10, nav_z-31, _x-50, _y, _z-50);
+                        Line3D (nav_x+14, nav_y-10, nav_z-31, _x+50, _y, _z-50); */
 
-        // Cabina.
-        n (-10,  -5,  16, -14, -10, -31);
-        n ( 10,  -5,  16,  14, -10, -31);
-        n (-10,  16,  16, -14,  16, -31);
-        n ( 10,  16,  16,  14,  16, -31);
-        n (-14, -10, -31,  14, -10, -31);
-        n (-14, -10, -31, -10,   0, -43);
-        n ( 14, -10, -31,  10,   0, -43);
-        n (  0,  16, -69, -10,   0, -43);
-        n (  0,  16, -69,  10,   0, -43);
-        n (  0,  16, -69, -10,  16, -43);
-        n (  0,  16, -69,  10,  16, -43);
-        n (-10,  16, -43, -14,  16, -31);
-        n ( 10,  16, -43,  14,  16, -31);
-        n (-10,   0, -43,  10,   0, -43);
-        n (-10,  16, -43,  10,  16, -43);
-        n (-10,   0, -43, -10,  16, -43);
-        n ( 10,   0, -43,  10,  16, -43);
-        n (-14, -10, -31, -14,  16, -31);
-        n ( 14, -10, -31,  14,  16, -31);
+            // Cabina.
+            n (-10,  -5,  16, -14, -10, -31);
+            n ( 10,  -5,  16,  14, -10, -31);
+            n (-10,  16,  16, -14,  16, -31);
+            n ( 10,  16,  16,  14,  16, -31);
+            n (-14, -10, -31,  14, -10, -31);
+            n (-14, -10, -31, -10,   0, -43);
+            n ( 14, -10, -31,  10,   0, -43);
+            n (  0,  16, -69, -10,   0, -43);
+            n (  0,  16, -69,  10,   0, -43);
+            n (  0,  16, -69, -10,  16, -43);
+            n (  0,  16, -69,  10,  16, -43);
+            n (-10,  16, -43, -14,  16, -31);
+            n ( 10,  16, -43,  14,  16, -31);
+            n (-10,   0, -43,  10,   0, -43);
+            n (-10,  16, -43,  10,  16, -43);
+            n (-10,   0, -43, -10,  16, -43);
+            n ( 10,   0, -43,  10,  16, -43);
+            n (-14, -10, -31, -14,  16, -31);
+            n ( 14, -10, -31,  14,  16, -31);
 
-        // Cupola della cabina.
-        n (-10,  -5,  16,  -6,  -9,   8);
-        n ( -6,  -9,   8,   6,  -9,   8);
-        n (  6,  -9,   8,  10,  -5,  16);
-        n ( -6,  -9,   8, -10, -14, -26);
-        n (-10, -14, -26, -14, -10, -31);
-        n (-10, -14, -26,  10, -14, -26);
-        n (  6,  -9,   8,  10, -14, -26);
-        n ( 10, -14, -26,  14, -10, -31);
+            // Cupola della cabina.
+            n (-10,  -5,  16,  -6,  -9,   8);
+            n ( -6,  -9,   8,   6,  -9,   8);
+            n (  6,  -9,   8,  10,  -5,  16);
+            n ( -6,  -9,   8, -10, -14, -26);
+            n (-10, -14, -26, -14, -10, -31);
+            n (-10, -14, -26,  10, -14, -26);
+            n (  6,  -9,   8,  10, -14, -26);
+            n ( 10, -14, -26,  14, -10, -31);
 
-        // Ali.
-        n (-10, 16,  16, -40, 16, -55);
-        n (-40, 16, -55, -10, 16, -43);
-        n ( 10, 16,  16,  40, 16, -55);
-        n ( 40, 16, -55,  10, 16, -43);
+            // Ali.
+            n (-10, 16,  16, -40, 16, -55);
+            n (-40, 16, -55, -10, 16, -43);
+            n ( 10, 16,  16,  40, 16, -55);
+            n ( 40, 16, -55,  10, 16, -43);
 
-    }
+        }
 
-    // Sezione ridisegno pannello di controllo informativo.
-    ox = nav_x; oy = nav_y; oz = nav_z;
+        // Sezione ridisegno pannello di controllo informativo.
+        ox = nav_x; oy = nav_y; oz = nav_z;
 
-    sprintf (dist, "F=%04d/CGR", (int)spd);
-    nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
+        char dist[20]; // Stringhe usate per conversioni.
+        sprintf (dist, "F=%04d/CGR", (int)spd);
+        nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
 
-    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
-    else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
-    nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
+        if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
+        else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
+        nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "ASC=%03hd`", nav_b);
-    nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "DEC=%03hd`", nav_a);
-    nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
+        sprintf (dist, "ASC=%03hd`", nav_b);
+        nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
+        sprintf (dist, "DEC=%03hd`", nav_a);
+        nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
-    nTxt (dist, 0.35, 4.5, 12.01, 0.06, 0.12);
-    kk = pixel_absd[pix]/33.33333333;
-    if (kk>1000)
-        sprintf (dist, "D=%1.1f:KM", kk/1000);
-    else
-        sprintf (dist, "D=%1.1f:MT", kk);
-    nTxt (dist, 0.35, 5.4, 12.01, 0.06, 0.12);
+        sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
+        nTxt (dist, 0.35, 4.5, 12.01, 0.06, 0.12);
+        kk = pixel_absd[pix]/33.33333333;
+        if (kk>1000)
+            sprintf (dist, "D=%1.1f:KM", kk/1000);
+        else
+            sprintf (dist, "D=%1.1f:MT", kk);
+        nTxt (dist, 0.35, 5.4, 12.01, 0.06, 0.12);
 
-    sprintf (dist, "X=%1.1f:KM", cam_x/33333.33333);
-    nTxt (dist, 3.1, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "Z=%1.1f:KM", cam_z/33333.33333);
-    nTxt (dist, 3.1, 5.4, 12.01, 0.07, 0.12);
+        sprintf (dist, "X=%1.1f:KM", cam_x/33333.33333);
+        nTxt (dist, 3.1, 4.5, 12.01, 0.07, 0.12);
+        sprintf (dist, "Z=%1.1f:KM", cam_z/33333.33333);
+        nTxt (dist, 3.1, 5.4, 12.01, 0.07, 0.12);
 
-    // Disegno tasti funzione, interruttori e/m, ecc...
-    if (!trackframe) {
-        nTxt ("N", -4, -4.5, 12.01, 0.07, 0.07);
-        nTxt ("S", -4, -3.5, 12.01, 0.07, 0.07);
-        nTxt ("E", -3.5, -4, 12.01, 0.07, 0.07);
-        nTxt ("W", -4.5, -4, 12.01, 0.07, 0.07);
-        n (-4-tcos[nav_b+270]/2, -4-tsin[nav_b+270]/2, 12.01, -4+tcos[nav_b+270], -4+tsin[nav_b+270], 12.01);
-        n (-4-tcos[nav_b+180]/2, -4-tsin[nav_b+180]/2, 12.01, -4+tcos[nav_b+180]/2, -4+tsin[nav_b+180]/2, 12.01);
-        nTxt ("Z", 4, -4.5, 12.01, 0.07, 0.07);
-        nTxt ("N", 4, -3.5, 12.01, 0.07, 0.07);
-        nTxt ("-", 4.5, -4, 12.01, 0.07, 0.07);
-        if (alfa>90&&alfa<270&&blink) nTxt ("*", 3.5, -4, 12.01, 0.07, 0.07);
-        alfax = 359 - nav_a;
-        n (4-tcos[alfax]/2, -4-tsin[alfax]/2, 12.01, 4+tcos[alfax], -4+tsin[alfax], 12.01);
-        n (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
-    }
+        // Disegno tasti funzione, interruttori e/m, ecc...
+        if (!trackframe) {
+            nTxt ("N", -4, -4.5, 12.01, 0.07, 0.07);
+            nTxt ("S", -4, -3.5, 12.01, 0.07, 0.07);
+            nTxt ("E", -3.5, -4, 12.01, 0.07, 0.07);
+            nTxt ("W", -4.5, -4, 12.01, 0.07, 0.07);
+            n (-4-tcos[nav_b+270]/2, -4-tsin[nav_b+270]/2, 12.01, -4+tcos[nav_b+270], -4+tsin[nav_b+270], 12.01);
+            n (-4-tcos[nav_b+180]/2, -4-tsin[nav_b+180]/2, 12.01, -4+tcos[nav_b+180]/2, -4+tsin[nav_b+180]/2, 12.01);
+            nTxt ("Z", 4, -4.5, 12.01, 0.07, 0.07);
+            nTxt ("N", 4, -3.5, 12.01, 0.07, 0.07);
+            nTxt ("-", 4.5, -4, 12.01, 0.07, 0.07);
+            if (alfa>90&&alfa<270&&blink) nTxt ("*", 3.5, -4, 12.01, 0.07, 0.07);
+            i16 alfax = 359 - nav_a;
+            n (4-tcos[alfax]/2, -4-tsin[alfax]/2, 12.01, 4+tcos[alfax], -4+tsin[alfax], 12.01);
+            n (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
+        }
 
-    bki0 = bki;
-    bki1 = bki;
-    bki2 = bki;
-    bki3 = bki;
-    bki4 = bki;
+        int bki0 = bki;
+        int bki1 = bki;
+        int bki2 = bki;
+        int bki3 = bki;
+        int bki4 = bki;
 
-    if (!trackframe&&!extra&&i==58) bki0 = i;
-    if (!extra&&i==59&&!trackframe) bki1 = i;
-    if (trackframe&&i==60) bki2 = i;
-    if (trackframe&&!extra&&i==61) bki3 = i;
-    if (orig&&i==62) bki4 = i;
+        if (!trackframe&&!extra&&i==58) bki0 = i;
+        if (!extra&&i==59&&!trackframe) bki1 = i;
+        if (trackframe&&i==60) bki2 = i;
+        if (trackframe&&!extra&&i==61) bki3 = i;
+        if (orig&&i==62) bki4 = i;
 
         console_key ("SPIN", -6.0, 58, i, i, bki0);
         console_key ("LEAD", -4.9, 59, i, i, bki1);
@@ -1260,12 +1271,11 @@ int main(int argc, char** argv)
             tsiny -= 361;
             tcosy -= 361;
         }
-
+    }
         // Esplosioni: Ragassi, esplodete gli oggetti... per favore!
-        no_nav:
             if (!explode_count) {
                 if (!trackframe) {
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]==-1&&!memcmp(&subsignal[9*(objecttype[o]+FRONTIER_M3)], "BOMB", 4)) {
                             rx = pixel_xdisloc[pix] - absolute_x[o];
                             ry = pixel_ydisloc[pix] - absolute_y[o];
@@ -1293,7 +1303,7 @@ int main(int argc, char** argv)
                         if (pixel_sonante>pix)
                             pixel_sonante--;
                     }
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]==pix) {
                             absolute_x[o] = pixel_xdisloc[pix] + relative_x[o];
                             absolute_y[o] = pixel_ydisloc[pix] + relative_y[o];
@@ -1317,7 +1327,7 @@ int main(int argc, char** argv)
                             o--;
                         }
                     }
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]>pix)
                             object_location[o]--;
                     }
@@ -1395,7 +1405,8 @@ int main(int argc, char** argv)
 
             //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
             //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
-    } while (i!=27);
+
+    } while (running);
 
     alfin (1);
 
