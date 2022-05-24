@@ -1921,7 +1921,8 @@ void dists ()
     }
 }
 
-/// walk forward in the pixel
+/// When flying, increase thrusting.
+/// When in a pixel, walk forward.
 void ispd ()
 {
 
@@ -1960,7 +1961,8 @@ void ispd ()
     }
 }
 
-/// walk backward in the pixel
+/// When flying, stop thrusting.
+/// When in a pixel, walk backward.
 void dspd ()
 {
         if (trackframe&&!extra) return;
