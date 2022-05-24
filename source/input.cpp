@@ -215,11 +215,19 @@ char trova_id (FILE* fh, const char *id) {
 }
 
 static char eol = 0;
+
+/**
+ * Read a word of information from a pixel definition file,
+ * saving it to global variable `t`.
+ * Characters are read until it reaches a semicolon (`;`)
+ * or the given code character `codcar`.
+ * 
+ * @param fh file handle to PIXELS.DEF
+ * @param codcar character to delimit the end of the word
+ * @param ptyp pixel type
+ */
 void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
 {
-    int c;
-    //char f;
-
     if (eol) {
         std::fclose (fh);
         //dsp_driver_off ();
@@ -230,7 +238,7 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
         exit (1); // FIXME exit bomb
     }
 
-    c = 0;
+    int c = 0;
     t[0] = '\0';
 
     while (c<80) {
@@ -251,8 +259,13 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
         if (std::fread(&t[c], 1, 1, fh) == 0) break;
         //if (!f) break;
         if (t[c] > 32) {
-            if (t[c-1]!='%' && t[c]>='a' && t[c]<='z')
-                t[c] -= 32;
+            // convert lowercase letters to uppercase
+            if (t[c]>='a' && t[c]<='z') {
+                // detect special character (preceeded by '%')
+                if (c == 0 || t[c-1] != '%') {
+                    t[c] -= ('a' - 'A');
+                }
+            }
             if (t[c] == '_')
                 t[c] = ' ';
             if (codcar == t[c] || t[c] == ';') {
