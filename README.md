@@ -43,6 +43,15 @@ cmake --build build --config Release -A win32 -DCMAKE_TOOLCHAIN_FILE=C:/path/to/
 
 The output is the executable file `cryxtels`.
 
+### Web version
+
+Building the Web version of Crystal Pixels
+is currently done with a different mechanism.
+Install Emscripten, then:
+
+1. Copy the file PIXELS.DEF from the `bin/` folder into the project root
+2. Run the command [build-wasm.sh](build-wasm.sh)
+
 ## Installing
 
 Place the compiled executable in the bin directory.

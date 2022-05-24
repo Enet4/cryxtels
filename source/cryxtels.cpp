@@ -43,6 +43,10 @@
 #include "SDL.h"
 #include "conf.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #ifndef far
 #define far
 #endif
@@ -209,6 +213,11 @@ bool intro_loop();
 /// Run one frame of main loop logic
 bool main_loop();
 
+#ifdef __EMSCRIPTEN__
+void intro_loop_cb();
+void main_loop_cb();
+#endif
+
 int main(int argc, char** argv)
 {
     cout << "Crystal Pixels" << endl
@@ -257,9 +266,14 @@ int main(int argc, char** argv)
     // ...
     //}
     //while (!tasto_premuto() && !mpul) {
+    #ifdef __EMSCRIPTEN__
+        emscripten_set_main_loop(intro_loop_cb, INTRO_FRAMES_PER_SECOND, 1);
+    #else
     while (run_intro) {
         run_intro = intro_loop();
     }
+    #endif
+    cout << "Intro loop ended" << endl;
 
 //    ignesci: //pop_audiofile ();
 //    ignentra: //push_audiofile ("ECHO");
@@ -279,16 +293,53 @@ int main(int argc, char** argv)
     SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
     // Ciclo principale.
+    cout << "Entering main loop" << endl;
+    #ifdef __EMSCRIPTEN__
+        emscripten_set_main_loop(main_loop_cb, FRAMES_PER_SECOND, 1);
+    #else
+
     bool running = true;
 	do {
         running = main_loop();
     } while (running);
+    #endif
 
     alfin (1);
 
     cout << "Quitting." << endl;
     return 0;
 }
+
+
+#ifdef __EMSCRIPTEN__
+void intro_loop_cb() {
+    auto run = intro_loop();
+    if (!run) {
+        emscripten_cancel_main_loop();
+
+        cout << "Intro loop ended" << endl;
+
+        cam_z = -20000;
+        fade (3);
+
+        if (grab_mouse) {
+            SDL_SetRelativeMouseMode(SDL_TRUE);
+        }
+
+        // discard relativa mouse movements up to now
+        SDL_GetRelativeMouseState(&mdltx, &mdlty);
+
+        emscripten_set_main_loop(main_loop_cb, FRAMES_PER_SECOND, 1);
+    }
+}
+
+void main_loop_cb() {
+    auto run = main_loop();
+    if (!run) {
+        emscripten_cancel_main_loop();
+    }
+}
+#endif
 
 /**
  * The game introduction loop logic, called once per frame.
@@ -301,7 +352,9 @@ bool intro_loop() {
     const int DELTA_L = (HEIGHT+70)/2; // 135
 
     //if (!sbp_stat) play (0);
+    #ifndef __EMSCRIPTEN__
     u32 sync = SDL_GetTicks(); //clock();
+    #endif
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -369,11 +422,13 @@ bool intro_loop() {
     }
     Render();
 
+    #ifndef __EMSCRIPTEN__
     unsigned long cticks = SDL_GetTicks();
     while (sync + INTRO_TICKS_PER_FRAME > cticks) {
         SDL_Delay(3);
         cticks = SDL_GetTicks();
     }
+    #endif
 
     return true;
 }
@@ -1479,15 +1534,17 @@ bool main_loop() {
 
             blink = 1 - blink; // Lampeggo della spia "volo rovesciato".
 
-            unsigned long cticks = SDL_GetTicks();
-            while (sync + TICKS_PER_FRAME > cticks) {
-                SDL_Delay(3);
-                cticks = SDL_GetTicks();
-            }
-            //while (blink && (clock()==sync)); // Sincronizzatore (max 37 fps.)
+    #ifndef __EMSCRIPTEN__
+    unsigned long cticks = SDL_GetTicks();
+    while (sync + TICKS_PER_FRAME > cticks) {
+        SDL_Delay(3);
+        cticks = SDL_GetTicks();
+    }
+    #endif
+    //while (blink && (clock()==sync)); // Sincronizzatore (max 37 fps.)
 
-            //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
-            //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
+    //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
+    //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
     return running;
 }
 
@@ -1684,16 +1741,19 @@ void build_cosm(char& flag)
 
     cout << "Loading pixels..." << endl;
     for (u16 p=0; p<existent_pixeltypes; p++) {
+        #ifndef __EMSCRIPTEN__
         cout << "Percentage complete: " << 100 * p / existent_pixeltypes << "\r";
+        #endif
         loaded_pixeltypes = 0; LoadPtyp (p);
     }
-    cout << "Percentage complete: 100";
-    cout << "\n\nLoading objects..." << endl;
+    cout << "Percentage complete: 100\n\nLoading objects..." << endl;
     pixelmass[FRONTIER_M3] = 100; // Massa del fottifoh.
     pixelmass[FRONTIER_M2] = 100; // del motore orbitale.
     pixelmass[FRONTIER_M1] = 100; // del lettore di cd.
     for (u16 p = 3; p < existent_objecttypes; p++) {
+        #ifndef __EMSCRIPTEN__
         cout << "Percentage complete: " << 100* p / existent_objecttypes << "\r";
+        #endif
         loaded_pixeltypes = 0; LoadPtyp (p+FRONTIER_M3);
     }
     cout << "Percentage complete: 100\n" << endl;
@@ -1705,8 +1765,10 @@ void build_cosm(char& flag)
         _objects = 0;
         cout << "Object positioning taking place." << endl;
         for (int o=0; o<objects; o++) {
+            #ifndef __EMSCRIPTEN__
             cout << "Percentage complete: "
                 << (100*o/objects) << "\r";
+            #endif
             object_location[o] = random (pixels);
             loaded_pixeltypes = 0;
             LoadPtyp (pixeltype[object_location[o]]);
@@ -1771,6 +1833,7 @@ void rot ()
     }
 }
 
+#ifndef __EMSCRIPTEN__
 /// enter a synchronous routine
 /// to fade out the screen
 /// (can be skipped by pressing any key)
@@ -1798,28 +1861,15 @@ void fade (unsigned char speed) {
         }
     }
     while(!skip && dx++ < (70 / speed));
-/*
-rip:    mpul = 0; mouse_input ();
-        _BL = tasto_premuto ();
-        asm {   les di, dword ptr adaptor
-                mov cx, 64000
-                xor dx, dx }
-__chic: asm {   cmp byte ptr es:[di], 0
-                je __zero
-                dec byte ptr es:[di]
-                inc dx }
-__zero: asm {   inc di
-                dec cx
-                jnz __chic
-                cmp bl, 0
-                jne halt
-                cmp mpul, 0
-                jne halt
-                cmp dx, 100
-                jnb rip }
-halt:   keybuffer_cleaner ();
-*/
 }
+#else
+/// enter a synchronous routine
+/// to fade out the screen
+/// (can be skipped by pressing any key)
+void fade (unsigned char speed) {
+    // TODO not supported in wasm yet
+}
+#endif
 
 void load_situation(char i, bool skip_fade) {
     if (i >= 'a' && i <= 'z') {
