@@ -60,6 +60,32 @@ extern i16 nav_a;
 /// beta angle of the Fly
 extern i16 nav_b;
 
+/// persistent distance to Sunny,
+/// calculated each frame
+extern double dsol;
+
+/// Whether the echo probe is on or off
+extern char bkecho;
+
+/// triggered when the player is close enough to Sunny,
+/// so that the palette is tweaked accordingly
+extern bool yel;
+
+/// Button pressed
+extern int bki;
+
+/// Flag for the radar flashes
+extern char blink;
+
+/// tracker for whether the thrust key is held
+extern bool thrust_keyhold;
+/// tracker for whether the back key is held
+extern bool back_keyhold;
+
+/// tracker for right click holding duration
+extern int rclick;
+
+
 extern u8 taking; // Flag: attempt of taking an object.
 extern ObjectId carry_type; // Object type being carried (-1 = none).
 extern double trackframe; // Number of frames of the docking sequence.

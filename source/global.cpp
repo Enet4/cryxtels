@@ -25,6 +25,27 @@ char type_this = 0; // character to type in the keyboard
 i16 nav_a = 0; // Inclinazione di The Fly.
 i16 nav_b = 0;
 
+/// persistent distance to Sunny,
+/// calculated each frame
+double dsol = 0;
+
+char bkecho = 1; // bk-up per l'ecoscandaglio
+/// triggered when the player is close enough to Sunny,
+/// so that the palette is tweaked accordingly
+bool yel = false;
+
+int bki = -1; // Button pressed.
+
+char blink = 0; // flag per lampeggìo.
+
+/// tracker for whether the thrust key is held
+bool thrust_keyhold = false;
+/// tracker for whether the back key is held
+bool back_keyhold = false;
+
+/// tracker for right click holding duration
+int rclick = -1;
+
 u8 taking = 0; // Flag: tentativo di prelevamento di un oggetto.
 ObjectId carry_type = -1; // Tipo oggetto trasportato (-1 = nessuno).
 double trackframe = 0; // Nr. fotogramma della sequenza di attracco.

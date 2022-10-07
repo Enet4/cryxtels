@@ -203,6 +203,12 @@ void chiudi_filedriver ();
 /// Fottifoh object model
 extern i8 fotty[277];
 
+/// Run one frame of intro loop logic
+bool intro_loop();
+
+/// Run one frame of main loop logic
+bool main_loop();
+
 int main(int argc, char** argv)
 {
     cout << "Crystal Pixels" << endl
@@ -239,31 +245,6 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    // declaration of main variables
-    int p; // Contatore generico.
-    int o; // Idem.
-
-    char bkecho = 1; // bk-up per l'ecoscandaglio
-
-    char yel = 0;
-
-    int i = -1, bki = -1, bki0, bki1, bki2, bki3, bki4; // Button pressed.
-
-    char blink = 0; // flag per lampeggo.
-    char dist[20]; // Stringhe usate per conversioni.
-
-    double veloc, dsol=0;
-
-    int alfax;
-
-
-    //double sc = 0;
-
-    unsigned long sync;
-
-    const int DELTA_U = (HEIGHT-70)/2; // 65
-    const int DELTA_L = (HEIGHT+70)/2; // 135
-
     // Don't run the intro if a game is loaded by the user.
     bool run_intro = (argc!=2);
 
@@ -277,82 +258,7 @@ int main(int argc, char** argv)
     //}
     //while (!tasto_premuto() && !mpul) {
     while (run_intro) {
-        //if (!sbp_stat) play (0);
-        sync = SDL_GetTicks(); //clock();
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-              case SDL_WINDOWEVENT_RESIZED:
-                break;
-              case SDL_QUIT:
-                alfin (1);
-                exit(0);
-                break;
-              case SDL_KEYDOWN:
-              case SDL_MOUSEBUTTONDOWN:
-                run_intro = false; // Get out of here.
-                break;
-              default: break;
-            }
-        }
-        if (!run_intro) break;
-
-        Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-        Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
-        Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
-        Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
-        Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
-        if (beta<360) {
-            cam_y += 25;
-            beta += 2;
-            darken_once();
-        }
-        else {
-            c = (c+1)%360;
-            bki1 = beta; beta = c;
-            cam_y += 140;
-            Object (0);
-            cam_y -= 140;
-            beta = bki1;
-//       asm {
-//          pusha
-            u16 i = 0;
-            // this is used to get the clock ticks
-            u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
-            i = dx;
-            u16 cx = WIDTH * 50;
-            do {
-                if (i < WIDTH*HEIGHT) {
-                    // pixel value outside fottifoh row range
-                    if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
-                        video_buffer[i] >>= 1;
-                    }
-                }
-                if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
-                    i += WIDTH + 1;
-                } else {
-                    i += WIDTH - 1;
-                }
-            } while (--cx > 0);
-
-            auto di = &video_buffer[0];
-            cx = HEIGHT*WIDTH; // all space
-            do {
-                // fade out effect
-                if (*di != 0) {
-                    *di -= 1;
-                }
-                di++;
-            } while (--cx > 0);
-        }
-        Render();
-
-        unsigned long cticks = SDL_GetTicks();
-        while (sync + INTRO_TICKS_PER_FRAME > cticks) {
-            SDL_Delay(3);
-            cticks = SDL_GetTicks();
-        }
+        run_intro = intro_loop();
     }
 
 //    ignesci: //pop_audiofile ();
@@ -365,14 +271,6 @@ int main(int argc, char** argv)
             fade (3);
     }
 
-    int rclick = 0;
-    //long stso = 0;
-    //long gap = 0;
-
-    // key hold variables
-    auto thrust_keyhold = false;
-    auto back_keyhold = false;
-
     if (grab_mouse) {
         SDL_SetRelativeMouseMode(SDL_TRUE);
     }
@@ -381,10 +279,115 @@ int main(int argc, char** argv)
     SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
     // Ciclo principale.
-    bool quit_now = false;
-	do
-	{
-        sync = SDL_GetTicks();
+    bool running = true;
+	do {
+        running = main_loop();
+    } while (running);
+
+    alfin (1);
+
+    cout << "Quitting." << endl;
+    return 0;
+}
+
+/**
+ * The game introduction loop logic, called once per frame.
+ * 
+ * @return true if the introduction should continue normally,
+ * false to end the introduction
+ */
+bool intro_loop() {
+    const int DELTA_U = (HEIGHT-70)/2; // 65
+    const int DELTA_L = (HEIGHT+70)/2; // 135
+
+    //if (!sbp_stat) play (0);
+    u32 sync = SDL_GetTicks(); //clock();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_WINDOWEVENT_RESIZED:
+            break;
+            case SDL_QUIT:
+                alfin (1);
+                exit(0);
+            break;
+            case SDL_KEYDOWN:
+            case SDL_MOUSEBUTTONDOWN:
+                return false; // Get out of here.
+            default:
+                break;
+        }
+    }
+
+    Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
+    Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
+    Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
+    Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
+    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
+    if (beta<360) {
+        cam_y += 25;
+        beta += 2;
+        darken_once();
+    }
+    else {
+        c = (c+1)%360;
+        i16 tmp = beta; beta = c;
+        cam_y += 140;
+        Object (0);
+        cam_y -= 140;
+        beta = tmp;
+
+        u16 i = 0;
+        // this is used to get the clock ticks
+        u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
+        i = dx;
+        u16 cx = WIDTH * 50;
+        do {
+            if (i < WIDTH*HEIGHT) {
+                // pixel value outside fottifoh row range
+                if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
+                    video_buffer[i] >>= 1;
+                }
+            }
+            if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
+                i += WIDTH + 1;
+            } else {
+                i += WIDTH - 1;
+            }
+        } while (--cx > 0);
+
+        auto di = &video_buffer[0];
+        cx = HEIGHT*WIDTH; // all space
+        do {
+            // fade out effect
+            if (*di != 0) {
+                *di -= 1;
+            }
+            di++;
+        } while (--cx > 0);
+    }
+    Render();
+
+    unsigned long cticks = SDL_GetTicks();
+    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
+        SDL_Delay(3);
+        cticks = SDL_GetTicks();
+    }
+
+    return true;
+}
+
+/// The main loop logic, called once per frame.
+///
+/// @return true if the main loop should continue normally,
+/// false to end the program gracefully
+bool main_loop() {
+    bool running = true;
+    u32 sync = SDL_GetTicks();
+
+    int i = -1;
+
         /*
 	    if (blink) {
             sync = clock();
@@ -424,7 +427,7 @@ int main(int argc, char** argv)
 
         if (!trackframe&&!explode_count) {
             pix = 0;
-            for (p=0; p<pixels; p++)
+            for (u16 p = 0; p < pixels ; p++)
                 if (pixel_absd[pix]>pixel_absd[p]) {
                     if (carried_pixel>-1&&p==pixels-1) break;
                     pix = p;
@@ -446,6 +449,8 @@ int main(int argc, char** argv)
                 my += mdlty;
             }
 
+            bool update_angles = true;
+
             if (!extra) {
                 if (trackframe) {
                     my = 0;
@@ -457,29 +462,31 @@ int main(int argc, char** argv)
                         if (mx<0) mx += 1800;
                         beta = mx / 5;
                     }
-                    goto noang;
+                    update_angles = false;
                 }
             }
 
-            mx -= 2*mdltx;
-            my -= 2*mdlty;
+            if (update_angles) {
+                mx -= 2*mdltx;
+                my -= 2*mdlty;
 
-            while (mx>=1800) mx -= 1800;
-            while (mx<0) mx += 1800;
-            while (my>=1800) my -= 1800;
-            while (my<0) my += 1800;
+                while (mx>=1800) mx -= 1800;
+                while (mx<0) mx += 1800;
+                while (my>=1800) my -= 1800;
+                while (my<0) my += 1800;
 
-            beta = mx / 5;
-            alfa = my / 5;
+                beta = mx / 5;
+                alfa = my / 5;
+            }
         }
-noang:
+
         // Mod keys array update
         update_ctrlkeys();
 
         // Sezione interazione da tastiera.
         //if (fermo_li) goto no_keys;
+        bool quit_now = false;
 
-        //i = 0;
         SDL_Event sdlevent;
         while (SDL_PollEvent(&sdlevent)) {
             switch (sdlevent.type) {
@@ -636,6 +643,9 @@ noang:
                             SDL_GetRelativeMouseState(&mdltx, &mdlty);
                         }
                         break;
+                    case SDLK_ESCAPE:
+                        running = false;
+                        break;
                     default:
                         break;
                     }
@@ -698,7 +708,7 @@ noang:
               }
             }
         }
-        if (quit_now) break;
+        if (quit_now) return false;
         //keybuffer_cleaner();
 //            }
 //            else
@@ -778,20 +788,21 @@ noang:
 
 //    nonpul:
 
-        // Calcolo della velocit e della distanza dal Solicchio.
-        veloc = sqrt(spd_x*spd_x+spd_y*spd_y+spd_z*spd_z);
+        // calculate speed and distance from Sunny
+        double veloc = sqrt(spd_x*spd_x+spd_y*spd_y+spd_z*spd_z);
         dsol = sqrt(cam_x*cam_x+cam_y*cam_y+cam_z*cam_z);
 
         if (dsol<15000) {
             // adjusted from (63-dsol/240)
             // to account for new sample value range (0..256)
             tinte (static_cast<unsigned char>(255 - dsol / 60.));
-            yel = 1;
+            yel = true;
         }
         else {
             if (yel) {
+                // reset to no yellow if last game frame had some yellow
                 tinte (0);
-                yel = 0;
+                yel = false;
             }
         }
 
@@ -878,6 +889,8 @@ noang:
             rz = pixel_zdisloc[pix] - cam_z;
             d = sqrt (rx*rx + ry*ry + rz*rz);
             if (subsignal[9*pixeltype[pix]]&&d<628) {
+                char dist[20];
+
                 // backdrop
                 strcpy (dist, &subsignal[9*pixeltype[pix]]);
                 strcat (dist, ".ATM");
@@ -1002,7 +1015,7 @@ noang:
 
         vicini = 0;
 
-        for (p=0; p<pixels; p++) { // Disegna tutti i pixels.
+        for (u16 p = 0; p < pixels; p++) { // Disegna tutti i pixels.
             nopix = p;
             Pixel (pixeltype[p]);
             Oggetti_sul_Pixel (0);
@@ -1020,7 +1033,7 @@ noang:
         else
             justloaded = 1;
 
-        for (o=0; o<_objects; o++) { // Per gli oggetti vagabondi.
+        for (u16 o=0; o<_objects; o++) { // Per gli oggetti vagabondi.
             if (object_location[o]==-1) {
                 ox = absolute_x[o];
                 oy = absolute_y[o];
@@ -1060,7 +1073,7 @@ noang:
         if (taking&&!extra) {
             kk = 500;
             obj = -1;
-            for (o=_objects-1; o>=0; o--) {
+            for (u16 o=_objects-1; o>=0; o--) {
                 if (object_location[o]==-1) {
                     _x = absolute_x[o] - cam_x;
                     _y = absolute_y[o] - cam_y;
@@ -1164,159 +1177,163 @@ noang:
         }
     }
 
-    no_ind: if (echo&2) goto no_nav;
+    no_ind:
+    
+    // draw navigation HUD if enabled
+    if (!(echo&2)) {
 
-    if (!extra) {
-        tsinx += 361;
-        tcosx += 361;
-        tsiny += 361;
-        tcosy += 361;
-    }
+        if (!extra) {
+            tsinx += 361;
+            tcosx += 361;
+            tsiny += 361;
+            tcosy += 361;
+        }
 
-    // Pannello informativo.
-    nrect (0, 4.95, 12.01, 6, 0.95);
+        // Pannello informativo.
+        nrect (0, 4.95, 12.01, 6, 0.95);
 
-    nrect (0, 4.95, 14, 6, 0.95);
-    n (-6, 4, 12.01, -6, 4, 14);
-    n ( 6, 4, 12.01,  6, 4, 14);
-    n (-6, 5.9, 12.01, -6, 5.9, 14);
-    n ( 6, 5.9, 12.01,  6, 5.9, 14);
+        nrect (0, 4.95, 14, 6, 0.95);
+        n (-6, 4, 12.01, -6, 4, 14);
+        n ( 6, 4, 12.01,  6, 4, 14);
+        n (-6, 5.9, 12.01, -6, 5.9, 14);
+        n ( 6, 5.9, 12.01,  6, 5.9, 14);
 
-    // Parte anteriore della navicella.
-    nrect (0, 13.5, 58, 4, 2.5);
+        // Parte anteriore della navicella.
+        nrect (0, 13.5, 58, 4, 2.5);
 
-    n (-10, 16, 16,  10, 16, 16);
-    n (-10, -5, 16, -10, 16, 16);
-    n ( 10, -5, 16,  10, 16, 16);
-    n (-10,  1, 25,  -4, 11, 58); //
-    n (-10,  1, 25, -10, -5, 16); ////
-    n (-10,  1, 25,-8.7, 16, 25); //////
-    //n ( -4, 11, 58,   4, 11, 58);
-    //n (  4, 11, 58,   4, 16, 58);
-    //n ( -4, 11, 58,  -4, 16, 58);
-    //n (  4, 16, 58,  -4, 16, 58);
-    n (  4, 11, 58,  10,  1, 25); //
-    n ( 10,  1, 25,  10, -5, 16); ////
-    n ( 10,  1, 25, 8.7, 16, 25); //////
-    n (  4, 16, 58,  10, 16, 16);
-    n ( -4, 16, 58, -10, 16, 16);
-    n ( -4, 16, 58,   0, 16, 83);
-    n (  0, 16, 83,   4, 16, 58);
-    n (  0, 16, 83,  -4, 11, 58);
-    n (  0, 16, 83,   4, 11, 58);
-    n (  0, 13, 64,  -4, 11, 58);
-    n (  0, 13, 64,   4, 11, 58);
-    n (  0, 13, 64,  -4, 16, 58);
-    n (  0, 13, 64,   4, 16, 58);
+        n (-10, 16, 16,  10, 16, 16);
+        n (-10, -5, 16, -10, 16, 16);
+        n ( 10, -5, 16,  10, 16, 16);
+        n (-10,  1, 25,  -4, 11, 58); //
+        n (-10,  1, 25, -10, -5, 16); ////
+        n (-10,  1, 25,-8.7, 16, 25); //////
+        //n ( -4, 11, 58,   4, 11, 58);
+        //n (  4, 11, 58,   4, 16, 58);
+        //n ( -4, 11, 58,  -4, 16, 58);
+        //n (  4, 16, 58,  -4, 16, 58);
+        n (  4, 11, 58,  10,  1, 25); //
+        n ( 10,  1, 25,  10, -5, 16); ////
+        n ( 10,  1, 25, 8.7, 16, 25); //////
+        n (  4, 16, 58,  10, 16, 16);
+        n ( -4, 16, 58, -10, 16, 16);
+        n ( -4, 16, 58,   0, 16, 83);
+        n (  0, 16, 83,   4, 16, 58);
+        n (  0, 16, 83,  -4, 11, 58);
+        n (  0, 16, 83,   4, 11, 58);
+        n (  0, 13, 64,  -4, 11, 58);
+        n (  0, 13, 64,   4, 11, 58);
+        n (  0, 13, 64,  -4, 16, 58);
+        n (  0, 13, 64,   4, 16, 58);
 
-    if (extra) {
-        // Attracchi.
+        if (extra) {
+            // Attracchi.
 
-/*                  _x = pixel_xdisloc[pix]+docksite_x[pixeltype[pix]];
-                    _y = pixel_ydisloc[pix]+docksite_y[pixeltype[pix]];
-                    _z = pixel_zdisloc[pix]+docksite_z[pixeltype[pix]];
+    /*                  _x = pixel_xdisloc[pix]+docksite_x[pixeltype[pix]];
+                        _y = pixel_ydisloc[pix]+docksite_y[pixeltype[pix]];
+                        _z = pixel_zdisloc[pix]+docksite_z[pixeltype[pix]];
 
-                    Line3D (nav_x-10, nav_y-5, nav_z+16, _x-50, _y, _z+50);
-                    Line3D (nav_x+10, nav_y-5, nav_z+16, _x+50, _y, _z+50);
-                    Line3D (nav_x-14, nav_y-10, nav_z-31, _x-50, _y, _z-50);
-                    Line3D (nav_x+14, nav_y-10, nav_z-31, _x+50, _y, _z-50); */
+                        Line3D (nav_x-10, nav_y-5, nav_z+16, _x-50, _y, _z+50);
+                        Line3D (nav_x+10, nav_y-5, nav_z+16, _x+50, _y, _z+50);
+                        Line3D (nav_x-14, nav_y-10, nav_z-31, _x-50, _y, _z-50);
+                        Line3D (nav_x+14, nav_y-10, nav_z-31, _x+50, _y, _z-50); */
 
-        // Cabina.
-        n (-10,  -5,  16, -14, -10, -31);
-        n ( 10,  -5,  16,  14, -10, -31);
-        n (-10,  16,  16, -14,  16, -31);
-        n ( 10,  16,  16,  14,  16, -31);
-        n (-14, -10, -31,  14, -10, -31);
-        n (-14, -10, -31, -10,   0, -43);
-        n ( 14, -10, -31,  10,   0, -43);
-        n (  0,  16, -69, -10,   0, -43);
-        n (  0,  16, -69,  10,   0, -43);
-        n (  0,  16, -69, -10,  16, -43);
-        n (  0,  16, -69,  10,  16, -43);
-        n (-10,  16, -43, -14,  16, -31);
-        n ( 10,  16, -43,  14,  16, -31);
-        n (-10,   0, -43,  10,   0, -43);
-        n (-10,  16, -43,  10,  16, -43);
-        n (-10,   0, -43, -10,  16, -43);
-        n ( 10,   0, -43,  10,  16, -43);
-        n (-14, -10, -31, -14,  16, -31);
-        n ( 14, -10, -31,  14,  16, -31);
+            // Cabina.
+            n (-10,  -5,  16, -14, -10, -31);
+            n ( 10,  -5,  16,  14, -10, -31);
+            n (-10,  16,  16, -14,  16, -31);
+            n ( 10,  16,  16,  14,  16, -31);
+            n (-14, -10, -31,  14, -10, -31);
+            n (-14, -10, -31, -10,   0, -43);
+            n ( 14, -10, -31,  10,   0, -43);
+            n (  0,  16, -69, -10,   0, -43);
+            n (  0,  16, -69,  10,   0, -43);
+            n (  0,  16, -69, -10,  16, -43);
+            n (  0,  16, -69,  10,  16, -43);
+            n (-10,  16, -43, -14,  16, -31);
+            n ( 10,  16, -43,  14,  16, -31);
+            n (-10,   0, -43,  10,   0, -43);
+            n (-10,  16, -43,  10,  16, -43);
+            n (-10,   0, -43, -10,  16, -43);
+            n ( 10,   0, -43,  10,  16, -43);
+            n (-14, -10, -31, -14,  16, -31);
+            n ( 14, -10, -31,  14,  16, -31);
 
-        // Cupola della cabina.
-        n (-10,  -5,  16,  -6,  -9,   8);
-        n ( -6,  -9,   8,   6,  -9,   8);
-        n (  6,  -9,   8,  10,  -5,  16);
-        n ( -6,  -9,   8, -10, -14, -26);
-        n (-10, -14, -26, -14, -10, -31);
-        n (-10, -14, -26,  10, -14, -26);
-        n (  6,  -9,   8,  10, -14, -26);
-        n ( 10, -14, -26,  14, -10, -31);
+            // Cupola della cabina.
+            n (-10,  -5,  16,  -6,  -9,   8);
+            n ( -6,  -9,   8,   6,  -9,   8);
+            n (  6,  -9,   8,  10,  -5,  16);
+            n ( -6,  -9,   8, -10, -14, -26);
+            n (-10, -14, -26, -14, -10, -31);
+            n (-10, -14, -26,  10, -14, -26);
+            n (  6,  -9,   8,  10, -14, -26);
+            n ( 10, -14, -26,  14, -10, -31);
 
-        // Ali.
-        n (-10, 16,  16, -40, 16, -55);
-        n (-40, 16, -55, -10, 16, -43);
-        n ( 10, 16,  16,  40, 16, -55);
-        n ( 40, 16, -55,  10, 16, -43);
+            // Ali.
+            n (-10, 16,  16, -40, 16, -55);
+            n (-40, 16, -55, -10, 16, -43);
+            n ( 10, 16,  16,  40, 16, -55);
+            n ( 40, 16, -55,  10, 16, -43);
 
-    }
+        }
 
-    // Sezione ridisegno pannello di controllo informativo.
-    ox = nav_x; oy = nav_y; oz = nav_z;
+        // Sezione ridisegno pannello di controllo informativo.
+        ox = nav_x; oy = nav_y; oz = nav_z;
 
-    sprintf (dist, "F=%04d/CGR", (int)spd);
-    nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
+        char dist[20]; // Stringhe usate per conversioni.
+        sprintf (dist, "F=%04d/CGR", (int)spd);
+        nTxt (dist, -5.5, 4.5, 12.01, 0.07, 0.12);
 
-    if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
-    else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
-    nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
+        if (!trackframe) sprintf (dist, "V=%04.0f:K/H", veloc*1.9656);
+        else sprintf (dist, "--DOCKED--" /*"ATTRACCATO"*/);
+        nTxt (dist, -5.5, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "ASC=%03hd`", nav_b);
-    nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "DEC=%03hd`", nav_a);
-    nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
+        sprintf (dist, "ASC=%03hd`", nav_b);
+        nTxt (dist, -2.25, 4.5, 12.01, 0.07, 0.12);
+        sprintf (dist, "DEC=%03hd`", nav_a);
+        nTxt (dist, -2.25, 5.4, 12.01, 0.07, 0.12);
 
-    sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
-    nTxt (dist, 0.35, 4.5, 12.01, 0.06, 0.12);
-    kk = pixel_absd[pix]/33.33333333;
-    if (kk>1000)
-        sprintf (dist, "D=%1.1f:KM", kk/1000);
-    else
-        sprintf (dist, "D=%1.1f:MT", kk);
-    nTxt (dist, 0.35, 5.4, 12.01, 0.06, 0.12);
+        sprintf (dist, "H=%1.1f:KM", -cam_y/33333.33333);
+        nTxt (dist, 0.35, 4.5, 12.01, 0.06, 0.12);
+        kk = pixel_absd[pix]/33.33333333;
+        if (kk>1000)
+            sprintf (dist, "D=%1.1f:KM", kk/1000);
+        else
+            sprintf (dist, "D=%1.1f:MT", kk);
+        nTxt (dist, 0.35, 5.4, 12.01, 0.06, 0.12);
 
-    sprintf (dist, "X=%1.1f:KM", cam_x/33333.33333);
-    nTxt (dist, 3.1, 4.5, 12.01, 0.07, 0.12);
-    sprintf (dist, "Z=%1.1f:KM", cam_z/33333.33333);
-    nTxt (dist, 3.1, 5.4, 12.01, 0.07, 0.12);
+        sprintf (dist, "X=%1.1f:KM", cam_x/33333.33333);
+        nTxt (dist, 3.1, 4.5, 12.01, 0.07, 0.12);
+        sprintf (dist, "Z=%1.1f:KM", cam_z/33333.33333);
+        nTxt (dist, 3.1, 5.4, 12.01, 0.07, 0.12);
 
-    // Disegno tasti funzione, interruttori e/m, ecc...
-    if (!trackframe) {
-        nTxt ("N", -4, -4.5, 12.01, 0.07, 0.07);
-        nTxt ("S", -4, -3.5, 12.01, 0.07, 0.07);
-        nTxt ("E", -3.5, -4, 12.01, 0.07, 0.07);
-        nTxt ("W", -4.5, -4, 12.01, 0.07, 0.07);
-        n (-4-tcos[nav_b+270]/2, -4-tsin[nav_b+270]/2, 12.01, -4+tcos[nav_b+270], -4+tsin[nav_b+270], 12.01);
-        n (-4-tcos[nav_b+180]/2, -4-tsin[nav_b+180]/2, 12.01, -4+tcos[nav_b+180]/2, -4+tsin[nav_b+180]/2, 12.01);
-        nTxt ("Z", 4, -4.5, 12.01, 0.07, 0.07);
-        nTxt ("N", 4, -3.5, 12.01, 0.07, 0.07);
-        nTxt ("-", 4.5, -4, 12.01, 0.07, 0.07);
-        if (alfa>90&&alfa<270&&blink) nTxt ("*", 3.5, -4, 12.01, 0.07, 0.07);
-        alfax = 359 - nav_a;
-        n (4-tcos[alfax]/2, -4-tsin[alfax]/2, 12.01, 4+tcos[alfax], -4+tsin[alfax], 12.01);
-        n (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
-    }
+        // Disegno tasti funzione, interruttori e/m, ecc...
+        if (!trackframe) {
+            nTxt ("N", -4, -4.5, 12.01, 0.07, 0.07);
+            nTxt ("S", -4, -3.5, 12.01, 0.07, 0.07);
+            nTxt ("E", -3.5, -4, 12.01, 0.07, 0.07);
+            nTxt ("W", -4.5, -4, 12.01, 0.07, 0.07);
+            n (-4-tcos[nav_b+270]/2, -4-tsin[nav_b+270]/2, 12.01, -4+tcos[nav_b+270], -4+tsin[nav_b+270], 12.01);
+            n (-4-tcos[nav_b+180]/2, -4-tsin[nav_b+180]/2, 12.01, -4+tcos[nav_b+180]/2, -4+tsin[nav_b+180]/2, 12.01);
+            nTxt ("Z", 4, -4.5, 12.01, 0.07, 0.07);
+            nTxt ("N", 4, -3.5, 12.01, 0.07, 0.07);
+            nTxt ("-", 4.5, -4, 12.01, 0.07, 0.07);
+            if (alfa>90&&alfa<270&&blink) nTxt ("*", 3.5, -4, 12.01, 0.07, 0.07);
+            i16 alfax = 359 - nav_a;
+            n (4-tcos[alfax]/2, -4-tsin[alfax]/2, 12.01, 4+tcos[alfax], -4+tsin[alfax], 12.01);
+            n (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
+        }
 
-    bki0 = bki;
-    bki1 = bki;
-    bki2 = bki;
-    bki3 = bki;
-    bki4 = bki;
+        int bki0 = bki;
+        int bki1 = bki;
+        int bki2 = bki;
+        int bki3 = bki;
+        int bki4 = bki;
 
-    if (!trackframe&&!extra&&i==58) bki0 = i;
-    if (!extra&&i==59&&!trackframe) bki1 = i;
-    if (trackframe&&i==60) bki2 = i;
-    if (trackframe&&!extra&&i==61) bki3 = i;
-    if (orig&&i==62) bki4 = i;
+        if (!trackframe&&!extra&&i==58) bki0 = i;
+        if (!extra&&i==59&&!trackframe) bki1 = i;
+        if (trackframe&&i==60) bki2 = i;
+        if (trackframe&&!extra&&i==61) bki3 = i;
+        if (orig&&i==62) bki4 = i;
 
         console_key ("SPIN", -6.0, 58, i, i, bki0);
         console_key ("LEAD", -4.9, 59, i, i, bki1);
@@ -1337,12 +1354,11 @@ noang:
             tsiny -= 361;
             tcosy -= 361;
         }
-
+    }
         // Esplosioni: Ragassi, esplodete gli oggetti... per favore!
-        no_nav:
             if (!explode_count) {
                 if (!trackframe) {
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]==-1&&!memcmp(&subsignal[9*(objecttype[o]+FRONTIER_M3)], "BOMB", 4)) {
                             rx = pixel_xdisloc[pix] - absolute_x[o];
                             ry = pixel_ydisloc[pix] - absolute_y[o];
@@ -1370,7 +1386,7 @@ noang:
                         if (pixel_sonante>pix)
                             pixel_sonante--;
                     }
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]==pix) {
                             absolute_x[o] = pixel_xdisloc[pix] + relative_x[o];
                             absolute_y[o] = pixel_ydisloc[pix] + relative_y[o];
@@ -1394,7 +1410,7 @@ noang:
                             o--;
                         }
                     }
-                    for (o=0; o<_objects; o++) {
+                    for (u16 o=0; o<_objects; o++) {
                         if (object_location[o]>pix)
                             object_location[o]--;
                     }
@@ -1472,12 +1488,7 @@ noang:
 
             //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
             //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
-    } while (i!=27);
-
-    alfin (1);
-
-    cout << "Quitting." << endl;
-    return 0;
+    return running;
 }
 
 inline void init_start()
@@ -1654,13 +1665,11 @@ int random(int max_num) {
 
 void build_cosm(char& flag)
 {
-    int p;
-
     /* Costruisce il microcosmo, assegnando una posizione, casuale ma costante,
         ad ogni pixel e ad ogni oggetto. Inoltre, vengono scelte le
         forme di ogni corpo del microcosmo. */
 
-    for (p=0; p<MAX_PIXELS; p++) {
+    for (u32 p = 0; p < MAX_PIXELS; p++) {
             //pixelmass[p] = 0;
             pixeltype[p] = p % existent_pixeltypes;
             pixel_xdisloc[p] = (double)(random(10000) - random(10000)) * 150.0;
@@ -1674,8 +1683,8 @@ void build_cosm(char& flag)
     //ctk = ctrlkeys[0];
 
     cout << "Loading pixels..." << endl;
-    for (p=0; p<existent_pixeltypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existent_pixeltypes << "\r";
+    for (u16 p=0; p<existent_pixeltypes; p++) {
+        cout << "Percentage complete: " << 100 * p / existent_pixeltypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p);
     }
     cout << "Percentage complete: 100";
@@ -1683,8 +1692,8 @@ void build_cosm(char& flag)
     pixelmass[FRONTIER_M3] = 100; // Massa del fottifoh.
     pixelmass[FRONTIER_M2] = 100; // del motore orbitale.
     pixelmass[FRONTIER_M1] = 100; // del lettore di cd.
-    for (p=3; p<existent_objecttypes; p++) {
-        cout << "Percentage complete: " << 100*(int)p/existent_objecttypes << "\r";
+    for (u16 p = 3; p < existent_objecttypes; p++) {
+        cout << "Percentage complete: " << 100* p / existent_objecttypes << "\r";
         loaded_pixeltypes = 0; LoadPtyp (p+FRONTIER_M3);
     }
     cout << "Percentage complete: 100\n" << endl;
@@ -1912,7 +1921,8 @@ void dists ()
     }
 }
 
-/// walk forward in the pixel
+/// When flying, increase thrusting.
+/// When in a pixel, walk forward.
 void ispd ()
 {
 
@@ -1951,7 +1961,8 @@ void ispd ()
     }
 }
 
-/// walk backward in the pixel
+/// When flying, stop thrusting.
+/// When in a pixel, walk backward.
 void dspd ()
 {
         if (trackframe&&!extra) return;
