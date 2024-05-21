@@ -18,11 +18,6 @@
 #ifndef GLOBAL_H_INCLUDED
 #define GLOBAL_H_INCLUDED
 
-// Discarding all old "far" qualifiers
-#ifndef far
-#define far
-#endif
-
 // provide strcasecmp to msvc
 #ifdef _MSC_VER
 #include <string.h>
@@ -150,15 +145,15 @@ extern u16 existent_objecttypes;
 
 extern u16 pixels; // Total nr. of pixels (not initialized).
 
-extern PixelTypeId far *pixeltype; // Pixel type array, from 0 to existent_pixeltypes-1.
+extern PixelTypeId *pixeltype; // Pixel type array, from 0 to existent_pixeltypes-1.
 
-extern u8 far *pixel_rot; // Rotation amount around Sunny flag.
+extern u8 *pixel_rot; // Rotation amount around Sunny flag.
 
-extern float far  *pixel_absd;    // Absolute distance from the observer.
-extern double far *pixel_support; // Support for which pixel (in memory).
-extern double far *pixel_xdisloc; // Position X.
-extern double far *pixel_ydisloc; //     -    Y.
-extern double far *pixel_zdisloc; //     -    Z.
+extern float  *pixel_absd;    // Absolute distance from the observer.
+extern double *pixel_support; // Support for which pixel (in memory).
+extern double *pixel_xdisloc; // Position X.
+extern double *pixel_ydisloc; //     -    Y.
+extern double *pixel_zdisloc; //     -    Z.
 
 // Command definitions.
 
@@ -193,15 +188,15 @@ extern const char *comspec[COMS];
 
 extern const u8 params[COMS];
 
-extern u8 far *pixel_elem_t;   // Element types. size = ELEMS*BUFFERS
+extern u8 *pixel_elem_t;   // Element types. size = ELEMS*BUFFERS
 
-extern double far *pixel_elem_x; // Coordinates relative to pixel.
-extern double far *pixel_elem_y;
-extern double far *pixel_elem_z;
-extern float  far *pixel_elem_1; // Special parameters (l, h, p, r, orient) ...
-extern float  far *pixel_elem_2;
-extern float  far *pixel_elem_3;
-extern float  far *pixel_elem_4;
+extern double *pixel_elem_x; // Coordinates relative to pixel.
+extern double *pixel_elem_y;
+extern double *pixel_elem_z;
+extern float  *pixel_elem_1; // Special parameters (l, h, p, r, orient) ...
+extern float  *pixel_elem_2;
+extern float  *pixel_elem_3;
+extern float  *pixel_elem_4;
 
 /** Text buffer for the TEXT function (40 car.),
  * the buffer contains the text, but can contain the
@@ -209,26 +204,26 @@ extern float  far *pixel_elem_4;
  * Text parameters, in numeric order from 0:
  * x, y, z, scalax, scalay, or.x, or.y
  */
-extern char far *pixel_elem_b;
+extern char *pixel_elem_b;
 
 // Position of the docking type for each pixel type.
 
 /// X coordinate of each pixel's dock site
-extern float far *docksite_x;
+extern float *docksite_x;
 /// Y coordinate of each pixel's dock site
-extern float far *docksite_y;
+extern float *docksite_y;
 /// Z coordinate of each pixel's dock site
-extern float far *docksite_z;
+extern float *docksite_z;
 /// Dock site width for each pixel.
-extern float far *docksite_w;
+extern float *docksite_w;
 /// Dock site height for each pixel.
-extern float far *docksite_h;
+extern float *docksite_h;
 
 // Pixel mass
-extern float far *pixelmass;
+extern float *pixelmass;
 
 // Files for sottofondi audio.
-extern char far *subsignal;
+extern char *subsignal;
 
 /* Concerning objects. */
 
@@ -236,12 +231,12 @@ extern u16 objects; // Total nr. of objects (not initialized).
 extern u16 _objects; // Variable used when cycling for the total number of objects.
 
 extern ObjectTypeId  *objecttype;      // Object type.
-extern double far *relative_x;      // Position X (relative to pixel).
-extern double far *relative_y;      // Position Y (relative to pixel).
-extern double far *relative_z;      // Position Z (relative to pixel).
-extern double far *absolute_x;      // Position X (absolute for Pixel = -1).
-extern double far *absolute_y;      // Position Y (absolute for Pixel = -1).
-extern double far *absolute_z;      // Position Z (absolute for Pixel = -1).
+extern double *relative_x;      // Position X (relative to pixel).
+extern double *relative_y;      // Position Y (relative to pixel).
+extern double *relative_z;      // Position Z (relative to pixel).
+extern double *absolute_x;      // Position X (absolute for Pixel = -1).
+extern double *absolute_y;      // Position Y (absolute for Pixel = -1).
+extern double *absolute_z;      // Position Z (absolute for Pixel = -1).
 extern PixelId  *object_location; // Pixel where the object can be retrieved.
 
 /* IMPORTANT: the object's elevation at the pixel's surface for each object type.

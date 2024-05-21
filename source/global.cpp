@@ -105,11 +105,11 @@ PixelTypeId* pixeltype; // Tipo di pixel, da 0 a existent_pixeltypes-1.
 
 u8* pixel_rot; // Flag di rotazione attorno al Solicchio.
 
-float far  *pixel_absd;    // Distanza assoluta dall'osservatore.
-double far *pixel_support; // Supporto per quel pixel (piccola memoria).
-double far *pixel_xdisloc; // Posizione X.
-double far *pixel_ydisloc; //     -     Y.
-double far *pixel_zdisloc; //     -     Z.
+float  *pixel_absd;    // Distanza assoluta dall'osservatore.
+double *pixel_support; // Supporto per quel pixel (piccola memoria).
+double *pixel_xdisloc; // Posizione X.
+double *pixel_ydisloc; //     -     Y.
+double *pixel_zdisloc; //     -     Z.
 
 // Definizioni comode.
 
@@ -132,7 +132,7 @@ const int FRONTIER_COMPL_M1 = 649 - FRONTIER;
 // Warning: this constant is likely outdated, do not rely on it
 const int MEMORIA_RICHIESTA = 251901 + 81*ELEMS*BUFFERS + 3*BUFFERS;
 
-//unsigned char far *ctrlkeys = (unsigned char far *) 0x417;
+//unsigned char *ctrlkeys = (unsigned char *) 0x417;
 
 /* Descrizione dei tipi di pixel
    (<BUFFERS> tipi caricati per volta, <ELEMS> elementi per tipo). */
@@ -141,8 +141,8 @@ u8 *buffer; // Buffer per la ricerca degli Id.
 
 u8 loaded_pixeltypes;       // Tipi di pixel caricati.
 
-PixelTypeId far *pixeltype_type;      // Che tipo di pixel ha questa definizione?
-u8 far *pixeltype_elements; // Quanti elementi contiene la definizione?
+PixelTypeId *pixeltype_type;      // Che tipo di pixel ha questa definizione?
+u8 *pixeltype_elements; // Quanti elementi contiene la definizione?
 
 const char* comspec[COMS] = {
 "ENDPIXEL", // FINEPIXEL
@@ -201,30 +201,30 @@ const u8 params[COMS] = {
 
 u8* pixel_elem_t;   // Tipo di elemento.
 
-double far *pixel_elem_x; // Coordinate relative al pixel.
-double far *pixel_elem_y;
-double far *pixel_elem_z;
-float  far *pixel_elem_1; // Parametri speciali (l, h, p, r, orient) ...
-float  far *pixel_elem_2;
-float  far *pixel_elem_3;
-float  far *pixel_elem_4;
+double *pixel_elem_x; // Coordinate relative al pixel.
+double *pixel_elem_y;
+double *pixel_elem_z;
+float  *pixel_elem_1; // Parametri speciali (l, h, p, r, orient) ...
+float  *pixel_elem_2;
+float  *pixel_elem_3;
+float  *pixel_elem_4;
 
-char far *pixel_elem_b;   /* Buffer testuale per la funzione TEXT (40 car.),
+char *pixel_elem_b;   /* Buffer testuale per la funzione TEXT (40 car.),
                              il buffer contiene il testo, ma può contenere
                              l'id del pixel se nel testo viene inserito
                              il simbolo "%d", insieme ad eventuali caratteri.
                              Parametri per text, in ordine numerico da 0:
                              x, y, z, scalax, scalay, or.x, or.y */
 
-float far *docksite_x;   // Posizione dei siti di attracco per ogni pixeltype.
-float far *docksite_y;
-float far *docksite_z;
-float far *docksite_w;   // Larghezza e Profondità.
-float far *docksite_h;
+float *docksite_x;   // Posizione dei siti di attracco per ogni pixeltype.
+float *docksite_y;
+float *docksite_z;
+float *docksite_w;   // Larghezza e Profondità.
+float *docksite_h;
 
-float far *pixelmass; // Massa.
+float *pixelmass; // Massa.
 
-char far *subsignal; // Files per sottofondi audio.
+char *subsignal; // Files per sottofondi audio.
 
 /* Dati sugli oggetti. */
 
@@ -232,20 +232,20 @@ u16 objects = 0; // Nr. totale degli oggetti (non inizializzato).
 u16 _objects; // Variabile usata nei cicli come nr. totale di oggetti.
 
 ObjectTypeId  *objecttype;      // Tipo d'oggetto.
-double far *relative_x;      // Posizione X (relativa a quella del Pixel).
-double far *relative_y;      // Posizione Y (relativa a quella del Pixel).
-double far *relative_z;      // Posizione Z (relativa a quella del Pixel).
-double far *absolute_x;      // Posizione X (assoluta per Pixel = -1).
-double far *absolute_y;      // Posizione Y (assoluta per Pixel = -1).
-double far *absolute_z;      // Posizione Z (assoluta per Pixel = -1).
+double *relative_x;      // Posizione X (relativa a quella del Pixel).
+double *relative_y;      // Posizione Y (relativa a quella del Pixel).
+double *relative_z;      // Posizione Z (relativa a quella del Pixel).
+double *absolute_x;      // Posizione X (assoluta per Pixel = -1).
+double *absolute_y;      // Posizione Y (assoluta per Pixel = -1).
+double *absolute_z;      // Posizione Z (assoluta per Pixel = -1).
 PixelId  *object_location; // Pixel su cui si trova l'oggetto.
 
 /* IMPORTANTE: elevazione sulla superficie del pixel
                per ogni tipo di oggetto.
                I primi 3 sono già definiti a zerozerouno. */
 
-double far object_elevation[203] = { 0.01, 0.01, 0.01 };
-double far object_collyblockshifting[203];
+double object_elevation[203] = { 0.01, 0.01, 0.01 };
+double object_collyblockshifting[203];
 
 // Supporti vari.
 

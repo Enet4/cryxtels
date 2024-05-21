@@ -43,10 +43,6 @@
 #include "SDL.h"
 #include "conf.h"
 
-#ifndef far
-#define far
-#endif
-
 using namespace std;
 
 constexpr int TICKS_IN_A_SECOND = 1000;

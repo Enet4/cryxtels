@@ -23,10 +23,6 @@
 #include <memory>
 #include "primitives.h"
 
-#ifndef far
-#define far
-#endif
-
 constexpr double Pi = 3.141592653589793238462643383;
 
 /// The software membory buffer to perform all rendering in.
@@ -36,9 +32,9 @@ extern std::unique_ptr<u8[]> video_buffer;
 //extern SDL_Surface * p_surface_scaled;
 
 /// Some old adapters.
-//unsigned char far * adaptor = (unsigned char far *) 0xA0000000;
-//unsigned char far * adapted = (unsigned char far *) 0x80000000;
-//unsigned char far * fake_adaptor = (unsigned char far *) 0x80000000;
+//unsigned char * adaptor = (unsigned char *) 0xA0000000;
+//unsigned char * adapted = (unsigned char *) 0x80000000;
+//unsigned char * fake_adaptor = (unsigned char *) 0x80000000;
 
 /// This is the main palette.
 //extern unsigned char tmppal[768];
@@ -95,7 +91,7 @@ void pcopy (u8 *dest, const u8 *sorg);
 
 /// Clear a graphical page with a pattern
 // Ultraveloce cancella pagina grafica.
-void pclear (u8 far *target, u8 pattern);
+void pclear (u8 *target, u8 pattern);
 
 /// Initialization of a table of trigonometric calculation results.
 // Inizializzazione.
