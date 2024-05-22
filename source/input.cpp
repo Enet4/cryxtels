@@ -472,7 +472,7 @@ void load_game (char i)
         std::fread (&cam_x, sizeof(f64), 1, fh);
         std::fread (&cam_y, sizeof(f64), 1, fh);
         std::fread (&cam_z, sizeof(f64), 1, fh);
-        std::fread (&alfa, sizeof(i16), 1, fh);
+        std::fread (&alpha, sizeof(i16), 1, fh);
         std::fread (&beta, sizeof(i16), 1, fh);
         std::fread (&nav_a, sizeof(i16), 1, fh);
         std::fread (&nav_b, sizeof(i16), 1, fh);
@@ -495,7 +495,7 @@ void load_game (char i)
         std::fread (&spd_y, sizeof(f64), 1, fh);
         std::fread (&spd_z, sizeof(f64), 1, fh);
         std::fread (&spd, sizeof(f64), 1, fh);
-        std::fread (&extra, 1, 1, fh);
+        std::fread (&EVA_in_progress, 1, 1, fh);
         std::fread (&rel_x, sizeof(f64), 1, fh);
         std::fread (&rel_y, sizeof(f64), 1, fh);
         std::fread (&rel_z, sizeof(f64), 1, fh);
@@ -550,7 +550,7 @@ void save_game (char i)
         std::fwrite (&cam_x, sizeof(f64), 1, fh);
         std::fwrite (&cam_y, sizeof(f64), 1, fh);
         std::fwrite (&cam_z, sizeof(f64), 1, fh);
-        std::fwrite (&alfa, sizeof(i16), 1, fh);
+        std::fwrite (&alpha, sizeof(i16), 1, fh);
         std::fwrite (&beta, sizeof(i16), 1, fh);
         std::fwrite (&nav_a, sizeof(i16), 1, fh);
         std::fwrite (&nav_b, sizeof(i16), 1, fh);
@@ -573,7 +573,7 @@ void save_game (char i)
         std::fwrite (&spd_y, sizeof(f64), 1, fh);
         std::fwrite (&spd_z, sizeof(f64), 1, fh);
         std::fwrite (&spd, sizeof(f64), 1, fh);
-        std::fwrite (&extra, 1, 1, fh);
+        std::fwrite (&EVA_in_progress, 1, 1, fh);
         std::fwrite (&rel_x, sizeof(f64), 1, fh);
         std::fwrite (&rel_y, sizeof(f64), 1, fh);
         std::fwrite (&rel_z, sizeof(f64), 1, fh);

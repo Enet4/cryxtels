@@ -48,7 +48,7 @@ extern float *tcosy, *tsiny;
 extern double cam_x, cam_y, cam_z;
 
 /// Alpha and Beta (camera orientation)
-extern i16 alfa,beta;
+extern i16 alpha,beta;
 
 /// Distance to the closest pixel.
 extern double kk;

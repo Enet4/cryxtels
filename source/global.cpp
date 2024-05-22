@@ -251,7 +251,7 @@ double object_collyblockshifting[203];
 
 PixelId pix = 0; // Pixel più vicino (ecoscandaglio, attracco automatico...)
 
-u8 extra = 0; // Flag: attività extraveicolare in corso?
+u8 EVA_in_progress = 0; // Flag: attività extraveicolare in corso?
 
 double r_x, r_y, r_z; // Posizioni relat. al pixel, per il fotogr. precedente.
 double dsx, dsy, dsz; // Posizioni reali del docksite del pixel-bersaglio.

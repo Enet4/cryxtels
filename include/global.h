@@ -251,7 +251,7 @@ extern double object_collyblockshifting[203];
 extern PixelId pix;
 
 /// Flag: 1 = extravehicular activity (walking on a pixel); 0 = on Fly
-extern u8 extra;
+extern u8 EVA_in_progress;
 
 extern double r_x, r_y, r_z; // Posizioni relat. al pixel, per il fotogr. precedente.
 extern double dsx, dsy, dsz; // Posizioni reali del docksite del pixel-bersaglio.
