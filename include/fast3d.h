@@ -68,9 +68,6 @@ void init_video ();
 /// (new) Toggle fullscreen mode
 void toggle_fullscreen();
 
-/// Do nothing here, it's no longer needed
-inline void _80_25_C () {} // modo grafico 80x25 testo a colori.
-
 /// Darken the screen once.
 void darken_once(u8 inc = 1);
 
@@ -115,7 +112,8 @@ extern char explode;
 void Line3D (double p_x, double p_y, double p_z,
 	     double x, double y, double z);
 
-// Conversioni x, y, z -> share_x, share_y
+// Compute whether a point is visible from the camera.
+// If it is, set share_x and share_y to its coordinates on-screen
 extern int share_x;
 extern int share_y;
 int C32 (double x, double y, double z);

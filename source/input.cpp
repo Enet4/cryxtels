@@ -231,7 +231,6 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
     if (eol) {
         std::fclose (fh);
         //dsp_driver_off ();
-        _80_25_C();
         cerr << "Parameter not found\nElement "
             << (pixeltype_elements[static_cast<int>(loaded_pixeltypes)]+1)
             << " of pixel type " << ptyp << "." << endl;
@@ -285,7 +284,6 @@ void load_pixels_def(void) {
     if (fh) {
         if (!trova_id (fh, "SEED")) {
             std::fclose (fh);
-            _80_25_C();
             cerr << "Missing command in PIXELS.DEF: SEED = n;"
                  << "\n<n> must be a number between 0 and 65535." << endl;
             throw 3;
@@ -296,7 +294,6 @@ void load_pixels_def(void) {
         std::fseek (fh, 0, SEEK_SET);
         if (!trova_id (fh, "AUTHOR")) {
             std::fclose (fh);
-            _80_25_C();
             cerr << "Missing command in PIXELS.DEF: AUTHOR = AUTHOR_NAME;" << endl;
             throw 4;
         }
@@ -310,7 +307,6 @@ void load_pixels_def(void) {
             existent_pixeltypes++;
             ptyp++; sprintf (t, "TYPE %d;\r\n", ptyp);
             if (ptyp>FRONTIER_M1) {
-                _80_25_C();
                 cout << "Too many pixels.\nIt will only load "
                      << FRONTIER << " pixels (from type 0 to type "
                      << FRONTIER_M1 << ")." << endl;
@@ -323,7 +319,6 @@ void load_pixels_def(void) {
             existent_objecttypes++;
             ptyp++; sprintf (t, "MODEL %d;\r\n", ptyp);
             if (ptyp>FRONTIER_COMPL_M1) {
-                _80_25_C();
                 cout << "Too many object models.\nIt will only load "
                     << FRONTIER_COMPL << " objects (from model 0 to model "
                     << FRONTIER_COMPL_M1 << ")." << endl;

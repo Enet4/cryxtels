@@ -89,8 +89,8 @@ extern double tracking; // Increment value to trackframe.
 /// Counter for the number of frames of the Fly reentering sequence.
 extern u8 req_end_extra;
 
-extern i16 alfad, betad; // Angular speed of x and y.
-extern i16 alfa90, beta90; // Support for some calculations.
+extern i16 v_alpha, v_beta; // Angular speed of x and y.
+extern i16 alpha90, beta90; // Support for some calculations.
 
 extern u8 fid; // Flag: Orientation of the direction opposite to the current one...
 extern u8 lead; // Flag: Orientation of the leading direction...
@@ -239,9 +239,7 @@ extern double *absolute_y;      // Position Y (absolute for Pixel = -1).
 extern double *absolute_z;      // Position Z (absolute for Pixel = -1).
 extern PixelId  *object_location; // Pixel where the object can be retrieved.
 
-/* IMPORTANT: the object's elevation at the pixel's surface for each object type.
- */
-
+// The object's elevation at the pixel's surface for each object type.
 extern double object_elevation[203];
 extern double object_collyblockshifting[203];
 

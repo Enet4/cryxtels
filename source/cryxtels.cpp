@@ -94,8 +94,8 @@ void save_situation (char i);
 /// Load state
 void load_situation (char i, bool skip_fade = false);
 
-/// Just makes the program exit because of something...
-void par0 (int el, int pix);
+/// Terminate program in case PIXELS.DEF contains a syntax error
+void fail_pixel_def (int el, int pix);
 
 /// redefinition of random(int),
 /// which probably became deprecated or existed in an outdated library
@@ -281,8 +281,8 @@ int main(int argc, char** argv)
  * false to end the introduction
  */
 bool intro_loop() {
-    const int DELTA_U = (HEIGHT-70)/2; // 65
-    const int DELTA_L = (HEIGHT+70)/2; // 135
+    static const int FOTTY_VIEWPORT_LOWER = HEIGHT*65/200;
+    static const int FOTTY_VIEWPORT_UPPER = HEIGHT*135/200;
 
     //if (!sbp_stat) play (0);
     u32 sync = SDL_GetTicks(); //clock();
@@ -307,14 +307,18 @@ bool intro_loop() {
     Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
     Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
     Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
+    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0); // microcosm author
     Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
-    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0);
+
+    // rotate camera and approach text
     if (beta<360) {
         cam_y += 25;
         beta += 2;
         darken_once();
     }
+    // once the text is up close:
     else {
+        // place a fottifoh in front of the camera
         c = (c+1)%360;
         i16 tmp = beta; beta = c;
         cam_y += 140;
@@ -322,22 +326,21 @@ bool intro_loop() {
         cam_y -= 140;
         beta = tmp;
 
-        u16 i = 0;
-        // this is used to get the clock ticks
-        u16 dx = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; //% WIDTH;
-        i = dx;
-        u16 cx = WIDTH * 50;
+        u16 current_frame = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % WIDTH;
+        u32 cx = WIDTH*50;
         do {
-            if (i < WIDTH*HEIGHT) {
+            if (current_frame < WIDTH*HEIGHT) {
                 // pixel value outside fottifoh row range
-                if (i < DELTA_U*WIDTH+4 || i >= DELTA_L*WIDTH+4) {
-                    video_buffer[i] >>= 1;
+                if (current_frame < WIDTH*FOTTY_VIEWPORT_LOWER + 4 ||
+                    current_frame >= WIDTH*FOTTY_VIEWPORT_UPPER + 4)
+                {
+                    video_buffer[current_frame] >>= 1;
                 }
             }
-            if (cx >= (WIDTH*(HEIGHT-150)) / 2) {
-                i += WIDTH + 1;
+            if (cx >= WIDTH*50/2) {
+                current_frame += WIDTH + 1;
             } else {
-                i += WIDTH - 1;
+                current_frame += WIDTH - 1;
             }
         } while (--cx > 0);
 
@@ -377,10 +380,10 @@ bool main_loop() {
             sync = clock();
         } */
         // Effetti del sistema di virata.
-        alpha+=alfad;
+        alpha+=v_alpha;
         if (alpha<0) alpha+=360;
         if (alpha>=360) alpha-=360;
-        beta+=betad;
+        beta+=v_beta;
         if (beta<0) beta+=360;
         if (beta>=360) beta-=360;
 
@@ -508,26 +511,26 @@ bool main_loop() {
                     case keymap_up:
                         if ((ctrlkeys[0]&3) || type_mode || fermo_li || m) break;
                         if ((trackframe!=0)&&!EVA_in_progress) break;
-                        alfad--;
-                        if (alfad<-3) alfad=-3;
+                        v_alpha--;
+                        if (v_alpha<-3) v_alpha=-3;
                         break;
                     case keymap_down:
                         if ((ctrlkeys[0]&3) || type_mode || fermo_li || m) break;
                         if (trackframe&&!EVA_in_progress) break;
-                        alfad++;
-                        if (alfad>3) alfad=3;
+                        v_alpha++;
+                        if (v_alpha>3) v_alpha=3;
                         break;
                     case keymap_right:
                         if ((ctrlkeys[0]&3) || type_mode || fermo_li || m) break;
                         if (trackframe&&!EVA_in_progress) break;
-                        betad--;
-                        if (betad<-3) betad=-3;
+                        v_beta--;
+                        if (v_beta<-3) v_beta=-3;
                         break;
                     case keymap_left:
                         if ((ctrlkeys[0]&3) || type_mode || fermo_li || m) break;
                         if (trackframe&&!EVA_in_progress) break;
-                        betad++;
-                        if (betad>3) betad=3;
+                        v_beta++;
+                        if (v_beta>3) v_beta=3;
                         break;
                     case keymap_thrust: //141: // Acc
                         if ((ctrlkeys[0]&3) || type_mode || fermo_li || m) break;
@@ -616,8 +619,8 @@ bool main_loop() {
 
                         mpul = 0;
                         m = 1 - m;
-                        alfad = 0;
-                        betad = 0;
+                        v_alpha = 0;
+                        v_beta = 0;
                         mx = beta * 5;
                         my = alpha * 5;
                         if (grab_mouse) {
@@ -792,7 +795,7 @@ bool main_loop() {
 
         // Ridimensionamento angolazione verticale in "extra attivit".
         if (EVA_in_progress && alpha>90 && alpha<270) {
-            alfad = 0;
+            v_alpha = 0;
             if (alpha>180)
                 alpha = 270;
             else
@@ -809,15 +812,15 @@ bool main_loop() {
         // FID (freno inerziale diamagnetico).
         // Non pi cos facile: ora c' lo SPIN.
         if (fid||lead||orig) {
-            alfad = alfa90 - alpha;
-            if (alfad>5) alfad = 5;
-            if (alfad<-5) alfad = -5;
-            alpha += alfad;
-            betad = beta90 - beta;
-            if (betad>5) betad = 5;
-            if (betad<-5) betad = -5;
-            beta += betad;
-            if (alpha==alfa90 && beta==beta90) {
+            v_alpha = alpha90 - alpha;
+            if (v_alpha>5) v_alpha = 5;
+            if (v_alpha<-5) v_alpha = -5;
+            alpha += v_alpha;
+            v_beta = beta90 - beta;
+            if (v_beta>5) v_beta = 5;
+            if (v_beta<-5) v_beta = -5;
+            beta += v_beta;
+            if (alpha==alpha90 && beta==beta90) {
                 m = comera_m;
                 mx = beta * 5;
                 my = alpha * 5;
@@ -831,8 +834,8 @@ bool main_loop() {
                 orig = 0;
                 play (TARGET);
             }
-            alfad = 0;
-            betad = 0;
+            v_alpha = 0;
+            v_beta = 0;
         }
 
         obj = -1;
@@ -880,6 +883,8 @@ bool main_loop() {
                 strcat (dist, ".ATM");
                 FILE* file = std::fopen(dist, "rb");
                 if (file) {
+                    // TODO: do the following calculations take the original resolution for granted?
+                    // does changing the resolution also change the behaviour of the following code?
                     // -- draw operation begin
                     auto ax = 360u;
                     ax -= beta;
@@ -1108,8 +1113,8 @@ bool main_loop() {
             beta = 360 - nav_b;
         //if (beta<0) beta+=360;
         //if (beta>359) beta-=360;
-        alfad = 0;
-        betad = 0;
+        v_alpha = 0;
+        v_beta = 0;
         rel_x /= 1.25; rel_z /= 1.25;
         if (alpha==0 && beta==360-nav_b
                 &&(rel_x<1 && rel_x>-1)
@@ -1388,7 +1393,6 @@ void read_args(int argc, char** argv, char& flag, char& sit)
             if (objects>MAX_OBJECTS) objects = MAX_OBJECTS;
         }
         if (objects<=0||pixels<=0) {
-            _80_25_C();
             cerr << "Usage: CRYXTELS ([<n> PIXELS] [<n> OBJECTS] | <gamesave>)" << endl;
             throw 1;
         }
@@ -1405,7 +1409,6 @@ void read_args(int argc, char** argv, char& flag, char& sit)
             std::fclose (fh);
             flag = 1;
         } else {
-            _80_25_C();
             cerr << "Could not load game: game save \"" << dist << "\" is missing." << endl;
             throw 1;
         }
@@ -1418,7 +1421,7 @@ void read_args(int argc, char** argv, char& flag, char& sit)
 }
 
 
-void par0 (int el, int pix)
+void fail_pixel_def (int el, int pix)
 {
     alfin (0);
     cerr << "Pixel definition error: Pixel of type " << pix << " does not specify element nr. " << (el+1) << endl
@@ -1864,8 +1867,8 @@ void attracco ()
     play (ATTRACCO);
     trackframe = 0;
     tracking = 1;
-    alfad = 0;
-    betad = 0;
+    v_alpha = 0;
+    v_beta = 0;
 }
 
 void undock ()
@@ -1934,7 +1937,7 @@ void find_alfabeta()
         ox = ox*ox+oy*oy+oz*oz;
         if (ox<kk) {
             kk = ox;
-            alfa90 = c;
+            alpha90 = c;
         }
     }
     play (FID);
@@ -2055,7 +2058,6 @@ void alfin (char arc)
                 recfile = nullptr;
         }
         //file_driver_off ();
-        _80_25_C ();
         ctrlkeys[0] = ctk;
 }
 
@@ -2521,7 +2523,7 @@ ogg_2:
             p6 = pixel_elem_4[jjj];
             switch (pixel_elem_t[jjj]) {
                 case SPIRALE:
-                    if (!p5) par0 (nr_elem, pixeltype[nopix]);
+                    if (!p5) fail_pixel_def (nr_elem, pixeltype[nopix]);
                     c = p5 * (id+1);
                     p3 *= id+1;
                     switch (static_cast<int>(p4)) {
@@ -2577,7 +2579,7 @@ ogg_2:
                         break;
                     case GRIGLIA:
                         p5 = (int) p5;
-                        if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                        if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                         if (id) {
                             c = p5;
                             p5 /= id;
@@ -2698,7 +2700,7 @@ ogg_2:
                                 }
                                 break;
                             case COLONNA:
-                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 p6 *= id+1;
                                 if (p6>90) p6 = 90;
                                 _x = p0 + tcos[0]*p4;
@@ -2733,7 +2735,7 @@ ogg_2:
                                 if (p3) rel (first_x, cry, first_z, crx, cry, crz);
                                 break;
                             case ASTERISCO:
-                                if (p4<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p4<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 p3 = -p3;
                                 p4 *= id+1;
                                 if (p4>90) p4 = 90;
@@ -2747,7 +2749,7 @@ ogg_2:
                                     }
                                 break;
                             case SFERA:
-                                if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 c = p5 * (id+1);
                                 if (c>90) c = 90;
                                 p3 = -p3;
@@ -2776,7 +2778,7 @@ ogg_2:
                                 Txt (t, p0, p1, p2, p3, p4, p5, p6);
                                 break;
                             case ELLISSE:
-                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 p6 *= id+1;
                                 if (p6>90) p6 = 90;
                                 if (p5==0) {
@@ -2820,7 +2822,7 @@ ogg_2:
                                 }
                                 break;
                             case CIAMBELLA:
-                                if (p6<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 p6 *= id+1;
                                 if (p6>90) p6 = 90;
                                 _ox = ox;
@@ -2890,7 +2892,7 @@ ogg_2:
                                 oz = _oz;
                                 break;
                             case SFERA_RETICOLARE:
-                                if (p5<=0) par0 (nr_elem, pixeltype[nopix]);
+                                if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
                                 c = p5 * (id+1);
                                 if (c>90) c = 90;
                                 p3 = -p3;
@@ -2931,6 +2933,7 @@ void Object (int tipo)
     FILE* th;
 
     switch (tipo) {
+        // Fottifoh
         case 0:
             a = 0;
             while (fotty[a]!=10) {
@@ -2941,6 +2944,7 @@ void Object (int tipo)
             rectrel (-2, 0, 4, 0.5, 0.5, 1);
             rectrel (2, 0, 4, 0.5, 0.5, 1);
             break;
+        // Orbital engine
         case 1:
             for (   a = static_cast<int>((SDL_GetTicks()/TICKS_PER_FRAME)%45);
                     a <= 135+(int)((SDL_GetTicks()/TICKS_PER_FRAME)%45);
@@ -2949,6 +2953,7 @@ void Object (int tipo)
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
             }
             break;
+        // Record player
         case 2:
             b = 0;
             if (/* sbf_stat&& */pix==pixel_sonante)
@@ -2966,6 +2971,9 @@ void Object (int tipo)
             Txt (t, -5.5, 0, 4, 0.1, 0.15, 270, 0);
             if (repeat) Txt ("REPEAT", -5.5, 0, 3, 0.1, 0.15, 270, 0);
             break;
+        
+        // other objects
+        // TODO: is this code reading from a file on each tick? Aren't objects loaded into memory on startup?
         default:
             Pixel (tipo+FRONTIER_M3);
             if (id) break;

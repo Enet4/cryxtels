@@ -54,8 +54,8 @@ double tracking = 0; // Incremento a trackframe.
 u8 req_end_extra = 0; /* Flag: si richiede la fine dell'attività
                            extraveicolare ed il rientro nella nave? */
 
-i16 alfad = 0, betad = 0; // Velocità angolare su assi x ed y.
-i16 alfa90, beta90; // Supporti per alcuni calcoli.
+i16 v_alpha = 0, v_beta = 0; // Velocità angolare su assi x ed y.
+i16 alpha90, beta90; // Supporti per alcuni calcoli.
 
 u8 fid = 0; // Flag: Orientamento nella direzione opposta a quella corrente...
 u8 lead = 0; // Flag: Orientamento in direzione d'avanzamento...
@@ -239,10 +239,6 @@ double *absolute_x;      // Posizione X (assoluta per Pixel = -1).
 double *absolute_y;      // Posizione Y (assoluta per Pixel = -1).
 double *absolute_z;      // Posizione Z (assoluta per Pixel = -1).
 PixelId  *object_location; // Pixel su cui si trova l'oggetto.
-
-/* IMPORTANTE: elevazione sulla superficie del pixel
-               per ogni tipo di oggetto.
-               I primi 3 sono già definiti a zerozerouno. */
 
 double object_elevation[203] = { 0.01, 0.01, 0.01 };
 double object_collyblockshifting[203];

@@ -16,6 +16,7 @@
  */
 
 #include "draw.h"
+#include "conf.h"
 #include "global.h"
 #include "fast3d.h"
 #include "text3d.h"
@@ -134,27 +135,46 @@ void draw_indicator_crosshair()
 
 void draw_indicator_prograde(int x, int y)
 {
-    if ( x>5 && x<315 && y>5 && y<195) {
-        Segmento (x - 5, y - 5, x + 5, y + 5);
-        Segmento (x + 5, y - 5, x - 5, y + 5);
+    static const int width = 5*HEIGHT/200;
+
+    static const int xlow = 5*WIDTH/320;
+    static const int xhigh = 315*WIDTH/320;
+    static const int ylow = xlow;
+    static const int yhigh = 195*HEIGHT/200; 
+    if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
+        Segmento (x - width, y - width, x + width, y + width);
+        Segmento (x + width, y - width, x - width, y + width);
     }
 }
 
 void draw_indicator_retrograde(int x, int y)
 {
-    if ( x>10 && x<310 && y>10 && y<190) {
-        Segmento (x - 9, y - 5, x + 9, y - 5);
-        Segmento (x - 9, y + 5, x + 9, y + 5);
-        Segmento (x - 5, y - 9, x - 5, y + 9);
-        Segmento (x + 5, y - 9, x + 5, y + 9);
+    static const int outside = 9*HEIGHT/200;
+    static const int inside  = 5*HEIGHT/200;
+
+    static const int xlow = 10*WIDTH/320;
+    static const int xhigh = 310*WIDTH/320;
+    static const int ylow = xlow;
+    static const int yhigh = 190*HEIGHT/200; 
+    if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
+        Segmento (x - outside, y - inside, x + outside, y - inside);
+        Segmento (x - outside, y + inside, x + outside, y + inside);
+        Segmento (x - inside, y - outside, x - inside, y + outside);
+        Segmento (x + inside, y - outside, x + inside, y + outside);
     }
 }
 
 void draw_indicator_closest(int x, int y)
 {
-    if ( x>20 && x<300 && y>20 && y<180) {
-        Segmento (x, y - 19, x, y + 19);
-        Segmento (x - 19, y, x + 19, y);
+    static const int width = 19*HEIGHT/200;
+
+    static const int xlow = 20*WIDTH/320;
+    static const int xhigh = 300*WIDTH/320;
+    static const int ylow = xlow;
+    static const int yhigh = 180*HEIGHT/200; 
+    if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
+        Segmento (x, y - width, x, y + width);
+        Segmento (x - width, y, x + width, y);
     }
 }
 
@@ -313,7 +333,7 @@ void draw_vehicle_attitude(i16 alpha, i16 beta, char blink)
     draw_text_relative ("-", 4.5, -4, 12.01, 0.07, 0.07);
     if ( alpha>90 && alpha<270 && blink)
         draw_text_relative ("*", 3.5, -4, 12.01, 0.07, 0.07);
-    i16 alfax = 359 - alpha;
-    draw_line_relative (4-tcos[alfax]/2, -4-tsin[alfax]/2, 12.01, 4+tcos[alfax], -4+tsin[alfax], 12.01);
-    draw_line_relative (4-tcos[alfax+90]/2, -4-tsin[alfax+90]/2, 12.01, 4+tcos[alfax+90]/2, -4+tsin[alfax+90]/2, 12.01);
+    i16 alphax = 359 - alpha;
+    draw_line_relative (4-tcos[alphax]/2, -4-tsin[alphax]/2, 12.01, 4+tcos[alphax], -4+tsin[alphax], 12.01);
+    draw_line_relative (4-tcos[alphax+90]/2, -4-tsin[alphax+90]/2, 12.01, 4+tcos[alphax+90]/2, -4+tsin[alphax+90]/2, 12.01);
 }
