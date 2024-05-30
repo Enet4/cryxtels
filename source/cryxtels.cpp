@@ -164,7 +164,7 @@ void extra_stop_extra ();
 
 /// Look for angles starting from coordinates relative to the observer. (alpha & beta)
 // Per cercare angoli partendo da coordinate relative all'osservatore.
-void find_alfabeta();
+void find_alphabeta();
 
 /// Invert direction
 void fid_on ();
@@ -281,8 +281,8 @@ int main(int argc, char** argv)
  * false to end the introduction
  */
 bool intro_loop() {
-    static const int FOTTY_VIEWPORT_LOWER = HEIGHT*65/200;
-    static const int FOTTY_VIEWPORT_UPPER = HEIGHT*135/200;
+    static const int FOTTY_VIEWPORT_UPPER = HEIGHT*65/200;
+    static const int FOTTY_VIEWPORT_LOWER = HEIGHT*135/200;
 
     //if (!sbp_stat) play (0);
     u32 sync = SDL_GetTicks(); //clock();
@@ -326,21 +326,21 @@ bool intro_loop() {
         cam_y -= 140;
         beta = tmp;
 
-        u16 current_frame = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % WIDTH;
+        u16 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; // WIDTH;
         u32 cx = WIDTH*50;
         do {
-            if (current_frame < WIDTH*HEIGHT) {
+            if (time < WIDTH*HEIGHT) {
                 // pixel value outside fottifoh row range
-                if (current_frame < WIDTH*FOTTY_VIEWPORT_LOWER + 4 ||
-                    current_frame >= WIDTH*FOTTY_VIEWPORT_UPPER + 4)
+                if (time < WIDTH*FOTTY_VIEWPORT_UPPER + 4 ||
+                    time >= WIDTH*FOTTY_VIEWPORT_LOWER + 4)
                 {
-                    video_buffer[current_frame] >>= 1;
+                    video_buffer[time] >>= 1;
                 }
             }
             if (cx >= WIDTH*50/2) {
-                current_frame += WIDTH + 1;
+                time +=  WIDTH + 1;
             } else {
-                current_frame += WIDTH - 1;
+                time += WIDTH - 1;
             }
         } while (--cx > 0);
 
@@ -1914,7 +1914,7 @@ void extra_stop_extra ()
     }
 }
 
-void find_alfabeta()
+void find_alphabeta()
 {
     kk = 1E9;
     for (c=0; c<360; c++) {
@@ -1952,7 +1952,7 @@ void fid_on ()
         rx = cam_x + 100 * tsin[beta] * tcos[alpha];
         rz = cam_z - 100 * tcos[beta] * tcos[alpha];
         ry = cam_y - 100 * tsin[alpha];
-        find_alfabeta ();
+        find_alphabeta ();
         fid = 1;
 }
 
@@ -1962,7 +1962,7 @@ void lead_on ()
     rx = cam_x + spd_x;
     ry = cam_y + spd_y;
     rz = cam_z + spd_z;
-    find_alfabeta ();
+    find_alphabeta ();
     lead = 1;
 }
 
@@ -1972,7 +1972,7 @@ void orig_on ()
     rx = cam_x / 1.001;
     ry = cam_y / 1.001;
     rz = cam_z / 1.001;
-    find_alfabeta ();
+    find_alphabeta ();
     orig = 1;
 }
 

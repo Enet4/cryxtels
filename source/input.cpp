@@ -477,10 +477,10 @@ void load_game (char i)
         std::fread (&reset_trackframe, 1, 1, fh);
         std::fread (&tracking, sizeof(f64), 1, fh);
         std::fread (&req_end_extra, 1, 1, fh);
-        std::fread (&alfad, sizeof(i16), 1, fh);
-        std::fread (&betad, sizeof(i16), 1, fh);
+        std::fread (&v_alpha, sizeof(i16), 1, fh);
+        std::fread (&v_beta, sizeof(i16), 1, fh);
         std::fread (&pix, sizeof(i16), 1, fh);
-        std::fread (&alfa90, sizeof(i16), 1, fh);
+        std::fread (&alpha90, sizeof(i16), 1, fh);
         std::fread (&beta90, sizeof(i16), 1, fh);
         std::fread (&fid, 1, 1, fh);
         std::fread (&lead, 1, 1, fh);
@@ -555,10 +555,10 @@ void save_game (char i)
         std::fwrite (&reset_trackframe, sizeof(u8), 1, fh);
         std::fwrite (&tracking, sizeof(f64), 1, fh);
         std::fwrite (&req_end_extra, sizeof(u8), 1, fh);
-        std::fwrite (&alfad, sizeof(i16), 1, fh);
-        std::fwrite (&betad, sizeof(i16), 1, fh);
+        std::fwrite (&v_alpha, sizeof(i16), 1, fh);
+        std::fwrite (&v_beta, sizeof(i16), 1, fh);
         std::fwrite (&pix, sizeof(PixelId), 1, fh);
-        std::fwrite (&alfa90, sizeof(i16), 1, fh);
+        std::fwrite (&alpha90, sizeof(i16), 1, fh);
         std::fwrite (&beta90, sizeof(i16), 1, fh);
         std::fwrite (&fid, 1, 1, fh);
         std::fwrite (&lead, 1, 1, fh);
