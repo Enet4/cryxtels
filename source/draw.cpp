@@ -276,10 +276,13 @@ void draw_readings_force(double force)
     draw_text_relative (str, -5.5, 4.5, 12.01, 0.07, 0.12);
 }
 
+// conversion factor from units per frame to km/h:
+// 1 unit/frame = 0.90 m/s at 30 frames/s
+// which means 1 unit/frame = 3.24 km/h (the original value was 1.9656)
 void draw_readings_speed(double speed)
 {
     char str[20];
-    sprintf (str, "V=%04.0f:K/H", speed*1.9656);
+    sprintf (str, "V=%04.0f:K/H", speed*3.24);
     draw_text_relative (str, -5.5, 5.4, 12.01, 0.07, 0.12);
 }
 
