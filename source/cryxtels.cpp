@@ -2680,7 +2680,7 @@ ogg_2:
                                     _z = p2 - p3*180 + p6*p3;
                                     _ox = p0; _oz = _z - p6*p3;
                                     for (c=p6; c<=360; c+=p6) {
-                                        _x = tsin[c] * p4;
+                                        _x = p0 + tsin[c] * p4;
                                         rel (_x, p1, _z, _ox, p1, _oz);
                                         _ox = _x;
                                         _oz = _z;
