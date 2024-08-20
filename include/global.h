@@ -264,7 +264,7 @@ extern double nav_y;
 extern double nav_z;
 
 extern double d; // Distanza generica.
-extern double k1; // Costanti ausiliarie.
+extern double k0, k1; // Costanti ausiliarie.
 extern int a, b, c; // Contatori ausiliari.
 
 extern int id; // 0, 1, 2 o 3. A seconda della distanza del pixel.

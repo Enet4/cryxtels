@@ -2528,38 +2528,41 @@ ogg_2:
                     p3 *= id+1;
                     switch (static_cast<int>(p4)) {
                         case 0:
-                            a = c; k1 = 0;
+                            a = c;
+                            k0 = 0; k1 = p3;
                             crx = c; cry = 0;
                             while (a<1080) {
                                 rel (p0+k1*tcos[(int)crx], p1+k1*tsin[(int)crx], p2,
-                                        p0+k1*tcos[(int)cry], p1+k1*tsin[(int)cry], p2);
+                                        p0+k0*tcos[(int)cry], p1+k0*tsin[(int)cry], p2);
                                 cry = crx; crx += c;
                                 if (crx>359) crx-=360;
-                                k1 += p3;
+                                k0 += p3; k1 += p3;
                                 a += c;
                             }
                             break;
                         case 1:
-                            a = c; k1 = 0;
+                            a = c;
+                            k0 = 0; k1 = p3;
                             crx = c; cry = 0;
                             while (a<1080) {
                                 rel (p0+k1*tcos[(int)crx], p1, p2+k1*tsin[(int)crx],
-                                        p0+k1*tcos[(int)cry], p1, p2+k1*tsin[(int)cry]);
+                                        p0+k0*tcos[(int)cry], p1, p2+k0*tsin[(int)cry]);
                                 cry = crx; crx += c;
                                 if (crx>359) crx-=360;
-                                k1 += p3;
+                                k0 += p3; k1 += p3;
                                 a += c;
                             }
                             break;
                         case 2:
-                            a = c; k1 = 0;
+                            a = c;
+                            k0 = 0; k1 = p3;
                             crx = c; cry = 0;
                             while (a<1080) {
                                 rel (p0, p1+k1*tcos[(int)crx], p2+k1*tsin[(int)crx], p0,
-                                        p1+k1*tcos[(int)cry], p2+k1*tsin[(int)cry]);
+                                        p1+k0*tcos[(int)cry], p2+k0*tsin[(int)cry]);
                                 cry = crx; crx += c;
                                 if (crx>359) crx-=360;
-                                k1 += p3;
+                                k0 += p3; k1 += p3;
                                 a += c;
                             }
                         }
