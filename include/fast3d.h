@@ -23,10 +23,6 @@
 #include <memory>
 #include "primitives.h"
 
-#ifndef far
-#define far
-#endif
-
 constexpr double Pi = 3.141592653589793238462643383;
 
 /// The software membory buffer to perform all rendering in.
@@ -36,9 +32,9 @@ extern std::unique_ptr<u8[]> video_buffer;
 //extern SDL_Surface * p_surface_scaled;
 
 /// Some old adapters.
-//unsigned char far * adaptor = (unsigned char far *) 0xA0000000;
-//unsigned char far * adapted = (unsigned char far *) 0x80000000;
-//unsigned char far * fake_adaptor = (unsigned char far *) 0x80000000;
+//unsigned char * adaptor = (unsigned char *) 0xA0000000;
+//unsigned char * adapted = (unsigned char *) 0x80000000;
+//unsigned char * fake_adaptor = (unsigned char *) 0x80000000;
 
 /// This is the main palette.
 //extern unsigned char tmppal[768];
@@ -52,7 +48,7 @@ extern float *tcosy, *tsiny;
 extern double cam_x, cam_y, cam_z;
 
 /// Alpha and Beta (camera orientation)
-extern i16 alfa,beta;
+extern i16 alpha,beta;
 
 /// Distance to the closest pixel.
 extern double kk;
@@ -71,9 +67,6 @@ void init_video ();
 
 /// (new) Toggle fullscreen mode
 void toggle_fullscreen();
-
-/// Do nothing here, it's no longer needed
-inline void _80_25_C () {} // modo grafico 80x25 testo a colori.
 
 /// Darken the screen once.
 void darken_once(u8 inc = 1);
@@ -95,7 +88,7 @@ void pcopy (u8 *dest, const u8 *sorg);
 
 /// Clear a graphical page with a pattern
 // Ultraveloce cancella pagina grafica.
-void pclear (u8 far *target, u8 pattern);
+void pclear (u8 *target, u8 pattern);
 
 /// Initialization of a table of trigonometric calculation results.
 // Inizializzazione.
@@ -119,7 +112,8 @@ extern char explode;
 void Line3D (double p_x, double p_y, double p_z,
 	     double x, double y, double z);
 
-// Conversioni x, y, z -> share_x, share_y
+// Compute whether a point is visible from the camera.
+// If it is, set share_x and share_y to its coordinates on-screen
 extern int share_x;
 extern int share_y;
 int C32 (double x, double y, double z);

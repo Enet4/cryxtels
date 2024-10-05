@@ -43,7 +43,7 @@ double cam_x = 0;
 double cam_y = 0;
 double cam_z = 0;
 
-i16 alfa  = 0;
+i16 alpha  = 0;
 i16 beta  = 0;
 
 double kk;
@@ -407,22 +407,22 @@ void Line3D (double p_x, double p_y, double p_z,
     p_z -= cam_z;
 
     p_z2 = p_z * tcos[beta] - p_x * tsin[beta];
-    p_rz = p_z2 * tcos[alfa] + p_y * tsin[alfa];
+    p_rz = p_z2 * tcos[alpha] + p_y * tsin[alpha];
 
     x -= cam_x;
     y -= cam_y;
     z -= cam_z;
 
     z2 = z * tcos[beta] - x * tsin[beta];
-    rz = z2 * tcos[alfa] + y * tsin[alfa];
+    rz = z2 * tcos[alpha] + y * tsin[alpha];
 
-    if (rz<uneg&&p_rz<uneg) return;
+    if (rz<uneg && p_rz<uneg) return;
 
     p_rx = p_x * tcosx[beta] + p_z * tsinx[beta];
-    p_ry = p_y * tcosy[alfa] - p_z2 * tsiny[alfa];
+    p_ry = p_y * tcosy[alpha] - p_z2 * tsiny[alpha];
 
     rx = x * tcosx[beta] + z * tsinx[beta];
-    ry = y * tcosy[alfa] - z2 * tsiny[alfa];
+    ry = y * tcosy[alpha] - z2 * tsiny[alpha];
 
     /* Conversione punti alle spalle dell'osservatore rispetto al piano
        dello schermo. */
@@ -524,7 +524,7 @@ void Line3D (double p_x, double p_y, double p_z,
         }
     }
 
-    if (fx==lx&&fy==ly) return; // Esclude le linee costituite da un punto solo.
+    if (fx==lx && fy==ly) return; // Esclude le linee costituite da un punto solo.
 
     if (fy<lowerbound_y||ly<lowerbound_y) return; // Esclude le linee che mai e poi mai si vedranno.
     if (fy>upperbound_y||ly>upperbound_y) return;
@@ -541,11 +541,11 @@ int C32 (double x, double y, double z)
     z -= cam_z;
 
     z2 = z * tcos[beta] - x * tsin[beta];
-    rz = z2 * tcos[alfa] + y * tsin[alfa];
+    rz = z2 * tcos[alpha] + y * tsin[alpha];
 
     if (rz<uneg) return 0; // Il punto non si vede. Inutile continuare.
 
-    ry = y * tcosy[alfa] - z2 * tsiny[alfa];
+    ry = y * tcosy[alpha] - z2 * tsiny[alpha];
     share_y = ry / rz;
 
     if (share_y<lowerbound_y || share_y>upperbound_y)

@@ -95,7 +95,7 @@ char symbol[65][41] = {
 4, -1, -2,  1, -1,  1, -1,  0, -1,  0, -1, -1, -1, -1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 };
 
 void Txt (const char * testo, double x, double y, double z,
-	  double scala_x, double scala_y, int alfa, int beta)
+	  double scala_x, double scala_y, int alpha, int beta)
 {
 	double fxx=0, fyy=0, pxx=0, pyy=0;
 	double lsx=0, lsy=0, lsz=0;
@@ -142,21 +142,21 @@ void Txt (const char * testo, double x, double y, double z,
 		for (l=0; l<symbol[t][0]; l++) {
 			fxx = symbol[t][f+0]*scala_x;
 			fyy = symbol[t][f+1]*scala_y;
-			if (fxx==pxx&&fyy==pyy) {
+			if (fxx==pxx && fyy==pyy) {
 				sx = lsx;
 				sy = lsy;
 				sz = lsz;
 			}
 			else {
-				z2 = fyy * tsin[alfa];
-				sy = fyy * tcos[alfa] + y;
+				z2 = fyy * tsin[alpha];
+				sy = fyy * tcos[alpha] + y;
 				sz = z2  * tcos[beta] - fxx * tsin[beta] + z;
 				sx = fxx * tcos[beta] + z2  * tsin[beta] + x;
 			}
 			pxx = symbol[t][f+2]*scala_x;
 			pyy = symbol[t][f+3]*scala_y;
-			z2  = pyy * tsin[alfa];
-			lsy = pyy * tcos[alfa] + y;
+			z2  = pyy * tsin[alpha];
+			lsy = pyy * tcos[alpha] + y;
 			lsz = z2  * tcos[beta] - pxx * tsin[beta] + z;
 			lsx = pxx * tcos[beta] + z2  * tsin[beta] + x;
 			Line3D (sx, sy, sz, lsx, lsy, lsz);

@@ -6,7 +6,8 @@ Makefile
 /cryxtels
 /cryxtels.exe
 /bin/cryxtels
-/bin/cryxtels.exe
+/bin/cryxtels*.exe
 /bin/CRYXTELS.*IT
 /bin/SNAP*.bmp
 /bin/TEXT-*.FIX
+/build/
