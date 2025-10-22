@@ -25,8 +25,8 @@
 constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
 constexpr u32 FRAMES_PER_SECOND = 30;
 
-constexpr u32 WIDTH = 320;
-constexpr u32 HEIGHT = 200;
+constexpr u32 WIDTH = 560;
+constexpr u32 HEIGHT = 350;
 
 constexpr u32 WIDTH_SC = 2;
 constexpr u32 HEIGHT_SC = 2;

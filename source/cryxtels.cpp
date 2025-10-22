@@ -312,8 +312,10 @@ bool intro_loop() {
 
     // rotate camera and approach text
     if (beta<360) {
-        cam_y += 25;
-        beta += 2;
+        // cam_y += 25;
+        // beta += 2;
+        cam_y += 25*180;
+        beta += 360;
         darken_once();
     }
     // once the text is up close:
@@ -326,21 +328,19 @@ bool intro_loop() {
         cam_y -= 140;
         beta = tmp;
 
-        u16 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; // WIDTH;
-        u32 cx = WIDTH*50;
+        u32 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % (WIDTH*HEIGHT);
+        u32 cx = WIDTH*50*(float)WIDTH/320; // adapt effect intensity to resolution
         do {
-            if (time < WIDTH*HEIGHT) {
-                // pixel value outside fottifoh row range
-                if (time < WIDTH*FOTTY_VIEWPORT_UPPER + 4 ||
-                    time >= WIDTH*FOTTY_VIEWPORT_LOWER + 4)
-                {
-                    video_buffer[time] >>= 1;
-                }
+            // pixel value outside fottifoh row range
+            if (time < WIDTH*FOTTY_VIEWPORT_UPPER + 4 ||
+                time >= WIDTH*FOTTY_VIEWPORT_LOWER + 4)
+            {
+                video_buffer[time] >>= 1;
             }
             if (cx >= WIDTH*50/2) {
-                time +=  WIDTH + 1;
+                time = (time + WIDTH + 1) % (WIDTH*HEIGHT);
             } else {
-                time += WIDTH - 1;
+                time = (time + WIDTH - 1) % (WIDTH*HEIGHT);
             }
         } while (--cx > 0);
 
@@ -348,7 +348,7 @@ bool intro_loop() {
         cx = HEIGHT*WIDTH; // all space
         do {
             // fade out effect
-            if (*di != 0) {
+            if (*di > 0) {
                 *di -= 1;
             }
             di++;
