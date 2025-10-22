@@ -1,0 +1,156 @@
+/** \file intro.cpp
+ *  This file is part of Crystal Pixels.
+ *
+ *  Crystal Pixels is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Crystal Pixels is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with the program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "global.h"
+#include "primitives.h"
+#include "fast3d.h"
+#include "text3d.h"
+#include "draw.h"
+#include "utils.h"
+#include "intro.h"
+
+#include "SDL.h"
+#include "conf.h"
+
+void place_fottifoh(void) {
+    c = (c+1)%360;
+    i16 tmp = beta; beta = c;
+    cam_y += 140;
+    Object(0);
+    cam_y -= 140;
+    beta = tmp;
+}
+
+void original_twinkle_effect(void) {
+    u16 width = 320, height = 200;
+    u16 fotty_viewport_upper = 65;
+    u16 fotty_viewport_lower = 135;
+    u16 buffer_size = width*height;
+
+    u16 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF;
+    u16 iteration = width*50;
+    u16 halfway = iteration/2;
+    do {
+        // pixel value outside fottifoh row range
+        if (time < width * fotty_viewport_upper + 4 ||
+            time >= width * fotty_viewport_lower + 4)
+        {
+            if (time < buffer_size)
+                video_buffer[time] >>= 1;
+        }
+        if (iteration >= halfway) {
+            time += width + 1;
+        } else {
+            time += width - 1;
+        }
+    } while (--iteration > 0);
+}
+
+void twinkle_effect(u16 width, u16 height) {
+    u16 fotty_viewport_upper = (float)height * 65.0/200.0;
+    u16 fotty_viewport_lower = (float)height * 135.0/200.0;
+
+    // adapt the effect's intensity to the new resolution
+    float scale_factor = (float)width / 320.0;
+    u32 intensity = (float)width * 50.0 * scale_factor;
+    u32 halfway = intensity / 2;
+    u32 buffer_size = width * height;
+    u32 canvas_size = buffer_size + 1536;
+
+    u32 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % canvas_size;
+    u32 iteration = intensity;
+    do {
+        // pixel value outside fottifoh row range
+        if (time < width * fotty_viewport_upper + 4 ||
+            time >= width * fotty_viewport_lower + 4)
+        {
+            if (time < buffer_size)
+                video_buffer[time] >>= 1;
+        }
+        if (iteration >= halfway) {
+            time = (time + width + 1) % canvas_size;
+        } else {
+            time = (time + width - 1) % canvas_size;
+        }
+    } while (--iteration > 0);
+}
+
+void fade_out_effect(u16 width, u16 height) {
+    auto di = &video_buffer[0];
+    u32 iteration = width*height; // all space
+    do {
+        // fade out effect
+        if (*di > 0) {
+            *di -= 1;
+        }
+        di++;
+    } while (--iteration > 0);
+}
+
+bool intro_loop(void) {
+    //if (!sbp_stat) play (0);
+    u32 sync = SDL_GetTicks(); //clock();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_WINDOWEVENT_RESIZED:
+            break;
+            case SDL_QUIT:
+                alfin(true);
+                exit(0);
+            break;
+            case SDL_KEYDOWN:
+            case SDL_MOUSEBUTTONDOWN:
+                return false; // end intro
+            default:
+                break;
+        }
+    }
+
+    Txt("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
+    Txt("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
+    Txt("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
+    Txt(t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0); // microcosm author
+    Txt("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
+
+    // rotate camera and approach text
+    if (beta<360) {
+        cam_y += 25;
+        beta += 2;
+        darken_once();
+    }
+    
+    // once the text is up close:
+    else {
+        place_fottifoh();
+        if (WIDTH == 320)
+            original_twinkle_effect();
+        else
+            twinkle_effect(WIDTH, HEIGHT);
+        fade_out_effect(WIDTH, HEIGHT);
+    }
+    Render();
+
+    unsigned long cticks = SDL_GetTicks();
+    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
+        SDL_Delay(3);
+        cticks = SDL_GetTicks();
+    }
+
+    return true;
+}

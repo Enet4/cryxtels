@@ -41,6 +41,7 @@
 #include "draw.h"
 #include "sdl_exception.h"
 #include "utils.h"
+#include "intro.h"
 
 #include "SDL.h"
 #include "conf.h"
@@ -244,97 +245,6 @@ int main(int argc, char** argv)
 
     cout << "Quitting." << endl;
     return 0;
-}
-
-/**
- * The game introduction loop logic, called once per frame.
- * 
- * @return true if the introduction should continue normally,
- * false to end the introduction
- */
-bool intro_loop() {
-    static const int FOTTY_VIEWPORT_UPPER = HEIGHT*65/200;
-    static const int FOTTY_VIEWPORT_LOWER = HEIGHT*135/200;
-
-    //if (!sbp_stat) play (0);
-    u32 sync = SDL_GetTicks(); //clock();
-
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_WINDOWEVENT_RESIZED:
-            break;
-            case SDL_QUIT:
-                alfin (1);
-                exit(0);
-            break;
-            case SDL_KEYDOWN:
-            case SDL_MOUSEBUTTONDOWN:
-                return false; // Get out of here.
-            default:
-                break;
-        }
-    }
-
-    Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-    Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
-    Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
-    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0); // microcosm author
-    Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
-
-    // rotate camera and approach text
-    if (beta<360) {
-        // cam_y += 25;
-        // beta += 2;
-        cam_y += 25*180;
-        beta += 360;
-        darken_once();
-    }
-    // once the text is up close:
-    else {
-        // place a fottifoh in front of the camera
-        c = (c+1)%360;
-        i16 tmp = beta; beta = c;
-        cam_y += 140;
-        Object (0);
-        cam_y -= 140;
-        beta = tmp;
-
-        u32 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % (WIDTH*HEIGHT);
-        u32 cx = WIDTH*50*(float)WIDTH/320; // adapt effect intensity to resolution
-        do {
-            // pixel value outside fottifoh row range
-            if (time < WIDTH*FOTTY_VIEWPORT_UPPER + 4 ||
-                time >= WIDTH*FOTTY_VIEWPORT_LOWER + 4)
-            {
-                video_buffer[time] >>= 1;
-            }
-            if (cx >= WIDTH*50/2) {
-                time = (time + WIDTH + 1) % (WIDTH*HEIGHT);
-            } else {
-                time = (time + WIDTH - 1) % (WIDTH*HEIGHT);
-            }
-        } while (--cx > 0);
-
-        auto di = &video_buffer[0];
-        cx = HEIGHT*WIDTH; // all space
-        do {
-            // fade out effect
-            if (*di > 0) {
-                *di -= 1;
-            }
-            di++;
-        } while (--cx > 0);
-    }
-    Render();
-
-    unsigned long cticks = SDL_GetTicks();
-    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
-        SDL_Delay(3);
-        cticks = SDL_GetTicks();
-    }
-
-    return true;
 }
 
 /// The main loop logic, called once per frame.
