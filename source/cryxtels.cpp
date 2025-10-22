@@ -46,10 +46,6 @@
 
 using namespace std;
 
-constexpr int TICKS_IN_A_SECOND = 1000;
-constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
-constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
-
 // dummy function (nullify effect)
 inline void play (long) {}
 
