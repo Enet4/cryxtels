@@ -345,7 +345,7 @@ void LoadPtyp (PixelTypeId ptyp) {
     memcpy (&subsignal[9*ptyp], "\0\0\0\0\0\0\0\0\0", 9);
 
     if (loaded_pixeltypes>=BUFFERS) {
-        //alfin (0);
+        //alfin (false);
         cerr << "Too many pixels were loaded here!!!\n"
             "There's no more space in the game's buffers." << endl;
         exit (255);
@@ -371,7 +371,7 @@ void LoadPtyp (PixelTypeId ptyp) {
                 (pixel_elem_t[jjj])++;
             if (pixel_elem_t[jjj] == COMS) {
                 std::fclose (fh);
-                //alfin (0);
+                //alfin (false);
                 cerr << "Command not recognized.\nElement "
                     << (pixeltype_elements[loaded_pixeltypes]+1)
                     << " in model nr. " << ptyp << "." << endl;
@@ -424,7 +424,7 @@ void LoadPtyp (PixelTypeId ptyp) {
         } while (pixeltype_elements[loaded_pixeltypes] < ELEMS);
         std::fclose (fh);
         if (pixeltype_elements[loaded_pixeltypes]==ELEMS) {
-            //alfin (0);
+            //alfin (false);
             cerr << "Definition too long.\nModel nr. " << ptyp << endl;
             exit (1); // FIXME exit bomb
         }

@@ -40,6 +40,7 @@
 #include "input.h"
 #include "draw.h"
 #include "sdl_exception.h"
+#include "utils.h"
 
 #include "SDL.h"
 #include "conf.h"
@@ -69,9 +70,6 @@ void dists ();
 /// Assign positions to gravitating pixels.
 void rot ();
 
-/// Fade out effect of the display.
-void fade (u8 speed = 1);
-
 /// Docking effects.
 void dock_effects ();
 
@@ -84,9 +82,6 @@ void load_situation (char i, bool skip_fade = false);
 /// redefinition of random(int),
 /// which probably became deprecated or existed in an outdated library
 int random(int max_num);
-
-/// Terminate some stuff
-void alfin (char arc);
 
 /// Take a snapshot into a BMP file.
 void snapshot ();
@@ -245,7 +240,7 @@ int main(int argc, char** argv)
         running = main_loop();
     } while (running);
 
-    alfin (1);
+    alfin(true);
 
     cout << "Quitting." << endl;
     return 0;
@@ -1605,56 +1600,6 @@ void rot ()
     }
 }
 
-/// enter a synchronous routine
-/// to fade out the screen
-/// (can be skipped by pressing any key)
-void fade (unsigned char speed) {
-    keybuffer_cleaner ();
-    unsigned int dx = 0;
-    auto skip = false;
-    do {
-        unsigned int sync = SDL_GetTicks();
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_KEYDOWN
-                || event.type == SDL_MOUSEBUTTONDOWN) {
-                skip = true;
-            }
-        }
-
-        darken_once(speed);
-        Render();
-        unsigned long cticks = SDL_GetTicks();
-        while (sync + TICKS_PER_FRAME > cticks) {
-            SDL_Delay(3);
-            cticks = SDL_GetTicks();
-        }
-    }
-    while(!skip && dx++ < (70 / speed));
-/*
-rip:    mpul = 0; mouse_input ();
-        _BL = tasto_premuto ();
-        asm {   les di, dword ptr adaptor
-                mov cx, 64000
-                xor dx, dx }
-__chic: asm {   cmp byte ptr es:[di], 0
-                je __zero
-                dec byte ptr es:[di]
-                inc dx }
-__zero: asm {   inc di
-                dec cx
-                jnz __chic
-                cmp bl, 0
-                jne halt
-                cmp mpul, 0
-                jne halt
-                cmp dx, 100
-                jnb rip }
-halt:   keybuffer_cleaner ();
-*/
-}
-
 void load_situation(char i, bool skip_fade) {
     if (i >= 'a' && i <= 'z') {
         i -= 'a' - 'A';
@@ -1971,20 +1916,6 @@ void chiudi_filedriver ()
     file_driver_off ();
     dsp_driver_on ();
 */
-}
-
-void alfin (char arc)
-{
-        if (arc) fade (5);
-        //dsp_driver_off (); // unused right now
-        if (recfile) {
-                //audio_stop (); // unused right now
-                std::fwrite("\0", 1, 1, recfile);
-                std::fclose(recfile);
-                recfile = nullptr;
-        }
-        //file_driver_off ();
-        ctrlkeys[0] = ctk;
 }
 
 void preleva_oggetto (int nr_ogg)
