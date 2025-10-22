@@ -68,15 +68,23 @@ void draw_vehicle_attitude(i16 alpha, i16 beta, char blink);
 /* info panel readings: */
 
 void draw_readings_force(double force);
-
 void draw_readings_speed(double speed);
-
 void draw_readings_docked();
-
 void draw_readings_heading(i16 alpha, i16 beta);
-
 void draw_readings_position(double x, double y, double z);
-
 void draw_readings_closest(double distance);
+
+
+/* custom objects: */
+
+// Terminate program in case PIXELS.DEF contains a syntax error
+void fail_pixel_def (int el, int pix);
+
+// Draw the entity with the corresponding code
+void Pixel (int typ);
+
+// Draws the object with the corresponding code
+// Also handles text input for some reason
+void Object (int tipo);
 
 #endif
