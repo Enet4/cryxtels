@@ -1060,7 +1060,7 @@ bool main_loop() {
 
         // handle object pick up request while flying
         if (taking&&!EVA_in_progress) {
-            kk = 500;
+            kk = 500 * 500;
             obj = -1;
             // cycle through objects in reverse order
             // (stopping as soon as `o` underflows)
@@ -1069,8 +1069,8 @@ bool main_loop() {
                     _x = absolute_x[o] - cam_x;
                     _y = absolute_y[o] - cam_y;
                     _z = absolute_z[o] - cam_z;
-                    d = sqrt (_x*_x+_y*_y+_z*_z);
-                    if (d<kk) {
+                    d = _x*_x+_y*_y+_z*_z;
+                    if (d < kk) {
                         kk = d;
                         obj = o;
                     }
