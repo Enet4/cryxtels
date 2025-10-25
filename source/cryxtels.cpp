@@ -1062,7 +1062,9 @@ bool main_loop() {
         if (taking&&!EVA_in_progress) {
             kk = 500;
             obj = -1;
-            for (u16 o=_objects-1; o>=0; o--) {
+            // cycle through objects in reverse order
+            // (stopping as soon as `o` underflows)
+            for (u16 o = _objects-1; o < _objects; o--) {
                 if (object_location[o]==-1) {
                     _x = absolute_x[o] - cam_x;
                     _y = absolute_y[o] - cam_y;
