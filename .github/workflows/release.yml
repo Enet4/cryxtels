@@ -1,0 +1,100 @@
+
+name: Publish binary bundles
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+      - "*.*.*_*"
+  workflow_dispatch: {}
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  release_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install SDL2
+      run: sudo apt update && sudo apt install -y libsdl2-dev
+
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+    
+    - name: Prepare binary bundle
+      run: |
+        cd ${{github.workspace}}
+        mkdir dist
+        cp build/cryxtels \
+          bin/*.ATM bin/PIXELS.DEF \
+          "readme new.txt" "crystal pixels.txt" \
+          "pixels definition.txt" gpl-3.0.txt \
+          dist/
+        cd dist
+        zip ../cryxtels-${{ github.ref_name }}-linux_x86_64.zip ./*
+        cd ..
+
+    - name: Publish bundle to GitHub release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-linux_x86_64.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+
+  release_windows_x86:
+    runs-on: windows-latest
+
+    steps:
+    - name: Cache vcpkg packages
+      uses: actions/cache@v4
+      env:
+        cache-name: vcpkg-packages
+      with:
+        path: |
+         C:/vcpkg/archives
+         C:/vcpkg/packages
+         C:/vcpkg/installed
+        key: ${{ runner.os }}-${{ env.cache-name }}-v1
+
+    - name: Install SDL2
+      run: vcpkg install sdl2:x86-windows
+
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -A win32
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Prepare binary bundle
+      shell: powershell
+      run: |
+        cd ${{github.workspace}}
+        mkdir dist
+        copy build\Release\cryxtels.exe dist\
+        copy bin\*.ATM dist\
+        copy bin\PIXELS.DEF dist\
+        copy "readme new.txt" dist\
+        copy "crystal pixels.txt" dist\
+        copy "pixels definition.txt" dist\
+        copy gpl-3.0.txt dist\
+        copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
+        cd dist
+        Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_name }}-windows_x86.zip
+        cd ..
+
+    - name: Publish bundle to GitHub release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-windows_x86.zip
+        tag: ${{ github.ref }}
+        overwrite: true
