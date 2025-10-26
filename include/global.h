@@ -80,6 +80,12 @@ extern bool back_keyhold;
 /// tracker for right click holding duration
 extern int rclick;
 
+/// tracker for the last time the echo sound was triggered
+extern unsigned int stso;
+
+/// tracker for the gap to the nearest pixel
+extern unsigned int gap;
+
 
 extern u8 taking; // Flag: attempt of taking an object.
 extern ObjectId carry_type; // Object type being carried (-1 = none).
@@ -222,7 +228,15 @@ extern float *docksite_h;
 // Pixel mass
 extern float *pixelmass;
 
-// Files for sottofondi audio.
+/** Files for sottofondi audio (background sounds).
+ *
+ * This array saves a contiguous sequence of associated file names per pixel type,
+ * each at most 8 characters long
+ * (without the ".VOC" extension)
+ * plus 1 byte for the null terminator.
+ *
+ * That is, the file name of the `i`th pixel type starts at `&subsignal[9 * i]`.
+ */
 extern char *subsignal;
 
 /* Concerning objects. */
@@ -270,13 +284,23 @@ extern int a, b, c; // Contatori ausiliari.
 extern int id; // 0, 1, 2 o 3. A seconda della distanza del pixel.
 extern int nopix; // Nr. Pixel.
 
-extern char globalvocfile[13]; // sottofondi sui pixels.
+/** A placeholder for the file name of the sottofondo,
+ * or depth sounder (AKA background audio).
+ *
+ * This buffer is used to load the audio file associated to a pixel or object,
+ * thus tracking whether it should be playing while in a pixel.
+ *
+ * Note that the effective audio being played,
+ * as well as the background audio to use when outside a pixel,
+ * is tracked separately in the dsp module.
+ */
+extern char globalvocfile[13];
 
 extern char fermo_li;
 
 /// whether the sound emitting object is close
 extern int vicini;
-extern int sta_suonando;
+extern int suonando;
 /// ID of the pixel emitting sound.
 extern PixelId pixel_sonante;
 
@@ -306,6 +330,8 @@ extern char t[80]; // Usata nelle funz. Pixel & Object.
 #define nr_audiofiles 14
 //#include <dsp.h>
 
+// identifiers for (originally) pre-loaded audios
+
 #define BOM        13
 #define DESTROY    12
 #define READY      11
@@ -317,9 +343,12 @@ extern char t[80]; // Usata nelle funz. Pixel & Object.
 #define LASCIARE    5
 #define PRENDERE    4
 #define DISTACCO    3
+// Warning: duplicate definition of the one below
 #define ATTRACCO    2
 #define TARGET      1
 
+// identifier for the depth sounder audio.
+// this does not refer to a specific audio file.
 #define SOTTOFONDO  0
 
 /* Fine sezione signal processing. */

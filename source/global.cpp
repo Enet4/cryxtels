@@ -46,6 +46,12 @@ bool back_keyhold = false;
 /// tracker for right click holding duration
 int rclick = -1;
 
+/// tracker for the last time the echo sound was triggered
+unsigned int stso = 0;
+
+/// tracker for the gap to the nearest pixel
+unsigned int gap = 0;
+
 u8 taking = 0; // Flag: tentativo di prelevamento di un oggetto.
 ObjectId carry_type = -1; // Tipo oggetto trasportato (-1 = nessuno).
 double trackframe = 0; // Nr. fotogramma della sequenza di attracco.
@@ -224,7 +230,16 @@ float *docksite_h;
 
 float *pixelmass; // Massa.
 
-char *subsignal; // Files per sottofondi audio.
+/** Files for sottofondi audio (background sounds).
+ *
+ * This array saves a contiguous sequence of associated file names per pixel type,
+ * each at most 8 characters long
+ * (without the ".VOC" extension)
+ * plus 1 byte for the null terminator.
+ *
+ * That is, the file name of the `i`th pixel type starts at `&subsignal[9 * i]`.
+ */
+char *subsignal;
 
 /* Dati sugli oggetti. */
 
@@ -271,7 +286,17 @@ int  nopix;
 
 //double ob = 15000, micro_x = 0, micro_y = 0;
 
-char globalvocfile[13] = ".voc"; // sottofondi sui pixels.
+/** A placeholder for the file name of the sottofondo,
+ * or depth sounder (AKA background audio).
+ *
+ * This buffer is used to load the audio file associated to a pixel or object,
+ * thus tracking whether it should be playing while in a pixel.
+ *
+ * Note that the effective audio being played,
+ * as well as the background audio to use when outside a pixel,
+ * is tracked separately in the dsp module.
+ */
+char globalvocfile[13] = ".voc";
 
 char fermo_li = 0;
 

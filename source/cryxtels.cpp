@@ -40,6 +40,7 @@
 #include "input.h"
 #include "draw.h"
 #include "sdl_exception.h"
+#include "dsp.h"
 
 #include "SDL.h"
 #include "conf.h"
@@ -49,9 +50,6 @@ using namespace std;
 constexpr int TICKS_IN_A_SECOND = 1000;
 constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
 constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
-
-// dummy function (nullify effect)
-inline void play (long) {}
 
 /// initialize some parts of cryxtels
 inline void init_start();
@@ -87,6 +85,11 @@ void fade (u8 speed = 1);
 
 /// Docking effects.
 void dock_effects ();
+
+/// Draw a console key on the ship's console
+/// and handle key locking (when out of the fly)
+/// and key pressing audio.
+void console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state);
 
 /// Save state
 void save_situation (char i);
@@ -219,6 +222,9 @@ int main(int argc, char** argv)
         init_video();
         tinte (0);
 
+        // initialize audio device
+        init_audio();
+
         // Configure input
 
     } catch (int err) {
@@ -237,16 +243,11 @@ int main(int argc, char** argv)
 
     sprintf (t, "%s'S MICROCOSM", autore_forme);
 
-    //while (!tasto_premuto()&&!mpul) {
-    // ...
-    //}
-    //while (!tasto_premuto() && !mpul) {
+    set_sottofondo("INTRO.VOC");
+
     while (run_intro) {
         run_intro = intro_loop();
     }
-
-//    ignesci: //pop_audiofile ();
-//    ignentra: //push_audiofile ("ECHO");
 
     if (flag)
             load_situation(sit, true);
@@ -254,6 +255,8 @@ int main(int argc, char** argv)
             cam_z = -20000;
             fade (3);
     }
+
+    set_sottofondo("ECHO.VOC");
 
     if (grab_mouse) {
         SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -284,8 +287,9 @@ bool intro_loop() {
     static const int FOTTY_VIEWPORT_UPPER = HEIGHT*65/200;
     static const int FOTTY_VIEWPORT_LOWER = HEIGHT*135/200;
 
-    //if (!sbp_stat) play (0);
-    u32 sync = SDL_GetTicks(); //clock();
+    // keep playing intro audio while in the loop
+    play(SOTTOFONDO, 2);
+    u32 sync = SDL_GetTicks();
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -405,12 +409,12 @@ bool main_loop() {
             dei pixels dall'osservatore. */
         dists ();
 
-        /* if (EVA_in_progress) {
-                rx = pixel_xdisloc[pix] + rel_x - cam_x;
-                ry = pixel_ydisloc[pix] + rel_y - cam_y;
-                rz = pixel_zdisloc[pix] + rel_z - cam_z;
-                pixel_absd[pix] = sqrt (rx*rx+ry*ry+rz*rz);
-            } */
+        if (EVA_in_progress) {
+            rx = pixel_xdisloc[pix] + rel_x - cam_x;
+            ry = pixel_ydisloc[pix] + rel_y - cam_y;
+            rz = pixel_zdisloc[pix] + rel_z - cam_z;
+            pixel_absd[pix] = sqrt (rx*rx+ry*ry+rz*rz);
+        }
 
         if (!trackframe&&!explode_count) {
             pix = 0;
@@ -420,7 +424,7 @@ bool main_loop() {
                     pix = p;
                 }
         }
-        //gap = pixel_absd[pix] / 500 + 5;
+        gap = pixel_absd[pix] / 500 + 5;
 
         r_x = rel_x;
         r_z = rel_z;
@@ -1040,7 +1044,7 @@ bool main_loop() {
                     ry = oy - cam_y;
                     rz = oz - cam_z;
                     kk = sqrt (rx*rx+ry*ry+rz*rz);
-                    //if (kk<pixel_absd[pix]) gap = kk / 500 + 5;
+                    if (kk<pixel_absd[pix]) gap = kk / 500 + 5;
                     if (kk<1000) Object (objecttype[o]);
                     absolute_x[o] += relative_x[o];
                     absolute_y[o] += relative_y[o];
@@ -1205,13 +1209,13 @@ bool main_loop() {
         if (trackframe && !EVA_in_progress && i==61) bki3 = i;
         if (orig && i==62) bki4 = i;
 
-        draw_console_key ("SPIN", -6.0, 58, i, i, bki0);
-        draw_console_key ("LEAD", -4.9, 59, i, i, bki1);
-        draw_console_key ("EXTR", -3.8, 60, i, i, bki2);
-        draw_console_key ("DOCK", -2.7, 61, i, i, bki3);
-        draw_console_key ("ORIG", -1.6, 62, i, i, bki4);
+        console_key ("SPIN", -6.0, 58, i, i, bki0);
+        console_key ("LEAD", -4.9, 59, i, i, bki1);
+        console_key ("EXTR", -3.8, 60, i, i, bki2);
+        console_key ("DOCK", -2.7, 61, i, i, bki3);
+        console_key ("ORIG", -1.6, 62, i, i, bki4);
 
-        draw_console_key ("ECHO", 5.0, echo&1, 1, echo, bkecho);
+        console_key ("ECHO", 5.0, echo&1, 1, echo, bkecho);
 
         // end drawing the fly
 
@@ -1298,14 +1302,16 @@ bool main_loop() {
             }
 
             // Cosette finali.
-            /* Sound Off for now
-            if (!sbp_stat&&!sbf_stat) { // Gestione audio in sottofondo...
+            if (audioEnabled) { // Gestione audio in sottofondo...
                 subs = 1;
                 if (globalvocfile[0]!='.') {
                     chiudi_filedriver ();
-                    for (o=0; o<_objects; o++) {
-                        if (object_location[o]==pixel_sonante)
-                            if (absolute_y[o]==11E11)
+                    for (int o = 0; o<_objects; o++) {
+                        if (object_location[o] == pixel_sonante)
+                            // it is unclear what this does
+                            // and whether it has a chance of getting triggered,
+                            // but it's in the original code...
+                            if (absolute_y[o] == 11E11)
                                 absolute_y[o] = 0;
                     }
                     // Per poter
@@ -1318,16 +1324,15 @@ bool main_loop() {
                     Oggetti_sul_Pixel (1);
                 }
             }
-            */
 
-            /* Sound stuff
+            // play the echo sonar
             if (!EVA_in_progress&&!trackframe) { // Segnale dell'ecoscandaglio.
-                if (SDL_GetTicks()-stso>=gap) {
-                    stso = SDL_GetTicks();
-                    if (subs&&(echo&1)) play (SOTTOFONDO);
+                auto ticks = SDL_GetTicks() / 24;
+                if (ticks - stso >= gap) {
+                    stso = ticks;
+                    if (subs&&(echo&1)) play (SOTTOFONDO, 2);
                 }
             }
-            */
 
             if (moving_last_object) { // "Adagia" l'oggetto lasciato.
                 _x = cfx - relative_x[_objects-1];
@@ -1371,7 +1376,7 @@ inline void init_start()
     }
 
 	// Init SDL
-	r = SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO);
+	r = SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 	if (r < 0)
 	{	cerr << "Failed to init SDL: " << SDL_GetError() << endl;
 		throw 2;
@@ -1646,6 +1651,10 @@ void fade (unsigned char speed) {
     keybuffer_cleaner ();
     unsigned int dx = 0;
     auto skip = false;
+
+    // fadeout sound depending on speed
+    audio_stop(-1, 660 / speed);
+
     do {
         unsigned int sync = SDL_GetTicks();
 
@@ -1803,8 +1812,7 @@ void ispd ()
         _x = rel_x;
         _z = rel_z;
         int acount = (SDL_GetTicks() % 520) / 4 - 80;
-        // Sound off
-        //if (acount<0&&!sbp_stat) play (PASSO);
+        if (acount < -10) play (PASSO);
         rel_y += acount / 300.0;
         rel_x -= 4 * tsin[beta] * tcos[alpha];
         rel_z += 4 * tcos[beta] * tcos[alpha];
@@ -1837,8 +1845,7 @@ void dspd ()
         if (!EVA_in_progress && trackframe<23)
                 spd = 0;
         else {
-                // Sound off
-                //if (!sbp_stat) play (PASSO);
+                play (PASSO);
                 _x = rel_x;
                 _z = rel_z;
                 rel_x += 4 * tsin[beta] * tcos[alpha];
@@ -1866,7 +1873,7 @@ void dspd ()
 
 void attracco ()
 {
-    play (ATTRACCO);
+    play (ATTRACCO, 1);
     trackframe = 0;
     tracking = 1;
     v_alpha = 0;
@@ -1880,7 +1887,7 @@ void undock ()
             spd_x = pixel_xdisloc[pix] - prevpixx;
             spd_z = pixel_zdisloc[pix] - prevpixz;
             reset_trackframe = 1;
-            play (DISTACCO); subs = 0;
+            play (DISTACCO, 1); subs = 0;
         }
         else {
             if (pixel_absd[pix] < 500 + 1000*pixel_rot[pix]
@@ -1942,7 +1949,7 @@ void find_alphabeta()
             alpha90 = c;
         }
     }
-    play (FID);
+    play (FID, 1);
     subs = 0;
     comera_m = m;
     m = 0;
@@ -2014,6 +2021,37 @@ void dock_effects ()
     }
 }
 
+/// Draw a console key on the ship's console
+/// and handle key locking (when out of the fly)
+/// and key pressing audio.
+void console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state)
+{
+    if (EVA_in_progress) {
+        // disable console keys when far away from the HUD
+        d = sqrt(rel_x*rel_x + (rel_z+10)*(rel_z+10));
+        if (d>25) {
+            input = 1;
+            cod = 0;
+        }
+    }
+
+    // only show console key as pressed when
+    // the key pressed is the same as the one bound to this console key
+    // AND the key wasn't already pressed in the previous frame
+    // (save for key code 1, which is a toggle button)
+    if (input!=cod || (cod != 1 && current_state == previous_state)) {
+        draw_console_key_up(serigraph, x);
+    }
+    else {
+        draw_console_key_down(serigraph, x);
+        if (current_state!=previous_state) {
+            if (EVA_in_progress && globalvocfile[0]!='.') return;
+            play (TASTO);
+            subs = 0;
+        }
+    }
+}
+
 void scoppia (int nr_ogg, double potenza, int var)
 {
         for (a=0; a<180; a+=18)
@@ -2030,23 +2068,26 @@ void scoppia (int nr_ogg, double potenza, int var)
         preleva_oggetto (nr_ogg);
         carry_type = bk;
 
-        if (!(SDL_GetTicks()%(random(var)+1))) play (BOM);
+        auto ticks = SDL_GetTicks() / 4;
+        if (!(ticks % (random(var)+1))) {
+            // use two channels for a more dense explosion effect
+            auto track = ticks & 1;
+            play (BOM, track);
+        }
         subs = 0;
 }
 
 void chiudi_filedriver ()
 {
-/* No audio
     globalvocfile[0] = '.';
-    if (recfile>-1) {
+    if (recfile) {
         audio_stop ();
-        write (recfile, "\0", 1);
-        close (recfile);
-        recfile = -1;
+        std::fwrite ("\0", 1, 1, recfile);
+        std::fclose (recfile);
+        recfile = nullptr;
     }
-    file_driver_off ();
-    dsp_driver_on ();
-*/
+    //file_driver_off ();
+    //dsp_driver_on ();
 }
 
 void alfin (char arc)
@@ -2054,10 +2095,9 @@ void alfin (char arc)
         if (arc) fade (5);
         //dsp_driver_off (); // unused right now
         if (recfile) {
-                //audio_stop (); // unused right now
-                std::fwrite("\0", 1, 1, recfile);
-                std::fclose(recfile);
-                recfile = nullptr;
+            std::fwrite("\0", 1, 1, recfile);
+            std::fclose(recfile);
+            recfile = nullptr;
         }
         //file_driver_off ();
         ctrlkeys[0] = ctk;
@@ -3008,53 +3048,10 @@ void Object (int tipo)
                     if (d<15||tipo==carry_type) {
                         fermo_li = 1;
                         memcpy (buffer+545, buffer+33, 512);
-                        /*
                         if (tasto_premuto()) {
-                            c = attendi_pressione_tasto();
+                            // play a keyboard press if suitable
                             if ((globalvocfile[0]=='.'&&EVA_in_progress)||!EVA_in_progress) play (TARGET);
-                            switch (c) {
-                                case 0:
-                                    switch (attendi_pressione_tasto()) {
-                                        case 77:
-                                            if (cursore<511) cursore++;
-                                            break;
-                                        case 75:
-                                            if (cursore) cursore--;
-                                            break;
-                                        case 80:
-                                            if (cursore<480) cursore += 32;
-                                            break;
-                                        case 72:
-                                            if (cursore>31) cursore -= 32;
-                                            break;
-                                        case 64:
-                                            snapshot();
-                                }
-                                break;
-                        case 13:
-                                if (cursore<480) {
-                                    cursore = (cursore/32) * 32;
-                                    cursore += 32;
-                                }
-                                break;
-                        case 8:
-                                if (cursore) {
-                                        cursore--;
-                                        buffer[cursore+33] = 32;
-                                }
-                                break;
-                        case 27:
-                                alfin (1);
-                                exit (0);
-                        default:
-                            if (cursore<512) {
-                                if (c>='a'&&c<='z') c -= 32;
-                                if (c>31 && c<97) {
-                                    buffer[cursore+33] = c;
-                                    if (cursore<511) cursore++;
-                                }
-                            }
-                            */
+                        }
                     }
                     if (cursore<512) {
                         if (type_this != 0) {

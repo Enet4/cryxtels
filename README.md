@@ -19,6 +19,7 @@ Building this project requires:
 - The SDL 2 development library should be installed in the system,
   either via a package manager in your system
   or through [vcpkg](https://github.com/microsoft/vcpkg).
+  The SDL_mixer extension is needed for audio support.
 
 Run `cmake` to generate the project scaffold
 (usually GNU Makefiles on Linux platforms),
