@@ -23,6 +23,7 @@
 
 #include "SDL.h"
 #include "conf.h"
+#include <dsp.h>
 
 /// enter a synchronous routine
 /// to fade out the screen
@@ -33,6 +34,10 @@ void fade(u8 speed) {
     keybuffer_cleaner();
     unsigned int dx = 0;
     auto skip = false;
+
+    // fadeout sound depending on speed
+    audio_stop(-1, 660 / speed);
+
     do {
         unsigned int sync = SDL_GetTicks();
 
@@ -77,14 +82,14 @@ halt:   keybuffer_cleaner ();
 }
 
 void alfin (bool arc) {
-        if (arc) fade(5);
-        //dsp_driver_off (); // unused right now
-        if (recfile) {
-                //audio_stop (); // unused right now
-                std::fwrite("\0", 1, 1, recfile);
-                std::fclose(recfile);
-                recfile = nullptr;
-        }
-        //file_driver_off ();
-        ctrlkeys[0] = ctk;
+    if (arc) fade(5);
+    //dsp_driver_off (); // unused right now
+    if (recfile) {
+        //audio_stop (); // unused right now
+        std::fwrite("\0", 1, 1, recfile);
+        std::fclose(recfile);
+        recfile = nullptr;
+    }
+    //file_driver_off ();
+    ctrlkeys[0] = ctk;
 }

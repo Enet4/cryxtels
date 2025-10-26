@@ -42,6 +42,7 @@
 #include "sdl_exception.h"
 #include "transition.h"
 #include "intro.h"
+#include "dsp.h"
 
 #include "SDL.h"
 #include "conf.h"
@@ -63,9 +64,6 @@ static void read_config(void) {
     pixels = config.cosm_pixels;
     objects = config.cosm_objects;
 }
-
-// dummy function (nullify effect)
-inline void play (long) {}
 
 /// initialize some parts of cryxtels
 inline void init_start();
@@ -89,6 +87,11 @@ void rot ();
 
 /// Docking effects.
 void dock_effects ();
+
+/// Draw a console key on the ship's console
+/// and handle key locking (when out of the fly)
+/// and key pressing audio.
+void console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state);
 
 /// Save state
 void save_situation (char i);
@@ -219,6 +222,9 @@ int main(int argc, char** argv)
         init_video();
         tinte (0);
 
+        // initialize audio device
+        init_audio();
+
         // Configure input
 
     } catch (int err) {
@@ -242,12 +248,11 @@ int main(int argc, char** argv)
     //}
     //while (!tasto_premuto() && !mpul) {
     init_intro();
+    set_sottofondo("INTRO.VOC");
+
     while (run_intro) {
         run_intro = intro_loop();
     }
-
-//    ignesci: //pop_audiofile ();
-//    ignentra: //push_audiofile ("ECHO");
 
     if (flag)
             load_situation(sit, true);
@@ -255,6 +260,8 @@ int main(int argc, char** argv)
             cam_z = -20000;
             fade (3);
     }
+
+    set_sottofondo("ECHO.VOC");
 
     if (grab_mouse) {
         SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -315,12 +322,12 @@ bool main_loop() {
             dei pixels dall'osservatore. */
         dists ();
 
-        /* if (EVA_in_progress) {
-                rx = pixel_xdisloc[pix] + rel_x - cam_x;
-                ry = pixel_ydisloc[pix] + rel_y - cam_y;
-                rz = pixel_zdisloc[pix] + rel_z - cam_z;
-                pixel_absd[pix] = sqrt (rx*rx+ry*ry+rz*rz);
-            } */
+        if (EVA_in_progress) {
+            rx = pixel_xdisloc[pix] + rel_x - cam_x;
+            ry = pixel_ydisloc[pix] + rel_y - cam_y;
+            rz = pixel_zdisloc[pix] + rel_z - cam_z;
+            pixel_absd[pix] = sqrt (rx*rx+ry*ry+rz*rz);
+        }
 
         if (!trackframe&&!explode_count) {
             pix = 0;
@@ -330,7 +337,7 @@ bool main_loop() {
                     pix = p;
                 }
         }
-        //gap = pixel_absd[pix] / 500 + 5;
+        gap = pixel_absd[pix] / 500 + 5;
 
         r_x = rel_x;
         r_z = rel_z;
@@ -485,10 +492,13 @@ bool main_loop() {
                         }
                         else {
                             if (dsol<15000) {
-                                if (carry_type>0) // change the object being created
+                                // change the object being created
+                                if (carry_type>0) {
                                     carry_type--;
-                                else // create a new object
+                                } else {
+                                    // rollback to the last object type
                                     carry_type = existent_objecttypes - 1;
+                                }
                             }
                         }
                         break;
@@ -950,7 +960,7 @@ bool main_loop() {
                     ry = oy - cam_y;
                     rz = oz - cam_z;
                     kk = sqrt (rx*rx+ry*ry+rz*rz);
-                    //if (kk<pixel_absd[pix]) gap = kk / 500 + 5;
+                    if (kk<pixel_absd[pix]) gap = kk / 500 + 5;
                     if (kk<1000) Object (objecttype[o]);
                     absolute_x[o] += relative_x[o];
                     absolute_y[o] += relative_y[o];
@@ -1115,13 +1125,13 @@ bool main_loop() {
         if (trackframe && !EVA_in_progress && i==61) bki3 = i;
         if (orig && i==62) bki4 = i;
 
-        draw_console_key ("SPIN", -6.0, 58, i, i, bki0);
-        draw_console_key ("LEAD", -4.9, 59, i, i, bki1);
-        draw_console_key ("EXTR", -3.8, 60, i, i, bki2);
-        draw_console_key ("DOCK", -2.7, 61, i, i, bki3);
-        draw_console_key ("ORIG", -1.6, 62, i, i, bki4);
+        console_key ("SPIN", -6.0, 58, i, i, bki0);
+        console_key ("LEAD", -4.9, 59, i, i, bki1);
+        console_key ("EXTR", -3.8, 60, i, i, bki2);
+        console_key ("DOCK", -2.7, 61, i, i, bki3);
+        console_key ("ORIG", -1.6, 62, i, i, bki4);
 
-        draw_console_key ("ECHO", 5.0, echo&1, 1, echo, bkecho);
+        console_key ("ECHO", 5.0, echo&1, 1, echo, bkecho);
 
         // end drawing the fly
 
@@ -1208,14 +1218,16 @@ bool main_loop() {
             }
 
             // Cosette finali.
-            /* Sound Off for now
-            if (!sbp_stat&&!sbf_stat) { // Gestione audio in sottofondo...
+            if (audioEnabled) { // Gestione audio in sottofondo...
                 subs = 1;
                 if (globalvocfile[0]!='.') {
                     chiudi_filedriver ();
-                    for (o=0; o<_objects; o++) {
-                        if (object_location[o]==pixel_sonante)
-                            if (absolute_y[o]==11E11)
+                    for (int o = 0; o<_objects; o++) {
+                        if (object_location[o] == pixel_sonante)
+                            // it is unclear what this does
+                            // and whether it has a chance of getting triggered,
+                            // but it's in the original code...
+                            if (absolute_y[o] == 11E11)
                                 absolute_y[o] = 0;
                     }
                     // Per poter
@@ -1228,16 +1240,15 @@ bool main_loop() {
                     Oggetti_sul_Pixel (1);
                 }
             }
-            */
 
-            /* Sound stuff
+            // play the echo sonar
             if (!EVA_in_progress&&!trackframe) { // Segnale dell'ecoscandaglio.
-                if (SDL_GetTicks()-stso>=gap) {
-                    stso = SDL_GetTicks();
-                    if (subs&&(echo&1)) play (SOTTOFONDO);
+                auto ticks = SDL_GetTicks() / 24;
+                if (ticks - stso >= gap) {
+                    stso = ticks;
+                    if (subs&&(echo&1)) play (SOTTOFONDO, 2);
                 }
             }
-            */
 
             if (moving_last_object) { // "Adagia" l'oggetto lasciato.
                 _x = cfx - relative_x[_objects-1];
@@ -1281,7 +1292,7 @@ inline void init_start()
     }
 
 	// Init SDL
-	r = SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO);
+	r = SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 	if (r < 0)
 	{	cerr << "Failed to init SDL: " << SDL_GetError() << endl;
 		throw 2;
@@ -1510,6 +1521,34 @@ void build_cosm(char& flag)
 
 }
 
+// Find an object just below object `o` with the given type.
+ObjectId find_close_object(ObjectId o, ObjectTypeId obj_type) {
+    for (ObjectId i = 0; i < _objects; i++) {
+        if (i == o) {
+            continue;
+        }
+        if (object_location[i] != nopix) {
+            continue;
+        }
+        _oy = relative_y[o] - relative_y[a];
+        if (_oy>=0) {
+            _ox = relative_x[i] - relative_x[i];
+            _oz = relative_z[i] - relative_z[i];
+            if (objecttype[o] != obj_type) {
+                continue;
+            }
+
+            auto sqr_dist = _ox*_ox+_oy*_oy+_oz*_oz;
+            auto threshold = object_elevation[objecttype[a]] + 5;
+            if (sqr_dist < threshold * threshold) {
+                // object is close enough
+                return a;
+            }
+        }
+    }
+    return -1;
+}
+
 void rot ()
 {
     // Assegnazione posizioni a pixels gravitanti.
@@ -1549,9 +1588,9 @@ void load_situation(char i, bool skip_fade) {
         rot ();
         dists ();
         dock_effects ();
-        //sta_suonando = -1;
-        //pixel_sonante = -1;
-        //globalvocfile[0] = '.';
+        sta_suonando = -1;
+        pixel_sonante = -1;
+        globalvocfile[0] = '.';
         moving_last_object = 0;
         mx = beta * 5; my = alpha * 5;
         r_x = rel_x; r_y = rel_y; r_z = rel_z;
@@ -1609,8 +1648,7 @@ void ispd ()
         _x = rel_x;
         _z = rel_z;
         int acount = (SDL_GetTicks() % 520) / 4 - 80;
-        // Sound off
-        //if (acount<0&&!sbp_stat) play (PASSO);
+        if (acount < -10) play (PASSO);
         rel_y += acount / 300.0;
         rel_x -= 4 * tsin[beta] * tcos[alpha];
         rel_z += 4 * tcos[beta] * tcos[alpha];
@@ -1643,8 +1681,7 @@ void dspd ()
         if (!EVA_in_progress && trackframe<23)
                 spd = 0;
         else {
-                // Sound off
-                //if (!sbp_stat) play (PASSO);
+                play (PASSO);
                 _x = rel_x;
                 _z = rel_z;
                 rel_x += 4 * tsin[beta] * tcos[alpha];
@@ -1672,7 +1709,7 @@ void dspd ()
 
 void attracco ()
 {
-    play (ATTRACCO);
+    play (ATTRACCO, 1);
     trackframe = 0;
     tracking = 1;
     v_alpha = 0;
@@ -1686,7 +1723,10 @@ void undock ()
             spd_x = pixel_xdisloc[pix] - prevpixx;
             spd_z = pixel_zdisloc[pix] - prevpixz;
             reset_trackframe = 1;
-            play (DISTACCO); subs = 0;
+            play (DISTACCO, 1); subs = 0;
+            // bring echo sonar back
+            audio_stop(2);
+            set_sottofondo("ECHO");
         }
         else {
             if (pixel_absd[pix] < 500 + 1000*pixel_rot[pix]
@@ -1748,7 +1788,7 @@ void find_alphabeta()
             alpha90 = c;
         }
     }
-    play (FID);
+    play (FID, 1);
     subs = 0;
     comera_m = m;
     m = 0;
@@ -1820,6 +1860,37 @@ void dock_effects ()
     }
 }
 
+/// Draw a console key on the ship's console
+/// and handle key locking (when out of the fly)
+/// and key pressing audio.
+void console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state)
+{
+    if (EVA_in_progress) {
+        // disable console keys when far away from the HUD
+        d = sqrt(rel_x*rel_x + (rel_z+10)*(rel_z+10));
+        if (d>25) {
+            input = 1;
+            cod = 0;
+        }
+    }
+
+    // only show console key as pressed when
+    // the key pressed is the same as the one bound to this console key
+    // AND the key wasn't already pressed in the previous frame
+    // (save for key code 1, which is a toggle button)
+    if (input!=cod || (cod != 1 && current_state == previous_state)) {
+        draw_console_key_up(serigraph, x);
+    }
+    else {
+        draw_console_key_down(serigraph, x);
+        if (current_state!=previous_state) {
+            if (EVA_in_progress && globalvocfile[0]!='.') return;
+            play (TASTO);
+            subs = 0;
+        }
+    }
+}
+
 void scoppia (int nr_ogg, double potenza, int var)
 {
         for (a=0; a<180; a+=18)
@@ -1836,23 +1907,26 @@ void scoppia (int nr_ogg, double potenza, int var)
         preleva_oggetto (nr_ogg);
         carry_type = bk;
 
-        if (!(SDL_GetTicks()%(random(var)+1))) play (BOM);
+        auto ticks = SDL_GetTicks() / 4;
+        if (!(ticks % (random(var)+1))) {
+            // use two channels for a more dense explosion effect
+            auto track = ticks & 1;
+            play (BOM, track);
+        }
         subs = 0;
 }
 
 void chiudi_filedriver ()
 {
-/* No audio
     globalvocfile[0] = '.';
-    if (recfile>-1) {
+    if (recfile) {
         audio_stop ();
-        write (recfile, "\0", 1);
-        close (recfile);
-        recfile = -1;
+        std::fwrite ("\0", 1, 1, recfile);
+        std::fclose (recfile);
+        recfile = nullptr;
     }
-    file_driver_off ();
-    dsp_driver_on ();
-*/
+    //file_driver_off ();
+    //dsp_driver_on ();
 }
 
 void preleva_oggetto (int nr_ogg)
@@ -1864,9 +1938,35 @@ void preleva_oggetto (int nr_ogg)
     if (globalvocfile[0]=='.'&&EVA_in_progress) play (PRENDERE);
 
     carry_type = objecttype[nr_ogg];
-    // update pixel translation speed if picking up an orbital engine
-    if (EVA_in_progress && object_location[nr_ogg]>-1 && carry_type==1)
-        pixel_rot[pix]--;
+    std::cout << "(DEBUG) picking up object nr " << nr_ogg << " of type " << carry_type << std::endl;
+    
+    if (EVA_in_progress) {
+        // update pixel translation speed if picking up an orbital engine
+        if (carry_type == OBJECT_TYPE_ORBITAL_ENGINE && object_location[nr_ogg] > -1) {
+            pixel_rot[pix]--;
+        } else {
+        
+            // identify if we are picking up an audio object
+            auto obj_below = find_close_object(nr_ogg, OBJECT_TYPE_CD_PLAYER);
+            std::cout << "(DEBUG) checking for CD player below... " << obj_below << std::endl;
+            if (obj_below > -1) {
+                std::cout << "(DEBUG) object is below CD player." << std::endl;
+                // inspect audio object properties
+                int ptr = 9 * (carry_type + FRONTIER_M3);
+                if (subsignal[ptr]) {
+                    auto effect = read_associated_file_effect(&subsignal[ptr]);
+                    if (effect == AssociatedFileEffect::OTHER) {
+                        // stop playing music when picking up the object
+                        audio_stop(2);
+                        sta_suonando = -1;
+                        pixel_sonante = -1;
+                        globalvocfile[0] = '.';
+                    }
+                }
+            }
+        }
+    }
+    
 
     // remove object and shift the others
     // so that the object picked up is always the last one
@@ -1912,7 +2012,7 @@ void Oggetti_sul_Pixel (char oblige)
                         oy -= object_elevation[objecttype[o]];
                         if (nopix==pix||oblige) {
                                 if (explode_count) explode = explode_count;
-                                if (objecttype[o]==2||objecttype[o]==0) {
+                                if (objecttype[o]==OBJECT_TYPE_CD_PLAYER || objecttype[o]==OBJECT_TYPE_FOTTIFOH) {
                                         // object copier or music player,
                                         // which work by placing an object on top
                                         for (a=o+1; a<_objects; a++) {
@@ -1923,48 +2023,88 @@ void Oggetti_sul_Pixel (char oblige)
                                                                 _oz = relative_z[o] - relative_z[a];
                                                                 if (sqrt(_ox*_ox+_oy*_oy+_oz*_oz)<object_elevation[objecttype[a]]+5) {
                                                                         // object is close enough, trigger effect
-                                                                        if (objecttype[o]==2) {
-                                                                                /* Audio object type. Off you go for now.
-                                                                                if (objecttype[a] == sta_suonando) vicini = 1;
-                                                                                if (!fd_status&&!moving_last_object) {
-                                                                                        if (absolute_y[a]<10E10) {
-                                                                                                if (!repeat)
-                                                                                                        absolute_y[a] = 10E10;
-                                                                                                else
-                                                                                                        absolute_y[a] = 11E11;
-                                                                                                ptr = 9*(objecttype[a]+FRONTIER_M3);
-                                                                                                if (subsignal[ptr]) {
-                                                                                                        if (!memcmp(&subsignal[ptr], "VISORE", 6)) {     goto nopoint; } // Do nothing.
-                                                                                                        if (!memcmp(&subsignal[ptr], "TESTO-", 6)) {     goto nopoint; } // Do nothing.
-                                                                                                        if (!memcmp(&subsignal[ptr], "BOMBA" , 5)) {     goto nopoint; } // Do nothing.
-                                                                                                        if (!memcmp(&subsignal[ptr], "SORG-D", 6)) { source = 0;          goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "SORG-C", 6)) { source = 1;          goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "SORG-M", 6)) { source = 2;          goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "SORG-L", 6)) { source = 3;          goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "N-TAPE", 6)) { quality = 0;         goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "Q-TAPE", 6)) { quality = 1;         goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "C-DISC", 6)) { quality = 2;         goto nopoint; }
-                                                                                                        if (!memcmp(&subsignal[ptr], "REPEAT", 6)) { repeat = 1 - repeat; goto nopoint; }
-                                                                                                        if (recfile==-1) {
-                                                                                                                memcpy (globalvocfile, &subsignal[ptr], 9);
-                                                                                                                strcat (globalvocfile, ".voc");
-                                                                                                                dsp_driver_off ();
-                                                                                                                file_driver_on ();
-                                                                                                                filtraggio (record_filt[quality]);
-                                                                                                                if (audio_play (globalvocfile) == -1) {
-                                                                                                                        sorgente (source);
-                                                                                                                        recfile = _creat (globalvocfile, 0);
-                                                                                                                        if (recfile>-1) rec (recfile, record_frq[quality]);
-                                                                                                                }
-                                                                                                                sta_suonando = objecttype[a];
-                                                                                                                pixel_sonante = nopix;
-                                                                                                        }
-                                                                                                        vicini = 1;
-                                                                                                        nopoint:
-                                                                                                }
+                                                                        if (objecttype[o] == OBJECT_TYPE_CD_PLAYER) {
+                                                                            if (objecttype[a] == sta_suonando) vicini = 1;
+                                                                            if (!moving_last_object) {
+                                                                                if (absolute_y[a]<10E10) {
+                                                                                    if (!repeat)
+                                                                                        absolute_y[a] = 10E10;
+                                                                                    else
+                                                                                        absolute_y[a] = 11E11;
+                                                                                    ptr = 9*(objecttype[a]+FRONTIER_M3);
+                                                                                    if (subsignal[ptr]) {
+                                                                                        // whether the associated file should be played
+                                                                                        bool should_play;
+                                                                                        // treat each associated file name correctly,
+                                                                                        // as they represent objects with different capabilities
+                                                                                        switch (read_associated_file_effect(&subsignal[ptr])) {
+                                                                                            case AssociatedFileEffect::MAGNIFY:
+                                                                                            case AssociatedFileEffect::TEXT_H:
+                                                                                            case AssociatedFileEffect::TEXT_V:
+                                                                                            case AssociatedFileEffect::BOMB:
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::SOURCE_D:
+                                                                                                source = 0;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::SOURCE_C:
+                                                                                                source = 1;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::SOURCE_M:
+                                                                                                source = 2;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::SOURCE_L:
+                                                                                                source = 3;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::QUALITY_L:
+                                                                                                quality = 0;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::QUALITY_M:
+                                                                                                quality = 1;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::QUALITY_H:
+                                                                                                quality = 2;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            case AssociatedFileEffect::REPEAT:
+                                                                                                repeat = 1 - repeat;
+                                                                                                should_play = false;
+                                                                                                break;
+                                                                                            default:
+                                                                                                should_play = true;
+                                                                                                break;
                                                                                         }
+                                                                                        if (should_play && recfile == nullptr) {
+                                                                                            // we are changing the global voc file,
+                                                                                            // because some code depends on it
+                                                                                            // in order to know whether music is playing,
+                                                                                            // but we do not actually use it.
+                                                                                            memcpy (globalvocfile, &subsignal[ptr], 9);
+                                                                                            strcat (globalvocfile, ".voc");
+                                                                                            //dsp_driver_off ();
+                                                                                            //file_driver_on ();
+                                                                                            //filtraggio (record_filt[quality]);
+                                                                                            if (!play_music(&subsignal[ptr], repeat)) {
+                                                                                                // if music playback fails,
+                                                                                                // we would try to record!
+                                                                                                // this is unsupported at the moment
+                                                                                                // sorgente (source);
+                                                                                                // recfile = _creat (globalvocfile, 0);
+                                                                                                // if (recfile>-1) rec (recfile, record_frq[quality]);
+                                                                                            }
+                                                                                            sta_suonando = objecttype[a];
+                                                                                            pixel_sonante = nopix;
+                                                                                        }
+                                                                                        vicini = 1;
+                                                                                    }
                                                                                 }
-                                                                                */
+                                                                            }
                                                                         }
                                                                         // object type 0: object copier
                                                                         else {
@@ -2064,19 +2204,20 @@ void lascia_cadere ()
             relative_x[_objects] -= 5 * tsin[beta] * tcos[alpha];
             relative_z[_objects] += 5 * tcos[beta] * tcos[alpha];
         }
-        /* Audio off
         if (subsignal[9*(carry_type+FRONTIER_M3)]) {
-            if (carry_type==sta_suonando && fd_status) break; //goto noeli;
-            strcpy (t, &subsignal[9*(carry_type+FRONTIER_M3)]);
-            strcat (t, ".voc");
-            a = open (t, 0);
-            if (a>-1) {
-                close (a);
-                remove (t);
+            if (carry_type != sta_suonando) {
+                // TODO understand what this was supposed to do
+
+                //strcpy (t, &subsignal[9*(carry_type+FRONTIER_M3)]);
+                //strcat (t, ".voc");
+                //a = open (t, 0);
+                //if (a>-1) {
+                //    close (a);
+                //    remove (t);
+                //}
             }
             //noeli:
         }
-        */
     }
 
     carry_type = -1;
@@ -2834,7 +2975,7 @@ void Object (int tipo)
             if (globalvocfile[0]!='.') Txt ("> PLAY >", -5.5, 0, -4, 0.1, 0.15, 270, 0);
             sprintf (t, "INPUT: %s", source_name[static_cast<int>(source)]);
             Txt (t, -5.5, 0, 5, 0.1, 0.15, 270, 0);
-            sprintf (t, "ACCURATEZZA: %s", record_qlty[static_cast<int>(quality)]);
+            sprintf (t, "QUALITY: %s", record_qlty[static_cast<int>(quality)]);
             Txt (t, -5.5, 0, 4, 0.1, 0.15, 270, 0);
             if (repeat) Txt ("REPEAT", -5.5, 0, 3, 0.1, 0.15, 270, 0);
             break;
@@ -2868,53 +3009,10 @@ void Object (int tipo)
                     if (d<15||tipo==carry_type) {
                         fermo_li = 1;
                         memcpy (buffer+545, buffer+33, 512);
-                        /*
                         if (tasto_premuto()) {
-                            c = attendi_pressione_tasto();
+                            // play a keyboard press if suitable
                             if ((globalvocfile[0]=='.'&&EVA_in_progress)||!EVA_in_progress) play (TARGET);
-                            switch (c) {
-                                case 0:
-                                    switch (attendi_pressione_tasto()) {
-                                        case 77:
-                                            if (cursore<511) cursore++;
-                                            break;
-                                        case 75:
-                                            if (cursore) cursore--;
-                                            break;
-                                        case 80:
-                                            if (cursore<480) cursore += 32;
-                                            break;
-                                        case 72:
-                                            if (cursore>31) cursore -= 32;
-                                            break;
-                                        case 64:
-                                            snapshot();
-                                }
-                                break;
-                        case 13:
-                                if (cursore<480) {
-                                    cursore = (cursore/32) * 32;
-                                    cursore += 32;
-                                }
-                                break;
-                        case 8:
-                                if (cursore) {
-                                        cursore--;
-                                        buffer[cursore+33] = 32;
-                                }
-                                break;
-                        case 27:
-                                alfin (true);
-                                exit (0);
-                        default:
-                            if (cursore<512) {
-                                if (c>='a'&&c<='z') c -= 32;
-                                if (c>31 && c<97) {
-                                    buffer[cursore+33] = c;
-                                    if (cursore<511) cursore++;
-                                }
-                            }
-                            */
+                        }
                     }
                     if (cursore<512) {
                         if (type_this != 0) {
