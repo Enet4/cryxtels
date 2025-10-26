@@ -6,6 +6,7 @@ on:
     tags:
       - "*.*.*"
       - "*.*.*_*"
+  workflow_dispatch: {}
 
 env:
   BUILD_TYPE: Release
