@@ -2399,21 +2399,23 @@ trovato:while (nr_elem<pixeltype_elements[iii]) {
 
         // handle object pick up request while in a pixel
         if (taking) {
-                kk = 40;
-                for (o=_objects-1; o>=0; o--) {
-                        // ctrlkeys[0]&64 is Caps Lock
-                        if (object_location[o]==nopix&&(pixelmass[objecttype[o]+FRONTIER_M3]<100||(ctrlkeys[0]&64))) {
-                                _x = (relative_x[o] + pixel_xdisloc[nopix]) - (cam_xt - 10 * tsin[beta] * tcos[alpha]);
-                                _y = (relative_y[o] + pixel_ydisloc[nopix] - object_elevation[objecttype[o]]) - (cam_yt + 10 * tsin[alpha]);
-                                _z = (relative_z[o] + pixel_zdisloc[nopix]) - (cam_zt + 10 * tcos[beta] * tcos[alpha]);
-                                _y /= 3;
-                                d = sqrt (_x*_x+_y*_y+_z*_z);
-                                if (d<kk) {
-                                        obj = o;
-                                        kk = d;
-                                }
-                        }
+            kk = 40 * 40;
+            // cycle through objects in reverse order
+            // (stopping as soon as `o` underflows)
+            for (u16 o = _objects-1; o < _objects; o--) {
+                // ctrlkeys[0]&64 is Caps Lock
+                if (object_location[o]==nopix&&(pixelmass[objecttype[o]+FRONTIER_M3]<100||(ctrlkeys[0]&64))) {
+                    _x = (relative_x[o] + pixel_xdisloc[nopix]) - (cam_xt - 10 * tsin[beta] * tcos[alpha]);
+                    _y = (relative_y[o] + pixel_ydisloc[nopix] - object_elevation[objecttype[o]]) - (cam_yt + 10 * tsin[alpha]);
+                    _z = (relative_z[o] + pixel_zdisloc[nopix]) - (cam_zt + 10 * tcos[beta] * tcos[alpha]);
+                    _y /= 3;
+                    d = _x*_x + _y*_y + _z*_z;
+                    if (d < kk) {
+                        obj = o;
+                        kk = d;
+                    }
                 }
+            }
         }
 }
 
