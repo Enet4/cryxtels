@@ -138,10 +138,10 @@ void Object (int tipo);
 
 // Funzione che toglie un oggetto dal microcosmo e lo dá all'utente.
 /// Function that takes an object from the microcosm and gives it to the user.
-void preleva_oggetto (int nr_ogg); // not implemented
+void preleva_oggetto (int nr_ogg);
 
 /// Update objects' data over the pixels
-void Oggetti_sul_Pixel (char oblige); // not implemented
+void Oggetti_sul_Pixel (char oblige);
 
 // Funzione che lascia al suolo l'oggetto prelevato.
 /// Function that leaves the taken object on the ground.
