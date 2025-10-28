@@ -1334,7 +1334,7 @@ bool main_loop() {
                 relative_x[_objects-1] += _x / 5;
                 relative_y[_objects-1] += _y / 5;
                 relative_z[_objects-1] += _z / 5;
-                if (sqrt(_x*_x+_y*_y+_z*_z)<0.1) {
+                if (_x*_x+_y*_y+_z*_z < 0.01) {
                     moving_last_object = 0;
                     relative_x[_objects-1] = cfx;
                     relative_y[_objects-1] = cfy;
