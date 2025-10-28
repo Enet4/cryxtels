@@ -2075,8 +2075,8 @@ void preleva_oggetto (int nr_ogg)
         pixel_rot[pix]--;
 
     // remove object and shift the others
-    int o;
-    for (o=nr_ogg; o<_objects; o++) {
+    // so that the object picked up is always the last one
+    for (int o = nr_ogg; o < _objects - 1; o++) {
         objecttype[o] = objecttype[o+1];
         absolute_x[o] = absolute_x[o+1];
         absolute_y[o] = absolute_y[o+1];
@@ -2085,6 +2085,20 @@ void preleva_oggetto (int nr_ogg)
         relative_y[o] = relative_y[o+1];
         relative_z[o] = relative_z[o+1];
         object_location[o] = object_location[o+1];
+    }
+    // and reset properties of the last object,
+    // so that they do not leak into the future object
+    // when it is dropped
+    {
+        auto o = _objects - 1;
+        objecttype[o] = -1;
+        absolute_x[o] = 0;
+        absolute_y[o] = 0;
+        absolute_z[o] = 0;
+        relative_x[o] = 0;
+        relative_y[o] = 0;
+        relative_z[o] = 0;
+        object_location[o] = -1;
     }
 
     _objects--;
