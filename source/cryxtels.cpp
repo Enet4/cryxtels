@@ -1703,6 +1703,7 @@ void load_situation(char i, bool skip_fade) {
         //sta_suonando = -1;
         //pixel_sonante = -1;
         //globalvocfile[0] = '.';
+        moving_last_object = 0;
         mx = beta * 5; my = alpha * 5;
         r_x = rel_x; r_y = rel_y; r_z = rel_z;
 
