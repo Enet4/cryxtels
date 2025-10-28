@@ -19,8 +19,37 @@
 #ifndef CONF_H_INCLUDED
 #define CONF_H_INCLUDED
 
+#include <string>
+
 #include "SDL.h"
 #include "primitives.h"
+
+#define CONFIG_FILE_NAME "settings.ini"
+
+typedef struct conf {
+    u32 framerate_intro;
+    u32 framerate;
+    int ticks_per_second;
+    int ticks_per_frame;    // == ticks_per_second / framerate
+    int ticks_per_frame_intro; // == ticks_per_second / framerate_intro
+
+    u32 render_width;
+    u32 render_height;
+    u32 window_scale;
+    u32 window_width; // == render_width * window_scale
+    u32 window_height; // == render_height * window_scale
+
+    std::string cosm_definition; // path to .def file
+
+    // the following can be overridden by command line arguments
+    u32 cosm_pixels;
+    u32 cosm_objects;
+    std::string cosm_situation;
+    // TODO: auto-save functionality?
+} Config;
+
+// Load the above settings from a configuration file
+Config load_config(const std::string& fpath);
 
 constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
 constexpr u32 FRAMES_PER_SECOND = 30;
