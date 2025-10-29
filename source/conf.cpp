@@ -17,7 +17,7 @@
 
 // Configuration loader
 
-#include <iostream>
+#include <fstream>
 #include <string>
 #include "conf.h"
 #include "ini_parser.hpp"
@@ -26,7 +26,7 @@ Config load_config(const std::string& fpath) {
     Config config;
     iniparser::ini ini;
     std::ifstream in(fpath);
-    if (in.fail) {
+    if (in.fail()) {
         std::cout << "Error while opening config file: " << fpath << std::endl;
         std::cout << "Default settings will be used." << std::endl;
     } else {
