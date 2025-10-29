@@ -24,7 +24,7 @@
 #include "SDL.h"
 #include "primitives.h"
 
-#define CONFIG_FILE_NAME "settings.ini"
+#define CONFIG_FILE_NAME "SETTINGS.INI"
 
 typedef struct conf {
     u32 framerate_intro;
