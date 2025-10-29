@@ -39,12 +39,12 @@ typedef struct conf {
     u32 window_width; // == render_width * window_scale
     u32 window_height; // == render_height * window_scale
 
-    std::string cosm_definition; // path to .def file
+    std::string definition_file; // path to .def file
 
     // the following can be overridden by command line arguments
     u32 cosm_pixels;
     u32 cosm_objects;
-    std::string cosm_situation;
+    std::string situation_file;
     // TODO: auto-save functionality?
 } Config;
 

@@ -47,8 +47,8 @@ Config load_config(const std::string& fpath) {
 
     config.cosm_pixels = ini["cosm"]["num_pixels"] | 250;
     config.cosm_objects = ini["cosm"]["num_objects"] | 250;
-    config.cosm_situation = ini["cosm"]["situation_file"] | "";
-    config.cosm_definition = ini["cosm"]["definition_file"] | "PIXELS.DEF";
+    config.situation_file = ini["cosm"]["situation_file"] | "";
+    config.definition_file = ini["cosm"]["definition_file"] | "PIXELS.DEF";
 
     return config;
 }
