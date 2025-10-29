@@ -54,10 +54,14 @@ static int ticks_per_frame;
 // initialize configuration variables
 static void read_config(void) {
     const Config& config = get_config();
+    
     width = config.render_width;
     height = config.render_height;
     ticks_per_second = config.ticks_per_second;
     ticks_per_frame = config.ticks_per_frame;
+
+    pixels = config.cosm_pixels;
+    objects = config.cosm_objects;
 }
 
 // dummy function (nullify effect)
@@ -1282,6 +1286,7 @@ void read_args(int argc, char** argv, char& flag, char& sit)
     flag = 0;
     char dist[20]; // Stringhe usate per conversioni.
     if (argc>2) {
+        objects = 0;
         pixels = 0;
         if (strcasecmp(argv[2], "PIXELS") == 0) {
             pixels = (int)atof(argv[1]);
@@ -1311,11 +1316,6 @@ void read_args(int argc, char** argv, char& flag, char& sit)
             cerr << "Could not load game: game save \"" << dist << "\" is missing." << endl;
             throw 1;
         }
-    }
-    else {
-        // Use default pixel and object numbers
-        pixels = 250;
-        objects = 250;
     }
 }
 
