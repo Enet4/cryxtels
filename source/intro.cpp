@@ -81,7 +81,7 @@ void original_twinkle_effect(void) {
     } while (--iteration > 0);
 }
 
-void twinkle_effect(u16 width, u16 height) {
+void twinkle_effect(void) {
     // adapt the effect's intensity to the new resolution
     float scale_factor = width / 320.0;
     u32 intensity = width * 50.0 * scale_factor;
@@ -106,7 +106,7 @@ void twinkle_effect(u16 width, u16 height) {
     } while (--iteration > 0);
 }
 
-void fade_out_effect(u16 width, u16 height) {
+void fade_out_effect(void) {
     auto di = &video_buffer[0];
     u32 iteration = framebuffer_size; // all space
     do {
@@ -158,8 +158,8 @@ bool intro_loop(void) {
         if (original_resolution)
             original_twinkle_effect();
         else
-            twinkle_effect(width, height);
-        fade_out_effect(width, height);
+            twinkle_effect();
+        fade_out_effect();
     }
     Render();
 
