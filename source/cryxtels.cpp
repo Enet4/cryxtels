@@ -51,7 +51,7 @@ static u32 height;
 static int ticks_per_second;
 static int ticks_per_frame;
 
-// initialize configuration variables
+/// initialize configuration variables
 static void read_config(void) {
     const Config& config = get_config();
     
@@ -1286,7 +1286,7 @@ void read_args(int argc, char** argv, char& flag, char& sit)
     flag = 0;
     char dist[20]; // Stringhe usate per conversioni.
     if (argc>2) {
-        objects = 0;
+        objects = 0; /// override config file settings
         pixels = 0;
         if (strcasecmp(argv[2], "PIXELS") == 0) {
             pixels = (int)atof(argv[1]);

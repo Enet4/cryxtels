@@ -30,25 +30,25 @@ typedef struct conf {
     u32 framerate_intro;
     u32 framerate;
     int ticks_per_second;
-    int ticks_per_frame;    // == ticks_per_second / framerate
-    int ticks_per_frame_intro; // == ticks_per_second / framerate_intro
+    int ticks_per_frame;    /// == ticks_per_second / framerate
+    int ticks_per_frame_intro; /// == ticks_per_second / framerate_intro
 
     u32 render_width;
     u32 render_height;
     u32 window_scale;
-    u32 window_width; // == render_width * window_scale
-    u32 window_height; // == render_height * window_scale
+    u32 window_width; /// == render_width * window_scale
+    u32 window_height; /// == render_height * window_scale
 
-    std::string definition_file; // path to .def file
+    std::string definition_file; /// path to .def file
 
-    // the following can be overridden by command line arguments
+    /// the following can be overridden by command line arguments
     u32 cosm_pixels;
     u32 cosm_objects;
     std::string situation_file;
-    // TODO: auto-save functionality?
+    /// TODO: auto-save functionality?
 } Config;
 
-// Returns the config object, loading it from disk on the first call
+/// Returns the config object, loading it from disk on the first call
 const Config& get_config(); 
 
 constexpr auto keymap_thrust    = SDLK_a;
