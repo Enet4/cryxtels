@@ -54,22 +54,6 @@ Config load_config(const std::string& fpath);
 // Declare the global config struct
 extern const Config config;
 
-constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
-constexpr u32 FRAMES_PER_SECOND = 30;
-
-constexpr int TICKS_IN_A_SECOND = 1000;
-constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
-constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
-
-constexpr u32 WIDTH = 560;
-constexpr u32 HEIGHT = 350;
-
-constexpr u32 WIDTH_SC = 2;
-constexpr u32 HEIGHT_SC = 2;
-
-constexpr u32 WIDTH_SCALED = WIDTH*WIDTH_SC;
-constexpr u32 HEIGHT_SCALED = HEIGHT*HEIGHT_SC;
-
 constexpr auto keymap_thrust    = SDLK_a;
 constexpr auto keymap_back      = SDLK_z;
 constexpr auto keymap_up        = SDLK_UP;
