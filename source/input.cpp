@@ -280,7 +280,7 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
 }
 
 void load_pixels_def(void) {
-    FILE* fh = std::fopen ("PIXELS.DEF", "rb");
+    FILE* fh = std::fopen (config.definition_file.c_str(), "rb");
     if (fh) {
         if (!trova_id (fh, "SEED")) {
             std::fclose (fh);
@@ -329,7 +329,7 @@ void load_pixels_def(void) {
         }
     }
     else {
-        cerr << "Missing file PIXELS.DEF" << endl;
+        cerr << "Missing file "<< config.definition_file << endl;
         throw 5;
     }
     if (fh)
@@ -355,7 +355,7 @@ void LoadPtyp (PixelTypeId ptyp) {
     pixeltype_type[loaded_pixeltypes] = ptyp;
     pixelmass[ptyp] = 10000;
 
-    FILE* fh = std::fopen("PIXELS.DEF", "rb");
+    FILE* fh = std::fopen(config.definition_file.c_str(), "rb");
     if (fh) {
         if (ptyp>FRONTIER_M1)
             sprintf (t, "MODEL %d;\r\n", static_cast<int>(ptyp-FRONTIER));
