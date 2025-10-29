@@ -51,6 +51,9 @@ typedef struct conf {
 // Load the above settings from a configuration file
 Config load_config(const std::string& fpath);
 
+// Declare the global config struct
+extern const Config config;
+
 constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
 constexpr u32 FRAMES_PER_SECOND = 30;
 

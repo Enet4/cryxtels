@@ -46,6 +46,11 @@
 #include "SDL.h"
 #include "conf.h"
 
+// read configuration file
+const Config config = load_config(CONFIG_FILE_NAME);
+static const u32 width = config.render_width;
+static const u32 height = config.render_height;
+
 using namespace std;
 
 // dummy function (nullify effect)
