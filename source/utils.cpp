@@ -45,7 +45,7 @@ void fade(u8 speed) {
         darken_once(speed);
         Render();
         unsigned long cticks = SDL_GetTicks();
-        while (sync + TICKS_PER_FRAME > cticks) {
+        while (sync + config.ticks_per_frame > cticks) {
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }
