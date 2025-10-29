@@ -50,6 +50,8 @@
 const Config config = load_config(CONFIG_FILE_NAME);
 static const u32 width = config.render_width;
 static const u32 height = config.render_height;
+static const int ticks_per_second = config.ticks_per_second;
+static const int ticks_per_frame = config.ticks_per_frame;
 
 using namespace std;
 
@@ -613,7 +615,7 @@ bool main_loop() {
                     rclick = SDL_GetTicks();
                 else {
                     // keep it pressed for half a second to invert
-                    if (SDL_GetTicks()-rclick>TICKS_IN_A_SECOND/2) {
+                    if (SDL_GetTicks()-rclick>ticks_per_second/2) {
                         fid_on (); // invert
                         i = SDLK_F1; //59;
                     }
@@ -783,8 +785,8 @@ bool main_loop() {
                     ax = ax / cx; // 360*32/36 = 320
                     ax <<= 2; // 320 * 4 = 1280
                     dx = 0;
-                    cx = WIDTH;
-                    auto si = ax % cx; // si = 1280 % WIDTH
+                    cx = width;
+                    auto si = ax % cx; // si = 1280 % width
                     ax = alpha;
                     cx = 360;
                     dx = 0;
@@ -792,8 +794,8 @@ bool main_loop() {
                     dx = 3;
                     ax = ax * dx; // (alpha % 360) * 3
                     dx = 0;
-                    cx = WIDTH;
-                    ax = ax * cx; // ax = (alpha % 360) * 3 * WIDTH
+                    cx = width;
+                    ax = ax * cx; // ax = (alpha % 360) * 3 * width
                     cx = ax >> 16; // cx = ax >> 16
                     dx = ax;
                     dx += si;
@@ -801,9 +803,9 @@ bool main_loop() {
                     auto p_data = &video_buffer[0];
                     si = 8;
                     do {
-                        cx = WIDTH*HEIGHT / 8;
+                        cx = width*height / 8;
                         std::fread(p_data, 1, cx, file);
-                        p_data += WIDTH*HEIGHT / 8;
+                        p_data += width*height / 8;
                     } while (--si != 0);
                     std::fclose (file);
                     // -- draw operation end
@@ -813,7 +815,7 @@ bool main_loop() {
 
                         // -- draw operation begin
                         auto si = &video_buffer[0];
-                        unsigned int cx = WIDTH*HEIGHT;
+                        unsigned int cx = width*height;
                         do
                         {
                             if (*si < (a&0xFF)) {
@@ -1159,7 +1161,7 @@ bool main_loop() {
 //                            int 0x1a
 //                            cmp si, dx
 //                            je ky
-                            while (si + TICKS_PER_FRAME > SDL_GetTicks());
+                            while (si + ticks_per_frame > SDL_GetTicks());
 //                            popa }
                             //adapted = fake_adaptor;
                             //pcopy (adaptor, adapted);
@@ -1236,13 +1238,13 @@ bool main_loop() {
             blink = 1 - blink; // Lampeggo della spia "volo rovesciato".
 
             unsigned long cticks = SDL_GetTicks();
-            while (sync + TICKS_PER_FRAME > cticks) {
+            while (sync + ticks_per_frame > cticks) {
                 SDL_Delay(3);
                 cticks = SDL_GetTicks();
             }
             //while (blink && (clock()==sync)); // Sincronizzatore (max 37 fps.)
 
-            //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
+            //cout << " " << (ticks_per_second / (cticks-sync)) << " fps" << endl;
             //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
     return running;
 }
