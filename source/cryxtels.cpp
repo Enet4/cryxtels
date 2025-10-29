@@ -219,6 +219,7 @@ int main(int argc, char** argv)
     // ...
     //}
     //while (!tasto_premuto() && !mpul) {
+    init_intro();
     while (run_intro) {
         run_intro = intro_loop();
     }

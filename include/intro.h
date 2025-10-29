@@ -21,6 +21,11 @@
 #define INTRO_H_INCLUDED
 
 /**
+ * Setup code for the intro. To be called once before intro_loop.
+ */
+void init_intro(void);
+
+/**
  * The game introduction loop logic, called once per frame.
  * 
  * @return true if the introduction should continue normally,

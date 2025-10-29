@@ -26,6 +26,30 @@
 #include "SDL.h"
 #include "conf.h"
 
+static u32 tickrate;
+static u32 width, height;
+static u32 framebuffer_size;
+static bool original_resolution;
+static u16 fotty_viewport_upper;
+static u16 fotty_viewport_lower;
+
+void init_intro(void) {
+    tickrate = config.ticks_per_frame_intro;
+    width = config.render_width;
+    height = config.render_height;
+    framebuffer_size = width * height;
+    
+    if (width == 320 && height == 200) {
+        fotty_viewport_upper = 65;
+        fotty_viewport_lower = 135;
+        original_resolution = true;
+    } else {
+        fotty_viewport_upper = height * 65 / 200;
+        fotty_viewport_lower = height * 135 / 200;
+        original_resolution = false;
+    }
+}
+
 void place_fottifoh(void) {
     c = (c+1)%360;
     i16 tmp = beta; beta = c;
@@ -36,12 +60,7 @@ void place_fottifoh(void) {
 }
 
 void original_twinkle_effect(void) {
-    u16 width = 320, height = 200;
-    u16 fotty_viewport_upper = 65;
-    u16 fotty_viewport_lower = 135;
-    u16 buffer_size = width*height;
-
-    u16 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF;
+    u16 time = (SDL_GetTicks()/tickrate) & 0xFFFF;
     u16 iteration = width*50;
     u16 halfway = iteration/2;
     do {
@@ -49,7 +68,7 @@ void original_twinkle_effect(void) {
         if (time < width * fotty_viewport_upper + 4 ||
             time >= width * fotty_viewport_lower + 4)
         {
-            if (time < buffer_size)
+            if (time < framebuffer_size)
                 video_buffer[time] >>= 1;
         }
         if (iteration >= halfway) {
@@ -61,24 +80,20 @@ void original_twinkle_effect(void) {
 }
 
 void twinkle_effect(u16 width, u16 height) {
-    u16 fotty_viewport_upper = (float)height * 65.0/200.0;
-    u16 fotty_viewport_lower = (float)height * 135.0/200.0;
-
     // adapt the effect's intensity to the new resolution
     float scale_factor = (float)width / 320.0;
     u32 intensity = (float)width * 50.0 * scale_factor;
     u32 halfway = intensity / 2;
-    u32 buffer_size = width * height;
-    u32 canvas_size = buffer_size + 1536;
+    u32 canvas_size = framebuffer_size + 1536;
 
-    u32 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) % canvas_size;
+    u32 time = (SDL_GetTicks()/tickrate) % canvas_size;
     u32 iteration = intensity;
     do {
         // pixel value outside fottifoh row range
         if (time < width * fotty_viewport_upper + 4 ||
             time >= width * fotty_viewport_lower + 4)
         {
-            if (time < buffer_size)
+            if (time < framebuffer_size)
                 video_buffer[time] >>= 1;
         }
         if (iteration >= halfway) {
@@ -91,7 +106,7 @@ void twinkle_effect(u16 width, u16 height) {
 
 void fade_out_effect(u16 width, u16 height) {
     auto di = &video_buffer[0];
-    u32 iteration = width*height; // all space
+    u32 iteration = framebuffer_size; // all space
     do {
         // fade out effect
         if (*di > 0) {
@@ -138,16 +153,16 @@ bool intro_loop(void) {
     // once the text is up close:
     else {
         place_fottifoh();
-        if (WIDTH == 320)
+        if (original_resolution)
             original_twinkle_effect();
         else
-            twinkle_effect(WIDTH, HEIGHT);
-        fade_out_effect(WIDTH, HEIGHT);
+            twinkle_effect(width, height);
+        fade_out_effect(width, height);
     }
     Render();
 
     unsigned long cticks = SDL_GetTicks();
-    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
+    while (sync + tickrate > cticks) {
         SDL_Delay(3);
         cticks = SDL_GetTicks();
     }
