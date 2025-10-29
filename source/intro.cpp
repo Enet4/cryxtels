@@ -83,10 +83,10 @@ void original_twinkle_effect(void) {
 
 void twinkle_effect(u16 width, u16 height) {
     // adapt the effect's intensity to the new resolution
-    float scale_factor = (float)width / 320.0;
-    u32 intensity = (float)width * 50.0 * scale_factor;
+    float scale_factor = width / 320.0;
+    u32 intensity = width * 50.0 * scale_factor;
     u32 halfway = intensity / 2;
-    u32 canvas_size = framebuffer_size + 1536;
+    u32 canvas_size = framebuffer_size * 1.024;
 
     u32 time = (SDL_GetTicks()/tickrate) % canvas_size;
     u32 iteration = intensity;
