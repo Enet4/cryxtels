@@ -35,9 +35,10 @@ typedef struct conf {
 
     u32 render_width;
     u32 render_height;
-    u32 window_scale;
-    u32 window_width; /// == render_width * window_scale
-    u32 window_height; /// == render_height * window_scale
+    float window_scale_x;
+    float window_scale_y;
+    u32 window_width; /// == render_width * window_scale_x
+    u32 window_height; /// == render_height * window_scale_y
 
     std::string definition_file; /// path to .def file
 

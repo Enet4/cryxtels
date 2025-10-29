@@ -41,9 +41,10 @@ Config load_config(const std::string& fpath) {
 
     config.render_width = ini["render"]["width"] | 320;
     config.render_height = ini["render"]["height"] | 200;
-    config.window_scale = ini["render"]["scale"] | 2;
-    config.window_width = config.render_width * config.window_scale;
-    config.window_height = config.render_height * config.window_scale;
+    config.window_scale_x = ini["render"]["scale_x"] | 2.0;
+    config.window_scale_y = ini["render"]["scale_y"] | 2.0;
+    config.window_width = config.render_width * config.window_scale_x;
+    config.window_height = config.render_height * config.window_scale_y;
 
     config.cosm_pixels = ini["cosm"]["num_pixels"] | 250;
     config.cosm_objects = ini["cosm"]["num_objects"] | 250;
