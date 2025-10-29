@@ -46,14 +46,19 @@
 #include "SDL.h"
 #include "conf.h"
 
-// read configuration file
-const Config config = load_config(CONFIG_FILE_NAME);
-static const u32 width = config.render_width;
-static const u32 height = config.render_height;
-static const int ticks_per_second = config.ticks_per_second;
-static const int ticks_per_frame = config.ticks_per_frame;
+static u32 width;
+static u32 height;
+static int ticks_per_second;
+static int ticks_per_frame;
 
-using namespace std;
+// initialize configuration variables
+static void read_config(void) {
+    const Config& config = get_config();
+    width = config.render_width;
+    height = config.render_height;
+    ticks_per_second = config.ticks_per_second;
+    ticks_per_frame = config.ticks_per_frame;
+}
 
 // dummy function (nullify effect)
 inline void play (long) {}
@@ -173,11 +178,15 @@ bool intro_loop();
 /// Run one frame of main loop logic
 bool main_loop();
 
+using namespace std;
+
 int main(int argc, char** argv)
 {
     cout << "Crystal Pixels" << endl
         << " version 3.15 originally made by Alessandro Ghignola in 1997" << endl
         << "     ported to modern systems by Eduardo Pinho in 2013" << endl;
+
+    read_config();
 
     char flag = 0;
     //char sit = 'S'; // < the original would auto-load the default game save (Alex's save)

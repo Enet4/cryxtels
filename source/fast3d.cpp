@@ -73,7 +73,9 @@ static int nav_zbasex, nav_zbasey;
 static int lowerbound_y, upperbound_y;
 static int lowerbound_x, upperbound_x;
 
-void read_config(void) {
+static void read_config(void) {
+    const Config& config = get_config();
+
     width = config.render_width;
     height = config.render_height;
     framebuffer_size = width * height;

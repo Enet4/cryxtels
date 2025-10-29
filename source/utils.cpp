@@ -28,6 +28,8 @@
 /// to fade out the screen
 /// (can be skipped by pressing any key)
 void fade(u8 speed) {
+    static const int tickrate = get_config().ticks_per_frame;
+
     keybuffer_cleaner();
     unsigned int dx = 0;
     auto skip = false;
@@ -45,7 +47,7 @@ void fade(u8 speed) {
         darken_once(speed);
         Render();
         unsigned long cticks = SDL_GetTicks();
-        while (sync + config.ticks_per_frame > cticks) {
+        while (sync + tickrate > cticks) {
             SDL_Delay(3);
             cticks = SDL_GetTicks();
         }

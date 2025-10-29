@@ -48,11 +48,8 @@ typedef struct conf {
     // TODO: auto-save functionality?
 } Config;
 
-// Load the above settings from a configuration file
-Config load_config(const std::string& fpath);
-
-// Declare the global config struct
-extern const Config config;
+// Returns the config object, loading it from disk on the first call
+const Config& get_config(); 
 
 constexpr auto keymap_thrust    = SDLK_a;
 constexpr auto keymap_back      = SDLK_z;

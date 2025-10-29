@@ -52,3 +52,9 @@ Config load_config(const std::string& fpath) {
 
     return config;
 }
+
+const Config& get_config() {
+    // will only parse the file on the first call
+    static const Config conf = load_config(CONFIG_FILE_NAME);
+    return conf;
+}

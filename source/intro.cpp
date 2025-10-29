@@ -34,6 +34,8 @@ static u16 fotty_viewport_upper;
 static u16 fotty_viewport_lower;
 
 void init_intro(void) {
+    static const Config& config = get_config();
+    
     tickrate = config.ticks_per_frame_intro;
     width = config.render_width;
     height = config.render_height;

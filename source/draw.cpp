@@ -140,12 +140,15 @@ void draw_indicator_crosshair()
 
 void draw_indicator_prograde(int x, int y)
 {
-    static const int width = 5*config.render_height/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 5*config.render_width/320;
-    static const int xhigh = 315*config.render_width/320;
+    static const int width = 5*render_height/200;
+
+    static const int xlow = 5*render_width/320;
+    static const int xhigh = 315*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 195*config.render_height/200; 
+    static const int yhigh = 195*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x - width, y - width, x + width, y + width);
         Segmento (x + width, y - width, x - width, y + width);
@@ -154,13 +157,16 @@ void draw_indicator_prograde(int x, int y)
 
 void draw_indicator_retrograde(int x, int y)
 {
-    static const int outside = 9*config.render_height/200;
-    static const int inside  = 5*config.render_height/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 10*config.render_width/320;
-    static const int xhigh = 310*config.render_width/320;
+    static const int outside = 9*render_height/200;
+    static const int inside  = 5*render_height/200;
+
+    static const int xlow = 10*render_width/320;
+    static const int xhigh = 310*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 190*config.render_height/200; 
+    static const int yhigh = 190*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x - outside, y - inside, x + outside, y - inside);
         Segmento (x - outside, y + inside, x + outside, y + inside);
@@ -171,12 +177,15 @@ void draw_indicator_retrograde(int x, int y)
 
 void draw_indicator_closest(int x, int y)
 {
-    static const int width = 19*config.render_height/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 20*config.render_width/320;
-    static const int xhigh = 300*config.render_width/320;
+    static const int width = 19*render_height/200;
+
+    static const int xlow = 20*render_width/320;
+    static const int xhigh = 300*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 180*config.render_height/200; 
+    static const int yhigh = 180*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x, y - width, x, y + width);
         Segmento (x - width, y, x + width, y);
@@ -452,6 +461,8 @@ void fail_pixel_def (int el, int pix)
 
 void Pixel (int typ)
 {
+    static const u32 width = get_config().render_width;
+
     double p0, p1, p2, p3, p4, p5, p6, crx=0, cry=0, crz=0;
     double first_x, first_y, first_z;
 
@@ -472,15 +483,15 @@ void Pixel (int typ)
             for (b=c; b<180; b+=c) {
                 if (C32(ox+p0*tsin[b]*tcos[a], oy+p0*tcos[b], oz-p0*tsin[a]*tsin[b])) {
                     // --- draw operation begin
-                    auto di = share_x + config.render_width*share_y;
+                    auto di = share_x + width*share_y;
                     auto si = &video_buffer[0] + di;
 
                     if (*si < 32) {
                         *si += 7;
                         *(si+1) += 5; *(si-1) += 5;
-                        *(si+config.render_width) += 5;  *(si-config.render_width) += 5;
-                        *(si+config.render_width+1) += 3; *(si-config.render_width-1) += 3;
-                        *(si-config.render_width+1) += 3; *(si+config.render_width-1) += 3;
+                        *(si+width) += 5;  *(si-width) += 5;
+                        *(si+width+1) += 3; *(si-width-1) += 3;
+                        *(si-width+1) += 3; *(si+width-1) += 3;
                     }
                     // --- draw operation end
                 }
@@ -490,7 +501,7 @@ void Pixel (int typ)
 
     if (pixel_absd[nopix]>pixelmass[typ]) {
         if (!C32(ox, oy, oz)) return;
-        vptr = share_x+config.render_width*share_y;
+        vptr = share_x+width*share_y;
 
         // --- draw operation begin
         auto cl = pixelmass[typ] / 1000; if (cl > 32) cl = 32;
@@ -504,14 +515,14 @@ void Pixel (int typ)
             *(si-1) += ch;
             *(si+2) += dl;
             *(si-2) += dl;
-            *(si+config.render_width-1) += dl;
-            *(si-config.render_width+1) += dl;
-            *(si+config.render_width) += ch;
-            *(si-config.render_width) += ch;
-            *(si+config.render_width+1) += dl;
-            *(si-config.render_width-1) += dl;
-            *(si+config.render_width*2) += dl;
-            *(si-config.render_width*2) += dl;
+            *(si+width-1) += dl;
+            *(si-width+1) += dl;
+            *(si+width) += ch;
+            *(si-width) += ch;
+            *(si+width+1) += dl;
+            *(si-width-1) += dl;
+            *(si+width*2) += dl;
+            *(si-width*2) += dl;
         }
         // --- draw operation end
     } else {
@@ -968,6 +979,7 @@ ogg_2:
 void Object (int tipo)
 {
     FILE* th;
+    static const int tickrate = get_config().ticks_per_frame;
 
     switch (tipo) {
         // Fottifoh
@@ -983,8 +995,8 @@ void Object (int tipo)
             break;
         // Orbital engine
         case 1:
-            for (   a = static_cast<int>((SDL_GetTicks()/config.ticks_per_frame)%45);
-                    a <= 135+(int)((SDL_GetTicks()/config.ticks_per_frame)%45);
+            for (   a = static_cast<int>((SDL_GetTicks()/tickrate)%45);
+                    a <= 135+(int)((SDL_GetTicks()/tickrate)%45);
                     a += 45) {
                 _ox = 25 * tcos[a]; _oy = 25 * tsin[a];
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
@@ -994,7 +1006,7 @@ void Object (int tipo)
         case 2:
             b = 0;
             if (/* sbf_stat&& */pix==pixel_sonante)
-                b = ((SDL_GetTicks()/config.ticks_per_frame)%3)*15;
+                b = ((SDL_GetTicks()/tickrate)%3)*15;
             for (a=b; a<=135+b; a+=45) {
                 _ox = 5 * tcos[a]; _oy = 5 * tsin[a];
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
