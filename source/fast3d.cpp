@@ -358,7 +358,7 @@ void Segmento (unsigned int x, unsigned int y,
     dx <<= 16; dx /= L;
     dy <<= 16; dy /= L;
 
-    // brush position
+    // brush position (with 16 bits of fractional precision)
     unsigned int brush_x = x << 16;
     unsigned int brush_y = y << 16;
 
@@ -367,10 +367,12 @@ void Segmento (unsigned int x, unsigned int y,
 
     u8* video = &video_buffer[0];
     do {
+        // truncate brush coords and place a dot there
         Dot_3x3(video
-            + width*(brush_y >> 16)
-            + (brush_x >> 16));
+                + width*(brush_y >> 16)
+                + (brush_x >> 16));
 
+        // move to the next sample point
         brush_y += dy;
         brush_x += dx;
     } while (brush_x < end);
