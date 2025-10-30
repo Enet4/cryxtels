@@ -316,15 +316,6 @@ inline void Dot_3x3(unsigned int x, unsigned int y, float brightness = 1.0) {
     *(ptr+width+1) += 1;
 }
 
-inline void Segmento_V(unsigned int x, unsigned int y_min, unsigned int y_max) {
-    y_max++;
-    unsigned int y = y_min;
-    while (y < y_max) {
-        Dot_3x3(x,y);
-        y++;
-    }
-}
-
 void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
 {
@@ -337,8 +328,10 @@ void Segmento (unsigned int x, unsigned int y,
     // Special case: vertical segment
     if (x == x2) {
         unsigned int y_min = std::min(y,y2);
-        unsigned int y_max = std::max(y,y2);
-        Segmento_V(x, y_min, y_max);
+        unsigned int y_max = std::max(y,y2) + 1;
+        for (unsigned int y = y_min; y < y_max; y++) {
+            Dot_3x3(x,y);
+        }
         return;
     }
 
