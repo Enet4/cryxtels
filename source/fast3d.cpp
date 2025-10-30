@@ -290,7 +290,6 @@ void init_trig () {
 }
 
 unsigned int ptr;
-unsigned int global_x, global_y;
 int share_x;
 int share_y;
 
