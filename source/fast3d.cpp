@@ -338,9 +338,6 @@ void Segmento (unsigned int x, unsigned int y,
     SDL_assert(x2 < width);
     SDL_assert(y2 < height);
 
-    u8* video = &video_buffer[0];
-
-    int temp;
     // Special case: vertical segment
     if (x == x2) {
         unsigned int y_min = std::min(y,y2);
@@ -349,37 +346,35 @@ void Segmento (unsigned int x, unsigned int y,
         return;
     }
 
+    // In the following, we will assume x < x2
     if (x2 < x) {
         std::swap(x, x2);
         std::swap(y, y2);
     }
-    int dx = x2 - x;
-
-    int dy = y2-y;
+    int dx = x2 - x; // dx > 0
+    int dy = y2 - y;
     int L = std::max(dx, std::abs(dy)) + 1;
-    // L = max(|dx|, |dy|) + 1
-
-    x2 <<= 16;
+    
+    // simulate fixed-point arithmetic with bitshifts
     dx <<= 16; dx /= L;
     dy <<= 16; dy /= L;
 
-    global_y = y << 16;
-    global_x = x << 16;
+    // brush position
+    unsigned int brush_x = x << 16;
+    unsigned int brush_y = y << 16;
 
-    /* Traccia il segmento tramite DMA. */
+    // stop when you reach column x2
+    unsigned int end = x2 << 16;
 
-    //const unsigned int HACK_SHIFT = -4;
+    u8* video = &video_buffer[0];
     do {
-        unsigned int di = global_y >> 16;
+        Dot_3x3(video
+            + width*(brush_y >> 16)
+            + (brush_x >> 16));
 
-        unsigned char* di2 = video + width*di + (global_x >> 16);
-
-        if ( *di2 < 32 ) {
-            Dot_3x3(di2);
-        }
-        global_y += dy;
-        global_x += dx;
-    } while (global_x < x2);
+        brush_y += dy;
+        brush_x += dx;
+    } while (brush_x < end);
 }
 
 char explode = 0;
