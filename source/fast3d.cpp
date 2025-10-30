@@ -294,6 +294,40 @@ unsigned int global_x, global_y;
 int share_x;
 int share_y;
 
+inline void Segmento_V(unsigned int x, unsigned int y_min, unsigned int y_max) {
+    u8* video = &video_buffer[0];
+    y_max++;
+    // now we're making a pointer to the scanline at y_max
+    u8* ax = video + width*y_max;
+    // now we'll make video point to the other scanline (y_min)
+    u8* bx = video + width*y_min + x;
+    while (bx < ax) {
+        if (*bx < 32) {
+            SDL_assert(bx-width >= &video_buffer[0]);
+            SDL_assert(bx+width < &video_buffer[0]+framebuffer_size);
+            // left
+            *(bx-1)       += 2;
+            // center
+            *bx           += 4;
+            // right
+            *(bx+1)       += 2;
+            // bottom-left
+            *(bx+width-1) += 1;
+            // bottom
+            *(bx+width)   += 2;
+            // bottom-right
+            *(bx+width+1) += 1;
+            // top-left
+            *(bx-width-1) += 1;
+            // top
+            *(bx-width)   += 2;
+            // top-right
+            *(bx-width+1) += 1;
+        }
+        bx += width;
+    }
+}
+
 void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
 {
@@ -303,45 +337,14 @@ void Segmento (unsigned int x, unsigned int y,
     SDL_assert(x2 < width);
     SDL_assert(y2 < height);
 
-    u8* si = &video_buffer[0];
+    u8* video = &video_buffer[0];
 
     int temp;
-    if (x==x2) {
-        if (y>y2) {
-            std::swap(y,y2);
-        }
-        y2++;
-        unsigned int di = width*y + x;
-        unsigned int _ax = width*y2;
-        // now we're making a pointer to the scanline at y2
-        u8* ax = si + _ax;
-        // now we'll make si point to the other scanline (y)
-        si += di;
-        while (si < ax) {
-            if (*si < 32) {
-                SDL_assert(si-width >= &video_buffer[0]);
-                SDL_assert(si+width < &video_buffer[0]+framebuffer_size);
-                // left
-                *(si-1)       += 2;
-                // center
-                *si           += 4;
-                // right
-                *(si+1)       += 2;
-                // bottom-left
-                *(si+width-1) += 1;
-                // bottom
-                *(si+width)   += 2;
-                // bottom-right
-                *(si+width+1) += 1;
-                // top-left
-                *(si-width-1) += 1;
-                // top
-                *(si-width)   += 2;
-                // top-right
-                *(si-width+1) += 1;
-            }
-            si += width;
-        }
+    // Special case: vertical segment
+    if (x == x2) {
+        unsigned int y_min = std::min(y,y2);
+        unsigned int y_max = std::max(y,y2);
+        Segmento_V(x, y_min, y_max);
         return;
     }
 
@@ -377,7 +380,7 @@ void Segmento (unsigned int x, unsigned int y,
     do {
         unsigned int di = global_y >> 16;
 
-        unsigned char* di2 = si + width*di + (global_x >> 16);
+        unsigned char* di2 = video + width*di + (global_x >> 16);
 
         if ( *di2 < 32 ) {
             SDL_assert(di2-width-1 >= &video_buffer[0]);
