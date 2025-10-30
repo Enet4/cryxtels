@@ -349,11 +349,11 @@ void Segmento (unsigned int x, unsigned int y,
     }
     int dx = x2 - x; // dx > 0
     int dy = y2 - y;
-    int L = std::max(dx, std::abs(dy)) + 1;
+    int iterations = std::max(dx, std::abs(dy)) + 1;
     
     // simulate fixed-point arithmetic with bitshifts
-    dx <<= 16; dx /= L;
-    dy <<= 16; dy /= L;
+    dx <<= 16; dx /= iterations;
+    dy <<= 16; dy /= iterations;
 
     // brush position (with 16 bits of fractional precision)
     unsigned int brush_x = x << 16;
@@ -361,14 +361,14 @@ void Segmento (unsigned int x, unsigned int y,
 
     // stop when you reach column x2
     unsigned int end = x2 << 16;
-    do {
+    for (int i = 0; i < iterations; i++) {
         // truncate brush coords and place a dot there
         Dot_3x3(brush_x >> 16, brush_y >> 16);
 
         // move to the next sample point
         brush_y += dy;
         brush_x += dx;
-    } while (brush_x < end);
+    }
 }
 
 char explode = 0;
