@@ -294,9 +294,16 @@ int share_x;
 int share_y;
 
 // Place a 3x3 dot centered at screen coordinates (x,y)
+// The function tolerates inputs on the frame's border and bumps them inwards
 inline void Dot_3x3(unsigned int x, unsigned int y, float brightness = 1.0) {
-    SDL_assert(x >= 0 && x < width);
-    SDL_assert(y >= 0 && y < height);
+    SDL_assert(x <= width);
+    SDL_assert(y <= height);
+    
+    // bump extreme inputs inward
+    if (x == 0) x = 1;
+    if (y == 0) y = 1;
+    if (x >= width-1) x = width-2;
+    if (y >= height-1) y = height-2;
     u8* ptr = &video_buffer[0] + y*width + x;
 
     if (*ptr >= 32){
