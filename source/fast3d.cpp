@@ -294,37 +294,37 @@ unsigned int global_x, global_y;
 int share_x;
 int share_y;
 
+// Place a 3x3 dot centered at ptr
+inline void Dot_3x3(u8* ptr) {
+    SDL_assert(ptr - width >= &video_buffer[0]);
+    SDL_assert(ptr + width < &video_buffer[0] + framebuffer_size);
+    // top row
+    *(ptr-width-1) += 1;
+    *(ptr-width)   += 2;
+    *(ptr-width+1) += 1;
+    // center row
+    *(ptr-1)       += 2;
+    *ptr           += 4;
+    *(ptr+1)       += 2;
+    // bottom row
+    *(ptr+width-1) += 1;
+    *(ptr+width)   += 2;
+    *(ptr+width+1) += 1;
+}
+
 inline void Segmento_V(unsigned int x, unsigned int y_min, unsigned int y_max) {
-    u8* video = &video_buffer[0];
     y_max++;
-    // now we're making a pointer to the scanline at y_max
-    u8* ax = video + width*y_max;
-    // now we'll make video point to the other scanline (y_min)
-    u8* bx = video + width*y_min + x;
-    while (bx < ax) {
-        if (*bx < 32) {
-            SDL_assert(bx-width >= &video_buffer[0]);
-            SDL_assert(bx+width < &video_buffer[0]+framebuffer_size);
-            // left
-            *(bx-1)       += 2;
-            // center
-            *bx           += 4;
-            // right
-            *(bx+1)       += 2;
-            // bottom-left
-            *(bx+width-1) += 1;
-            // bottom
-            *(bx+width)   += 2;
-            // bottom-right
-            *(bx+width+1) += 1;
-            // top-left
-            *(bx-width-1) += 1;
-            // top
-            *(bx-width)   += 2;
-            // top-right
-            *(bx-width+1) += 1;
+
+    u8* video = &video_buffer[0];
+    u8* start = video + width*y_min + x; // pointer to (x, y_min)
+    u8* end = video + width*y_max; // pointer to (0, y_max)
+
+    u8* ptr = start;
+    while (ptr < end) {
+        if (*ptr < 32) {
+            Dot_3x3(ptr);
         }
-        bx += width;
+        ptr += width;
     }
 }
 
@@ -383,26 +383,7 @@ void Segmento (unsigned int x, unsigned int y,
         unsigned char* di2 = video + width*di + (global_x >> 16);
 
         if ( *di2 < 32 ) {
-            SDL_assert(di2-width-1 >= &video_buffer[0]);
-            SDL_assert(di2+width+1 < &video_buffer[0]+framebuffer_size);
-            // left
-            *(di2-1)       += 2;
-            // center
-            *di2           += 4;
-            // right
-            *(di2+1)       += 2;
-            // bottom-left
-            *(di2+width-1) += 1;
-            // bottom
-            *(di2+width)   += 2;
-            // bottom-right
-            *(di2+width+1) += 1;
-            // top-left
-            *(di2-width-1) += 1;
-            // top
-            *(di2-width)   += 2;
-            // top-right
-            *(di2-width+1) += 1;
+            Dot_3x3(di2);
         }
         global_y += b;
         global_x += a;
