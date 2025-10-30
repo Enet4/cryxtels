@@ -293,10 +293,12 @@ unsigned int ptr;
 int share_x;
 int share_y;
 
-// Place a 3x3 dot centered at ptr
-inline void Dot_3x3(u8* ptr, float brightness = 1.0) {
-    SDL_assert(ptr - width >= &video_buffer[0]);
-    SDL_assert(ptr + width < &video_buffer[0] + framebuffer_size);
+// Place a 3x3 dot centered at screen coordinates (x,y)
+inline void Dot_3x3(unsigned int x, unsigned int y, float brightness = 1.0) {
+    SDL_assert(x >= 0 && x < width);
+    SDL_assert(y >= 0 && y < height);
+    u8* ptr = &video_buffer[0] + y*width + x;
+
     if (*ptr >= 32){
         return;
     }
@@ -316,15 +318,10 @@ inline void Dot_3x3(u8* ptr, float brightness = 1.0) {
 
 inline void Segmento_V(unsigned int x, unsigned int y_min, unsigned int y_max) {
     y_max++;
-
-    u8* video = &video_buffer[0];
-    u8* start = video + width*y_min + x; // pointer to (x, y_min)
-    u8* end = video + width*y_max; // pointer to (0, y_max)
-
-    u8* ptr = start;
-    while (ptr < end) {
-        Dot_3x3(ptr);
-        ptr += width; // next scanline
+    unsigned int y = y_min;
+    while (y < y_max) {
+        Dot_3x3(x,y);
+        y++;
     }
 }
 
@@ -364,13 +361,9 @@ void Segmento (unsigned int x, unsigned int y,
 
     // stop when you reach column x2
     unsigned int end = x2 << 16;
-
-    u8* video = &video_buffer[0];
     do {
         // truncate brush coords and place a dot there
-        Dot_3x3(video
-                + width*(brush_y >> 16)
-                + (brush_x >> 16));
+        Dot_3x3(brush_x >> 16, brush_y >> 16);
 
         // move to the next sample point
         brush_y += dy;
