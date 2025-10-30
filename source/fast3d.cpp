@@ -295,9 +295,12 @@ int share_x;
 int share_y;
 
 // Place a 3x3 dot centered at ptr
-inline void Dot_3x3(u8* ptr) {
+inline void Dot_3x3(u8* ptr, float brightness = 1.0) {
     SDL_assert(ptr - width >= &video_buffer[0]);
     SDL_assert(ptr + width < &video_buffer[0] + framebuffer_size);
+    if (*ptr >= 32){
+        return;
+    }
     // top row
     *(ptr-width-1) += 1;
     *(ptr-width)   += 2;
@@ -321,10 +324,8 @@ inline void Segmento_V(unsigned int x, unsigned int y_min, unsigned int y_max) {
 
     u8* ptr = start;
     while (ptr < end) {
-        if (*ptr < 32) {
-            Dot_3x3(ptr);
-        }
-        ptr += width;
+        Dot_3x3(ptr);
+        ptr += width; // next scanline
     }
 }
 
