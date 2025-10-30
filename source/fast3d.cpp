@@ -349,28 +349,19 @@ void Segmento (unsigned int x, unsigned int y,
         return;
     }
 
-    int a = x2-x;
-    if (a<0) {
-        temp = x2; x2 = x; x = temp;
-        temp = y2; y2 = y; y = temp;
-        a = x2-x;
+    if (x2 < x) {
+        std::swap(x, x2);
+        std::swap(y, y2);
     }
+    int dx = x2 - x;
 
-    int L = a;
-    int b = y2-y;
-    if (b>0) {
-        if (b>L)
-            L=b;
-    }
-    else {
-        if (-b>L)
-            L=-b;
-    }
-    L++;
+    int dy = y2-y;
+    int L = std::max(dx, std::abs(dy)) + 1;
+    // L = max(|dx|, |dy|) + 1
 
     x2 <<= 16;
-    a <<= 16; a /= L;
-    b <<= 16; b /= L;
+    dx <<= 16; dx /= L;
+    dy <<= 16; dy /= L;
 
     global_y = y << 16;
     global_x = x << 16;
@@ -386,8 +377,8 @@ void Segmento (unsigned int x, unsigned int y,
         if ( *di2 < 32 ) {
             Dot_3x3(di2);
         }
-        global_y += b;
-        global_x += a;
+        global_y += dy;
+        global_x += dx;
     } while (global_x < x2);
 }
 
