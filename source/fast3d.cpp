@@ -290,9 +290,38 @@ void init_trig () {
 }
 
 unsigned int ptr;
-unsigned int global_x, global_y;
 int share_x;
 int share_y;
+
+// Place a 3x3 dot centered at screen coordinates (x,y)
+// The function tolerates inputs on the frame's border and bumps them inwards
+inline void Dot_3x3(unsigned int x, unsigned int y, float brightness = 1.0) {
+    SDL_assert(x <= width);
+    SDL_assert(y <= height);
+    
+    // bump extreme inputs inward
+    if (x == 0) x = 1;
+    if (y == 0) y = 1;
+    if (x >= width-1) x = width-2;
+    if (y >= height-1) y = height-2;
+    u8* ptr = &video_buffer[0] + y*width + x;
+
+    if (*ptr >= 32){
+        return;
+    }
+    // top row
+    *(ptr-width-1) += 1;
+    *(ptr-width)   += 2;
+    *(ptr-width+1) += 1;
+    // center row
+    *(ptr-1)       += 2;
+    *ptr           += 4;
+    *(ptr+1)       += 2;
+    // bottom row
+    *(ptr+width-1) += 1;
+    *(ptr+width)   += 2;
+    *(ptr+width+1) += 1;
+}
 
 void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
@@ -303,107 +332,43 @@ void Segmento (unsigned int x, unsigned int y,
     SDL_assert(x2 < width);
     SDL_assert(y2 < height);
 
-    u8* si = &video_buffer[0];
-
-    int temp;
-    if (x==x2) {
-        if (y>y2) {
-            std::swap(y,y2);
-        }
-        y2++;
-        unsigned int di = width*y + x;
-        unsigned int _ax = width*y2;
-        // now we're making a pointer to the scanline at y2
-        u8* ax = si + _ax;
-        // now we'll make si point to the other scanline (y)
-        si += di;
-        while (si < ax) {
-            if (*si < 32) {
-                SDL_assert(si-width >= &video_buffer[0]);
-                SDL_assert(si+width < &video_buffer[0]+framebuffer_size);
-                // left
-                *(si-1)       += 2;
-                // center
-                *si           += 4;
-                // right
-                *(si+1)       += 2;
-                // bottom-left
-                *(si+width-1) += 1;
-                // bottom
-                *(si+width)   += 2;
-                // bottom-right
-                *(si+width+1) += 1;
-                // top-left
-                *(si-width-1) += 1;
-                // top
-                *(si-width)   += 2;
-                // top-right
-                *(si-width+1) += 1;
-            }
-            si += width;
+    // Special case: vertical segment
+    if (x == x2) {
+        unsigned int y_min = std::min(y,y2);
+        unsigned int y_max = std::max(y,y2) + 1;
+        for (unsigned int y = y_min; y < y_max; y++) {
+            Dot_3x3(x,y);
         }
         return;
     }
 
-    int a = x2-x;
-    if (a<0) {
-        temp = x2; x2 = x; x = temp;
-        temp = y2; y2 = y; y = temp;
-        a = x2-x;
+    // In the following, we will assume x < x2
+    if (x2 < x) {
+        std::swap(x, x2);
+        std::swap(y, y2);
     }
+    int dx = x2 - x; // dx > 0
+    int dy = y2 - y;
+    int iterations = std::max(dx, std::abs(dy)) + 1;
+    
+    // simulate fixed-point arithmetic with bitshifts
+    dx <<= 16; dx /= iterations;
+    dy <<= 16; dy /= iterations;
 
-    int L = a;
-    int b = y2-y;
-    if (b>0) {
-        if (b>L)
-            L=b;
+    // brush position (with 16 bits of fractional precision)
+    unsigned int brush_x = x << 16;
+    unsigned int brush_y = y << 16;
+
+    // stop when you reach column x2
+    unsigned int end = x2 << 16;
+    for (int i = 0; i < iterations; i++) {
+        // truncate brush coords and place a dot there
+        Dot_3x3(brush_x >> 16, brush_y >> 16);
+
+        // move to the next sample point
+        brush_y += dy;
+        brush_x += dx;
     }
-    else {
-        if (-b>L)
-            L=-b;
-    }
-    L++;
-
-    x2 <<= 16;
-    a <<= 16; a /= L;
-    b <<= 16; b /= L;
-
-    global_y = y << 16;
-    global_x = x << 16;
-
-    /* Traccia il segmento tramite DMA. */
-
-    //const unsigned int HACK_SHIFT = -4;
-    do {
-        unsigned int di = global_y >> 16;
-
-        unsigned char* di2 = si + width*di + (global_x >> 16);
-
-        if ( *di2 < 32 ) {
-            SDL_assert(di2-width-1 >= &video_buffer[0]);
-            SDL_assert(di2+width+1 < &video_buffer[0]+framebuffer_size);
-            // left
-            *(di2-1)       += 2;
-            // center
-            *di2           += 4;
-            // right
-            *(di2+1)       += 2;
-            // bottom-left
-            *(di2+width-1) += 1;
-            // bottom
-            *(di2+width)   += 2;
-            // bottom-right
-            *(di2+width+1) += 1;
-            // top-left
-            *(di2-width-1) += 1;
-            // top
-            *(di2-width)   += 2;
-            // top-right
-            *(di2-width+1) += 1;
-        }
-        global_y += b;
-        global_x += a;
-    } while (global_x < x2);
 }
 
 char explode = 0;
