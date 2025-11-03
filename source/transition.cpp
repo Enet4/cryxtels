@@ -1,4 +1,4 @@
-/** \file utils.cpp
+/** \file transition.cpp
  *  This file is part of Crystal Pixels.
  *
  *  Crystal Pixels is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "global.h"
 #include "fast3d.h"
 #include "input.h"
-#include "utils.h"
+#include "transition.h"
 
 #include "SDL.h"
 #include "conf.h"

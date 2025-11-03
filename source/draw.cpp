@@ -22,7 +22,7 @@
 #include "fast3d.h"
 #include "text3d.h"
 #include "input.h"
-#include "utils.h"
+#include "transition.h"
 
 #include "conf.h"
 

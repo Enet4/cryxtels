@@ -20,7 +20,7 @@
 #include "fast3d.h"
 #include "text3d.h"
 #include "draw.h"
-#include "utils.h"
+#include "transition.h"
 #include "intro.h"
 
 #include "SDL.h"

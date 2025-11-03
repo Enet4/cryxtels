@@ -40,7 +40,7 @@
 #include "input.h"
 #include "draw.h"
 #include "sdl_exception.h"
-#include "utils.h"
+#include "transition.h"
 #include "intro.h"
 
 #include "SDL.h"

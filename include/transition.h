@@ -1,4 +1,4 @@
-/** \file utils.h
+/** \file transition.h
  *  This file is part of Crystal Pixels.
  *
  *  Crystal Pixels is free software: you can redistribute it and/or modify
@@ -15,12 +15,11 @@
  *  along with the program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Utils header file
-// This file contains miscellaneous functions that must be available to multiple modules
-// TODO: place each of these functions in a more appropriate file
+// Transition header file
+// This file contains functions that handle state transition
 
-#ifndef UTILS_H_INCLUDED
-#define UTILS_H_INCLUDED
+#ifndef TRANSITION_H_INCLUDED
+#define TRANSITION_H_INCLUDED
 
 #include "primitives.h"
 
