@@ -361,14 +361,16 @@ void Segmento (unsigned int x, unsigned int y,
 
     // stop when you reach column x2
     unsigned int end = x2 << 16;
-    for (int i = 0; i < iterations; i++) {
+    unsigned int max_y = height << 16;
+    do {
         // truncate brush coords and place a dot there
         Dot_3x3(brush_x >> 16, brush_y >> 16);
 
         // move to the next sample point
         brush_y += dy;
         brush_x += dx;
-    }
+    } while (brush_x < end
+        && brush_y < max_y); // safeguard for brush_y underflow
 }
 
 char explode = 0;
