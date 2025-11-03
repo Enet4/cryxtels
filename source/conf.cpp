@@ -27,7 +27,7 @@ Config load_config(const std::string& fpath) {
     iniparser::ini ini;
     std::ifstream in(fpath);
     if (in.fail()) {
-        std::cout << "Error while opening config file: " << fpath << std::endl;
+        std::cout << "Could not read config file " << fpath << std::endl;
         std::cout << "Default settings will be used." << std::endl;
     } else {
         in >> ini;
