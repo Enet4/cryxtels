@@ -96,6 +96,9 @@ void save_situation (char i);
 /// Load state
 void load_situation (char i, bool skip_fade = false);
 
+// Terminate program in case PIXELS.DEF contains a syntax error
+void fail_pixel_def (int el, int pix);
+
 /// redefinition of random(int),
 /// which probably became deprecated or existed in an outdated library
 int random(int max_num);
@@ -124,6 +127,13 @@ void collyblock (double cx, double cy, double cz,
 /// Calculates the collision zone by neighbour pixel and its objects.
 /// It tries to get the nearest object.
 void CollyZone (int nopix, char objectblocks);
+
+// Draw the entity with the corresponding code
+void Pixel (int typ);
+
+// Draws the object with the corresponding code
+// Also handles text input for some reason
+void Object (int tipo);
 
 // Funzione che toglie un oggetto dal microcosmo e lo dá all'utente.
 /// Function that takes an object from the microcosm and gives it to the user.
@@ -172,9 +182,6 @@ void scoppia (int nr_ogg, double potenza, int var);
 
 /// close file driver?
 void chiudi_filedriver ();
-
-/// Fottifoh object model
-extern i8 fotty[277];
 
 /// Run one frame of intro loop logic
 bool intro_loop();
@@ -2197,4 +2204,724 @@ trovato:while (nr_elem<pixeltype_elements[iii]) {
                         }
                 }
         }
+}
+
+
+// Updates buffer with loaded pixels:
+// Search for the pixel type of ID `typ`
+// and load it if it is not loaded yet.
+void cerca_e_carica (PixelTypeId typ) {
+    if (loaded_pixeltypes) {
+        for (auto iii = 0u; iii<loaded_pixeltypes; iii++) {
+            if (typ==pixeltype_type[iii])
+                return;
+        }
+    }
+    LoadPtyp (typ);
+}
+
+// TODO: What does this do?
+void Update()
+{
+    int p, o, f;
+
+    loaded_pixeltypes = 0;
+
+    for (p=0; p<pixels; p++) {
+        if (pixel_absd[p]<pixelmass[pixeltype[p]])
+            cerca_e_carica (pixeltype[p]);
+    }
+
+    for (o=0; o<_objects; o++) {
+        if (objecttype[o]>=3) {
+                f = 0;
+                if (object_location[o]>-1) {
+                        if (pixel_absd[object_location[o]]<4000)
+                            f = 1;
+                }
+                else {
+                    rx = absolute_x[o] - cam_x;
+                        ry = absolute_y[o] - cam_y;
+                        rz = absolute_z[o] - cam_z;
+                        if (sqrt(rx*rx+ry*ry+rz*rz)<1000) f = 1;
+                        }
+                        if (f) cerca_e_carica (objecttype[o]+FRONTIER_M3);
+                }
+        }
+
+        if (carry_type>=3)
+                cerca_e_carica (carry_type+FRONTIER_M3);
+}
+
+void fail_pixel_def (int el, int pix)
+{
+    alfin(false);
+    std::cerr << "Pixel definition error: Pixel of type " << pix << " does not specify element nr. " << (el+1) << std::endl
+         << "0-valued parameters are invalid." << std::endl;
+    exit(1);
+}
+
+void Pixel (int typ)
+{
+    double p0, p1, p2, p3, p4, p5, p6, crx=0, cry=0, crz=0;
+    double first_x, first_y, first_z;
+
+    int iii, pid = 3, nr_elem = 0;
+    int jjj, bkuneg = uneg;
+    unsigned vptr;
+
+    if (typ>FRONTIER_M1) goto ricerca;
+
+    ox = pixel_xdisloc[nopix];
+    oy = pixel_ydisloc[nopix];
+    oz = pixel_zdisloc[nopix];
+
+    if (subsignal[9*typ]&&pixel_absd[nopix]>512) {
+        p0 = pixel_absd[nopix] * 0.01; if (p0<628) p0 = 628;
+        c = pixel_absd[nopix] / 700; if (c>45) c = 45; if (c<18) c = 18;
+        for (a=0; a<360; a+=c) {
+            for (b=c; b<180; b+=c) {
+                if (C32(ox+p0*tsin[b]*tcos[a], oy+p0*tcos[b], oz-p0*tsin[a]*tsin[b])) {
+                    // --- draw operation begin
+                    auto di = share_x + width*share_y;
+                    auto si = &video_buffer[0] + di;
+
+                    if (*si < 32) {
+                        *si += 7;
+                        *(si+1) += 5; *(si-1) += 5;
+                        *(si+width) += 5;  *(si-width) += 5;
+                        *(si+width+1) += 3; *(si-width-1) += 3;
+                        *(si-width+1) += 3; *(si+width-1) += 3;
+                    }
+                    // --- draw operation end
+                }
+            }
+        }
+    }
+
+    if (pixel_absd[nopix]>pixelmass[typ]) {
+        if (!C32(ox, oy, oz)) return;
+        vptr = share_x+width*share_y;
+
+        // --- draw operation begin
+        auto cl = pixelmass[typ] / 1000; if (cl > 32) cl = 32;
+        auto ch = cl / 2; auto dl = cl / 4;
+
+        auto si = &video_buffer[0] + vptr;
+
+        if (*si < 32 ) {
+            *si += cl;
+            *(si+1) += ch;
+            *(si-1) += ch;
+            *(si+2) += dl;
+            *(si-2) += dl;
+            *(si+width-1) += dl;
+            *(si-width+1) += dl;
+            *(si+width) += ch;
+            *(si-width) += ch;
+            *(si+width+1) += dl;
+            *(si-width-1) += dl;
+            *(si+width*2) += dl;
+            *(si-width*2) += dl;
+        }
+        // --- draw operation end
+    } else {
+ricerca:
+        if (loaded_pixeltypes) {
+            for (iii = 0; iii<loaded_pixeltypes; iii++) {
+                if (typ==pixeltype_type[iii])
+                    goto trovato;
+            }
+        }
+        Update();
+        goto ricerca;
+trovato:
+        if (typ>FRONTIER_M1) {
+            _x = ox - cam_x; _y = oy - cam_y; _z = oz - cam_z;
+            d = sqrt(_x*_x+_y*_y+_z*_z);
+            id = static_cast<int>(d / pixelmass[typ]);
+            goto ogg_2;
+        } else {
+            id = static_cast<int>(pixel_absd[nopix]/CULLING);
+            if (nopix==pix) explode = explode_count;
+        }
+        uneg += pixel_absd[nopix] / 100;
+        if (uneg>1000) uneg = 1000;
+ogg_2:
+        if (id>3) id = 3;
+        while (nr_elem<pixeltype_elements[iii]) {
+            jjj = ELEMS * iii + nr_elem;
+            if (pixel_elem_t[jjj]==DETTAGLIO) {
+                if (id==pid) {
+                    uneg = bkuneg;
+                    explode = 0;
+                    return;
+                }
+                pid--;
+            }
+            p0 = pixel_elem_x[jjj];
+            p1 = pixel_elem_y[jjj];
+            p2 = pixel_elem_z[jjj];
+            p3 = pixel_elem_1[jjj];
+            p4 = pixel_elem_2[jjj];
+            p5 = pixel_elem_3[jjj];
+            p6 = pixel_elem_4[jjj];
+            switch (pixel_elem_t[jjj]) {
+                case SPIRALE:
+                    if (!p5) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                    c = p5 * (id+1);
+                    p3 *= id+1;
+                    switch (static_cast<int>(p4)) {
+                        case 0:
+                            a = c;
+                            k0 = 0; k1 = p3;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0+k1*tcos[(int)crx], p1+k1*tsin[(int)crx], p2,
+                                        p0+k0*tcos[(int)cry], p1+k0*tsin[(int)cry], p2);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k0 += p3; k1 += p3;
+                                a += c;
+                            }
+                            break;
+                        case 1:
+                            a = c;
+                            k0 = 0; k1 = p3;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0+k1*tcos[(int)crx], p1, p2+k1*tsin[(int)crx],
+                                        p0+k0*tcos[(int)cry], p1, p2+k0*tsin[(int)cry]);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k0 += p3; k1 += p3;
+                                a += c;
+                            }
+                            break;
+                        case 2:
+                            a = c;
+                            k0 = 0; k1 = p3;
+                            crx = c; cry = 0;
+                            while (a<1080) {
+                                rel (p0, p1+k1*tcos[(int)crx], p2+k1*tsin[(int)crx], p0,
+                                        p1+k0*tcos[(int)cry], p2+k0*tsin[(int)cry]);
+                                cry = crx; crx += c;
+                                if (crx>359) crx-=360;
+                                k0 += p3; k1 += p3;
+                                a += c;
+                            }
+                        }
+                        break;
+                    case PUNTO:
+                        if (!id) xrel (p0, p1, p2);
+                        break;
+                    case LINEA:
+                        rel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case RETTANGOLO:
+                        rectrel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case SCATOLA:
+                    case SOLID_BOX:
+                        boxrel (p0, p1, p2, p3, p4, p5);
+                        break;
+                    case GRIGLIA:
+                        p5 = (int) p5;
+                        if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                        if (id) {
+                            c = p5;
+                            p5 /= id;
+                            if (p5<1) p5 = 1;
+                            p3 *= (float)c / p5;
+                            p4 *= (float)c / p5;
+                        }
+                        _x = p3;
+                        _y = p4;
+                        switch ((int)p6) {
+                            case 0:
+                                p0 -= (p5*_x) / 2;
+                                p1 -= (p5*_y) / 2;
+                                p6 = p1 + _y*p5; _z = p0;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p6, p2);
+                                    p0 += _x;
+                                }
+                                p0 = _z; p6 = p0 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p6, p1, p2);
+                                    p1 += _y;
+                                }
+                                break;
+                            case 1:
+                                p0 -= (p5*_x) / 2;
+                                p2 -= (p5*_y) / 2;
+                                p6 = p2 + _y*p5; _z = p0;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p1, p6);
+                                    p0 += _x;
+                                }
+                                p0 = _z; p6 = p0 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p6, p1, p2);
+                                    p2 += _y;
+                                }
+                                break;
+                            case 2:
+                                p2 -= (p5*_x) / 2;
+                                p1 -= (p5*_y) / 2;
+                                p6 = p1 + _y*p5; _z = p2;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p6, p2);
+                                    p2 += _x;
+                                }
+                                p2 = _z; p6 = p2 + p5*_x;
+                                for (a=0; a<=p5; a++) {
+                                    rel (p0, p1, p2, p0, p1, p6);
+                                    p1 += _y;
+                                }
+                            }
+                            break;
+                        case DISEGNO_ELLITTICO:
+                            p6 *= id+1;
+                            if (p6>90) p6 = 90;
+                            if (p5==0) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0+tcos[c]*p3, oy+p1+tsin[c]*p4, oz+p2)) {
+                                        aux_plot();
+                                    }
+                                }
+                                break;
+                            }
+                            if (p5==1) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0+tcos[c]*p3, oy+p1, oz+p2+tsin[c]*p4)) {
+                                        aux_plot();
+                                    }
+                                }
+                                break;
+                            }
+                            if (p5==2) {
+                                for (c=0; c<360; c+=p6) {
+                                    if (C32 (ox+p0, oy+p1+tsin[c]*p4, oz+p2+tcos[c]*p3)) {
+                                        aux_plot();
+                                    }
+                                }
+                                break;
+                            }
+                            break;
+                        case ONDA:
+                            p6 *= id+1;
+                            if (p6>90) p6 = 90;
+                            switch ((int)p5) {
+                                case 0:
+                                    _x = p0 - p3*180 + p6*p3;
+                                    _oy = p1; _ox = _x - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _y = p1 + tsin[c] * p4;
+                                        rel (_x, _y, p2, _ox, _oy, p2);
+                                        _oy = _y;
+                                        _ox = _x;
+                                        _x += p6*p3;
+                                    }
+                                    break;
+                                case 1:
+                                    _z = p2 - p3*180 + p6*p3;
+                                    _ox = p0; _oz = _z - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _x = p0 + tsin[c] * p4;
+                                        rel (_x, p1, _z, _ox, p1, _oz);
+                                        _ox = _x;
+                                        _oz = _z;
+                                        _z += p6*p3;
+                                    }
+                                    break;
+                                case 2:
+                                    _z = p2 - p3*180 + p6*p3;
+                                    _oy = p1; _oz = _z - p6*p3;
+                                    for (c=p6; c<=360; c+=p6) {
+                                        _y = p1 + tsin[c] * p4;
+                                        rel (p0, _y, _z, p0, _oy, _oz);
+                                        _oy = _y;
+                                        _oz = _z;
+                                        _z += p6*p3;
+                                    }
+                                }
+                                break;
+                            case COLONNA:
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                _x = p0 + tcos[0]*p4;
+                                _z = p2 + tsin[0]*p4;
+                                _y = p1 - p5 / 2;
+                                crx = p0 + tcos[0]*p3;
+                                crz = p2 + tsin[0]*p3;
+                                cry = p1 + p5 / 2;
+                                for (a=p6; a<360; a+=p6) {
+                                    _ox = _x;
+                                    _oz = _z;
+                                    first_x = crx;
+                                    first_z = crz;
+                                    _x = p0 + tcos[a]*p4;
+                                    _z = p2 + tsin[a]*p4;
+                                    crx = p0 + tcos[a]*p3;
+                                    crz = p2 + tsin[a]*p3;
+                                    rel (_x, _y, _z, crx, cry, crz);
+                                    if (p4) rel (_x, _y, _z, _ox, _y, _oz);
+                                    if (p3) rel (first_x, cry, first_z, crx, cry, crz);
+                                }
+                                _ox = _x;
+                                _oz = _z;
+                                first_x = crx;
+                                first_z = crz;
+                                _x = p0 + tcos[0]*p4;
+                                _z = p2 + tsin[0]*p4;
+                                crx = p0 + tcos[0]*p3;
+                                crz = p2 + tsin[0]*p3;
+                                rel (_x, _y, _z, crx, cry, crz);
+                                if (p4) rel (_x, _y, _z, _ox, _y, _oz);
+                                if (p3) rel (first_x, cry, first_z, crx, cry, crz);
+                                break;
+                            case ASTERISCO:
+                                if (p4<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                p3 = -p3;
+                                p4 *= id+1;
+                                if (p4>90) p4 = 90;
+                                for (a=0; a<180; a+=p4)
+                                    for (b=p4; b<180; b+=p4) {
+                                        _oz = p3 * tcos[b];
+                                        z2 = p3 * tsin[b];
+                                        _ox = z2 * tcos[a];
+                                        _oy = z2 * tsin[a];
+                                        rel (p0-_ox, p1-_oz, p2+_oy, p0+_ox, p1+_oz, p2-_oy);
+                                    }
+                                break;
+                            case SFERA:
+                                if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                c = p5 * (id+1);
+                                if (c>90) c = 90;
+                                p3 = -p3;
+                                _ox = ox;
+                                _oy = oy;
+                                _oz = oz;
+                                crx = ox + p0;
+                                cry = oy + p1;
+                                crz = oz + p2;
+                                for (a=0; a<360; a+=c)
+                                    for (b=c; b<180; b+=c) {
+                                        oz = p3 * tcos[b] * p4;
+                                        z2 = p3 * tsin[b];
+                                        ox = z2 * tcos[a];
+                                        oy = z2 * tsin[a];
+                                        if (C32(ox+crx, oz+cry, crz-oy)) {
+                                            aux_plot();
+                                        }
+                                    }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
+                            case TESTO:
+                                sprintf (t, &pixel_elem_b[40*jjj], nopix);
+                                Txt (t, p0, p1, p2, p3, p4, p5, p6);
+                                break;
+                            case ELLISSE:
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                if (p5==0) {
+                                    _x = p0+p3;
+                                    _y = p1;
+                                    for (c=p6; c<360; c+=p6) {
+                                        crx = p0+tcos[c]*p3;
+                                        cry = p1+tsin[c]*p4;
+                                        rel (_x, _y, p2, crx, cry, p2);
+                                        _x = crx;
+                                        _y = cry;
+                                    }
+                                    rel (_x, _y, p2, p0+p3, p1, p2);
+                                    break;
+                                }
+                                if (p5==1) {
+                                    _x = p0+p3;
+                                    _z = p2;
+                                    for (c=p6; c<360; c+=p6) {
+                                        crx = p0+tcos[c]*p3;
+                                        crz = p2+tsin[c]*p4;
+                                        rel (_x, p1, _z, crx, p1, crz);
+                                        _x = crx;
+                                        _z = crz;
+                                    }
+                                    rel (_x, p1, _z, p0+p3, p1, p2);
+                                    break;
+                                }
+                                if (p5==2) {
+                                    _y = p1+p3;
+                                    _z = p2;
+                                    for (c=p6; c<360; c+=p6) {
+                                        cry = p1+tcos[c]*p3;
+                                        crz = p2+tsin[c]*p4;
+                                        rel (p0, _y, _z, p0, cry, crz);
+                                        _y = cry;
+                                        _z = crz;
+                                    }
+                                    rel (p0, _y, _z, p0, p1+p3, p2);
+                                    break;
+                                }
+                                break;
+                            case CIAMBELLA:
+                                if (p6<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                p6 *= id+1;
+                                if (p6>90) p6 = 90;
+                                _ox = ox;
+                                _oy = oy;
+                                _oz = oz;
+                                ox += p0;
+                                oy += p1;
+                                oz += p2;
+                                switch (int(p5)) {
+                                    case 0:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (crx, crz, _y, first_x, first_z, first_y);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (crx, crz, _y, _x*tcos[(int)(a-p6)], - _x*tsin[(int)(a-p6)], _y);
+                                            }
+                                            rel (crx, crz, _y, cry, (p3-p4) * tsin[a], 0);
+                                        }
+                                        break;
+                                    case 1:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (crx, _y, crz, first_x, first_y, first_z);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (crx, _y, crz, _x*tcos[(int)(a-p6)], _y, - _x*tsin[static_cast<int>(a-p6)]);
+                                            }
+                                            rel (crx, _y, crz, cry, 0, (p3-p4) * tsin[a]);
+                                        }
+                                        break;
+                                    case 2:
+                                        for (a=p6; a<360+p6; a+=p6) {
+                                            first_x = (p4 - p3) * tcos[a];
+                                            cry = first_x;
+                                            first_y = 0;
+                                            first_z = (p3-p4)*tsin[a];
+                                            for (c=p6; c<360; c+=p6*2) {
+                                                _x = tcos[c]*p4 - p3;
+                                                _y = tsin[c]*p4;
+                                                crx = _x*tcos[a];
+                                                crz = - _x*tsin[a];
+                                                rel (_y, crz, crx, first_y, first_z, first_x);
+                                                first_x = crx; first_y = _y; first_z = crz;
+                                                rel (_y, crz, crx, _y, - _x*tsin[(int)(a-p6)], _x*tcos[a-static_cast<int>(p6)]);
+                                            }
+                                            rel (_y, crz, crx, 0, (p3-p4) * tsin[a], cry);
+                                        }
+                                        break;
+                                }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
+                            case SFERA_RETICOLARE:
+                                if (p5<=0) fail_pixel_def (nr_elem, pixeltype[nopix]);
+                                c = p5 * (id+1);
+                                if (c>90) c = 90;
+                                p3 = -p3;
+                                _ox = ox; ox += p0;
+                                _oy = oy; oy += p1;
+                                _oz = oz; oz += p2;
+                                for (a=0; a<360; a+=c) {
+                                    first_z = p3 * tcos[c] * p4;
+                                    z2 = p3 * tsin[c];
+                                    first_x = z2 * tcos[a];
+                                    first_y = z2 * tsin[a];
+                                    for (b=2*c; b<180; b+=c) {
+                                        crz = p3 * tcos[b] * p4;
+                                        k1 = p3 * tsin[b];
+                                        crx = k1 * tcos[a];
+                                        cry = k1 * tsin[a];
+                                        rel (crx, crz, cry, first_x, first_z, first_y);
+                                        rel (k1 * tcos[a+c], crz, k1 * tsin[a+c], first_x, first_z, first_y);
+                                        first_x = crx;
+                                        first_y = cry;
+                                        first_z = crz;
+                                    }
+                                }
+                                ox = _ox;
+                                oy = _oy;
+                                oz = _oz;
+                                break;
+            }
+            nr_elem++;
+        }
+        uneg = bkuneg;
+        explode = 0;
+    }
+}
+
+void Object (int tipo)
+{
+    FILE* th;
+
+    switch (tipo) {
+        // Fottifoh
+        case 0:
+            a = 0;
+            while (fotty[a]!=10) {
+                rel (fotty[a], fotty[a+1], fotty[a+2],
+                        fotty[a+3], fotty[a+4], fotty[a+5]);
+                a += 6;
+            }
+            rectrel (-2, 0, 4, 0.5, 0.5, 1);
+            rectrel (2, 0, 4, 0.5, 0.5, 1);
+            break;
+        // Orbital engine
+        case 1:
+            for (   a = static_cast<int>((SDL_GetTicks()/ticks_per_frame)%45);
+                    a <= 135+(int)((SDL_GetTicks()/ticks_per_frame)%45);
+                    a += 45) {
+                _ox = 25 * tcos[a]; _oy = 25 * tsin[a];
+                rel (-_ox, 0, _oy, _ox, 0, -_oy);
+            }
+            break;
+        // Record player
+        case 2:
+            b = 0;
+            if (/* sbf_stat&& */pix==pixel_sonante)
+                b = ((SDL_GetTicks()/ticks_per_frame)%3)*15;
+            for (a=b; a<=135+b; a+=45) {
+                _ox = 5 * tcos[a]; _oy = 5 * tsin[a];
+                rel (-_ox, 0, _oy, _ox, 0, -_oy);
+            }
+            rectrel (0, 0, 0, 6, 6, 1);
+            if (recfile) Txt ("> RECORD >", -5.5, 0, -5, 0.1, 0.15, 270, 0);
+            if (globalvocfile[0]!='.') Txt ("> PLAY >", -5.5, 0, -4, 0.1, 0.15, 270, 0);
+            sprintf (t, "INPUT: %s", source_name[static_cast<int>(source)]);
+            Txt (t, -5.5, 0, 5, 0.1, 0.15, 270, 0);
+            sprintf (t, "ACCURATEZZA: %s", record_qlty[static_cast<int>(quality)]);
+            Txt (t, -5.5, 0, 4, 0.1, 0.15, 270, 0);
+            if (repeat) Txt ("REPEAT", -5.5, 0, 3, 0.1, 0.15, 270, 0);
+            break;
+        
+        // other objects
+        // TODO: is this code reading from a file on each tick? Aren't objects loaded into memory on startup?
+        default:
+            Pixel (tipo+FRONTIER_M3);
+            if (id) break;
+            if (!type_mode) break; // ctrlkeys[0]&16 is scroll lock, use something else
+            if (!memcmp(&subsignal[9*(tipo+FRONTIER_M3)], "TEXT-" /*"TESTO-"*/, 5/*6*/)) {
+                a = subsignal[9*(tipo+FRONTIER_M3)+5/*6*/];
+                memset (buffer, ' ', 512);
+                // safeguard buffer from reading beyond the end of the text
+                buffer[512] = '\0';
+                sprintf (autore_forme, "TEXT-%03d.FIX", tipo-3);
+                th = std::fopen (autore_forme, "r+b");
+                if (th) {
+                    buffer[32] = '\0';
+                    k1 = 5.32;
+                    int bytes_read = std::fread(&buffer[33], 1, 512, th);
+                    for (c=0; c<bytes_read; c+=32) {
+                        memcpy (buffer, buffer+33+c, 32);
+                        if (a=='V') {
+                            Txt (reinterpret_cast<char*>(buffer), -6.82, -k1, 0, 0.11, 0.14, 0, 0);
+                        } else if (a=='H') {
+                            Txt (reinterpret_cast<char*>(buffer), -6.82, 0, k1, 0.11, 0.14, 270, 0);
+                        }
+                        k1 -= 0.7;
+                    }
+                    if (d<15||tipo==carry_type) {
+                        fermo_li = 1;
+                        memcpy (buffer+545, buffer+33, 512);
+                        /*
+                        if (tasto_premuto()) {
+                            c = attendi_pressione_tasto();
+                            if ((globalvocfile[0]=='.'&&EVA_in_progress)||!EVA_in_progress) play (TARGET);
+                            switch (c) {
+                                case 0:
+                                    switch (attendi_pressione_tasto()) {
+                                        case 77:
+                                            if (cursore<511) cursore++;
+                                            break;
+                                        case 75:
+                                            if (cursore) cursore--;
+                                            break;
+                                        case 80:
+                                            if (cursore<480) cursore += 32;
+                                            break;
+                                        case 72:
+                                            if (cursore>31) cursore -= 32;
+                                            break;
+                                        case 64:
+                                            snapshot();
+                                }
+                                break;
+                        case 13:
+                                if (cursore<480) {
+                                    cursore = (cursore/32) * 32;
+                                    cursore += 32;
+                                }
+                                break;
+                        case 8:
+                                if (cursore) {
+                                        cursore--;
+                                        buffer[cursore+33] = 32;
+                                }
+                                break;
+                        case 27:
+                                alfin (true);
+                                exit (0);
+                        default:
+                            if (cursore<512) {
+                                if (c>='a'&&c<='z') c -= 32;
+                                if (c>31 && c<97) {
+                                    buffer[cursore+33] = c;
+                                    if (cursore<511) cursore++;
+                                }
+                            }
+                            */
+                    }
+                    if (cursore<512) {
+                        if (type_this != 0) {
+                            assert (type_this >= 32 && type_this <= 96);
+                            buffer[cursore+33] = type_this;
+                            if (cursore<511) cursore++;
+                        }
+                        type_this = 0;
+                    }
+                    //}
+                    if (a=='V') Txt ("*", -6.82+(cursore%32)*0.44, (cursore/32)*0.7-5.32, 0, 0.5, 0.5, 0, 0);
+                    else if (a=='H') Txt ("*", -6.82+(cursore%32)*0.44, 0, 5.32-(cursore/32)*0.7, 0.5, 0.5, 270, 0);
+                    if (memcmp (buffer+33, buffer+545, 512)) {
+                        std::fseek (th, 0, SEEK_SET);
+                        std::fwrite (buffer+33, 1, 512, th);
+                    }
+                //}
+                    std::fclose (th);
+                }
+                else {
+                    th = std::fopen(autore_forme, "wb");
+                    if (th) {
+                        std::fwrite (buffer, 1, 512, th);
+                        std::fclose (th);
+                    }
+                }
+        }
+    }
 }

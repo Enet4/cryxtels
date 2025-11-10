@@ -19,7 +19,6 @@
 #include "primitives.h"
 #include "fast3d.h"
 #include "text3d.h"
-#include "draw.h"
 #include "transition.h"
 #include "intro.h"
 
@@ -32,6 +31,8 @@ static u32 framebuffer_size;
 static bool original_resolution;
 static u16 fotty_viewport_upper;
 static u16 fotty_viewport_lower;
+
+extern void Object (int type);
 
 void init_intro(void) {
     static const Config& config = get_config();
