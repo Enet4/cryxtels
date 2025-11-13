@@ -18,6 +18,7 @@
 #include "fast3d.h"
 
 #include <cmath>
+#include <ctime>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -165,7 +166,15 @@ void toggle_fullscreen (void) {
 
 void snapshot (void)
 {
-    SDL_SaveBMP(p_surface_32, "SNAP.bmp");
+    const size_t fmtlen = sizeof("SNAP 2025-11-25 132109.bmp");
+    char datetime[fmtlen + 1];
+    char filename[fmtlen + 1];
+
+    time_t now; std::time(&now);
+    strftime(datetime, fmtlen, "%Y-%m-%d %H%M%S", std::localtime(&now));
+    sprintf(filename, "SNAP %s.bmp", datetime);
+    
+    SDL_SaveBMP(p_surface_32, filename);
 }
 
 void Render (void)
