@@ -56,4 +56,14 @@ Command line parameters.
    CRYXTELS <LETTER>
     - Loads situation from the respective situation letter ("CRYXTELS.?IT").
 
+__________________
+General settings.
+
+    Edit SETTINGS.INI to customize your Crystal Pixels experience.
+    With this file you can:
+
+    - Increase the display size and resolution
+    - Change the frame rates
+    - Change the default generation parameters
+    - Use a different file for the pixel definitions
 
