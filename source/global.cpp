@@ -76,7 +76,8 @@ u8 echo = 1; // Ecoscandaglio acceso?
 
 PixelId carried_pixel = -1; // Pixel trasportato (solo i DONI del Solicchio).
 
-double disl = 0; // dislivello incontrato da un passo all'altro.
+/// difference in altitude from one step to another
+double disl = 0;
 
 u16 cursore = 0; // Sulle lavagnette.
 
@@ -284,7 +285,8 @@ FILE* recfile = nullptr;
 double cox = 0, coy = 0, coz = 0;
 u8 justloaded = 5;
 
-u8 moving_last_object = 0; // Sta spostando l'ultimo oggetto lasciato.
+/// Whether the last object moved is still being dropped.
+u8 moving_last_object = 0;
 double cfx, cfy, cfz; // Carried-Final-relative-X/Y/Z (dove deve andare /\).
 
 const char *source_name[] = { "SORG. PREIMPOSTATA", "C.D.", "MIC", "LINEA D'INGRESSO" };

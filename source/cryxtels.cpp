@@ -137,10 +137,10 @@ void Object (int tipo);
 
 // Funzione che toglie un oggetto dal microcosmo e lo dá all'utente.
 /// Function that takes an object from the microcosm and gives it to the user.
-void preleva_oggetto (int nr_ogg); // not implemented
+void preleva_oggetto (int nr_ogg);
 
 /// Update objects' data over the pixels
-void Oggetti_sul_Pixel (char oblige); // not implemented
+void Oggetti_sul_Pixel (char oblige);
 
 // Funzione che lascia al suolo l'oggetto prelevato.
 /// Function that leaves the taken object on the ground.
@@ -1244,7 +1244,7 @@ bool main_loop() {
                 relative_x[_objects-1] += _x / 5;
                 relative_y[_objects-1] += _y / 5;
                 relative_z[_objects-1] += _z / 5;
-                if (sqrt(_x*_x+_y*_y+_z*_z)<0.1) {
+                if (_x*_x+_y*_y+_z*_z < 0.01) {
                     moving_last_object = 0;
                     relative_x[_objects-1] = cfx;
                     relative_y[_objects-1] = cfy;
@@ -1550,6 +1550,7 @@ void load_situation(char i, bool skip_fade) {
         //sta_suonando = -1;
         //pixel_sonante = -1;
         //globalvocfile[0] = '.';
+        moving_last_object = 0;
         mx = beta * 5; my = alpha * 5;
         r_x = rel_x; r_y = rel_y; r_z = rel_z;
 
@@ -1866,8 +1867,8 @@ void preleva_oggetto (int nr_ogg)
         pixel_rot[pix]--;
 
     // remove object and shift the others
-    int o;
-    for (o=nr_ogg; o<_objects; o++) {
+    // so that the object picked up is always the last one
+    for (int o = nr_ogg; o < _objects - 1; o++) {
         objecttype[o] = objecttype[o+1];
         absolute_x[o] = absolute_x[o+1];
         absolute_y[o] = absolute_y[o+1];
@@ -1876,6 +1877,20 @@ void preleva_oggetto (int nr_ogg)
         relative_y[o] = relative_y[o+1];
         relative_z[o] = relative_z[o+1];
         object_location[o] = object_location[o+1];
+    }
+    // and reset properties of the last object,
+    // so that they do not leak into the future object
+    // when it is dropped
+    {
+        auto o = _objects - 1;
+        objecttype[o] = -1;
+        absolute_x[o] = 0;
+        absolute_y[o] = 0;
+        absolute_z[o] = 0;
+        relative_x[o] = 0;
+        relative_y[o] = 0;
+        relative_z[o] = 0;
+        object_location[o] = -1;
     }
 
     _objects--;
