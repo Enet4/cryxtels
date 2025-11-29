@@ -1938,7 +1938,6 @@ void preleva_oggetto (int nr_ogg)
     if (globalvocfile[0]=='.'&&EVA_in_progress) play (PRENDERE);
 
     carry_type = objecttype[nr_ogg];
-    std::cout << "(DEBUG) picking up object nr " << nr_ogg << " of type " << carry_type << std::endl;
     
     if (EVA_in_progress) {
         // update pixel translation speed if picking up an orbital engine
@@ -1948,9 +1947,7 @@ void preleva_oggetto (int nr_ogg)
         
             // identify if we are picking up an audio object
             auto obj_below = find_close_object(nr_ogg, OBJECT_TYPE_CD_PLAYER);
-            std::cout << "(DEBUG) checking for CD player below... " << obj_below << std::endl;
             if (obj_below > -1) {
-                std::cout << "(DEBUG) object is below CD player." << std::endl;
                 // inspect audio object properties
                 int ptr = 9 * (carry_type + FRONTIER_M3);
                 if (subsignal[ptr]) {

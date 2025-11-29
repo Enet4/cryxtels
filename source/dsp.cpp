@@ -22,6 +22,7 @@
 #include <iostream>
 #include <cstring>
 
+/** Global variable for whether audio is enabled. */
 bool audioEnabled = true;
 
 /** The total number of recognized audios,
@@ -207,7 +208,6 @@ void play(Audio audio, int channel_num, int loops) {
 
     auto err = Mix_PlayChannel(channel_num, chunk, loops);
     if (err != -1) {
-        std::cout << "(DEBUG) Playing '" << filename << "'" << std::endl;
         last_played[err] = audio;
     }
 }
@@ -280,12 +280,6 @@ bool play_music(const char* name, bool repeat) {
         return false;
     }
 
-    if (repeat) {
-        std::cout << "(DEBUG) Will play music file '" << fname << "' in repeat" << std::endl;
-    } else {
-        std::cout << "(DEBUG) Will play music file '" << fname << "' once" << std::endl;
-    }
-
     set_sottofondo(fname.c_str());
     MUSIC_SELECTED = name;
     play(0, 2, repeat ? -1 : 0);
@@ -300,7 +294,6 @@ void audio_stop(int channel_num, int fadeout) {
     if (!audioEnabled) {
         return;
     }
-    std::cout << "(DEBUG) stop_audio(" << channel_num << ", " << fadeout << ")" << std::endl;
     if (channel_num == -1) {
         if (fadeout > 0) {
             Mix_FadeOutChannel(-1, fadeout);
