@@ -15,11 +15,16 @@
  *  along with the program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+#include <cassert>
 #include "draw.h"
-#include "conf.h"
 #include "global.h"
 #include "fast3d.h"
 #include "text3d.h"
+#include "input.h"
+#include "transition.h"
+
+#include "conf.h"
 
 void draw_line_relative (double sx, double sy, double sz, double fx, double fy, double fz)
 {
@@ -135,12 +140,15 @@ void draw_indicator_crosshair()
 
 void draw_indicator_prograde(int x, int y)
 {
-    static const int width = 5*HEIGHT/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 5*WIDTH/320;
-    static const int xhigh = 315*WIDTH/320;
+    static const int width = 5*render_height/200;
+
+    static const int xlow = 5*render_width/320;
+    static const int xhigh = 315*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 195*HEIGHT/200; 
+    static const int yhigh = 195*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x - width, y - width, x + width, y + width);
         Segmento (x + width, y - width, x - width, y + width);
@@ -149,13 +157,16 @@ void draw_indicator_prograde(int x, int y)
 
 void draw_indicator_retrograde(int x, int y)
 {
-    static const int outside = 9*HEIGHT/200;
-    static const int inside  = 5*HEIGHT/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 10*WIDTH/320;
-    static const int xhigh = 310*WIDTH/320;
+    static const int outside = 9*render_height/200;
+    static const int inside  = 5*render_height/200;
+
+    static const int xlow = 10*render_width/320;
+    static const int xhigh = 310*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 190*HEIGHT/200; 
+    static const int yhigh = 190*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x - outside, y - inside, x + outside, y - inside);
         Segmento (x - outside, y + inside, x + outside, y + inside);
@@ -166,12 +177,15 @@ void draw_indicator_retrograde(int x, int y)
 
 void draw_indicator_closest(int x, int y)
 {
-    static const int width = 19*HEIGHT/200;
+    static const u32 render_width = get_config().render_width;
+    static const u32 render_height = get_config().render_height;
 
-    static const int xlow = 20*WIDTH/320;
-    static const int xhigh = 300*WIDTH/320;
+    static const int width = 19*render_height/200;
+
+    static const int xlow = 20*render_width/320;
+    static const int xhigh = 300*render_width/320;
     static const int ylow = xlow;
-    static const int yhigh = 180*HEIGHT/200; 
+    static const int yhigh = 180*render_height/200; 
     if ( x>xlow && x<xhigh && y>ylow && y<yhigh) {
         Segmento (x, y - width, x, y + width);
         Segmento (x - width, y, x + width, y);
@@ -340,3 +354,53 @@ void draw_vehicle_attitude(i16 alpha, i16 beta, char blink)
     draw_line_relative (4-tcos[alphax]/2, -4-tsin[alphax]/2, 12.01, 4+tcos[alphax], -4+tsin[alphax], 12.01);
     draw_line_relative (4-tcos[alphax+90]/2, -4-tsin[alphax+90]/2, 12.01, 4+tcos[alphax+90]/2, -4+tsin[alphax+90]/2, 12.01);
 }
+
+// Fottifoh model data
+const i8 fotty[277] = {
+        -6, 0, +6,          -4, 0, +8,
+        -4, 0, +8,          -2, 0, +8,
+        -2, 0, +8,          -2, 0, +6,
+        -2, 0, +6,           0, 0, +7,
+         0, 0, +7,          +2, 0, +6,
+        +2, 0, +6,          +2, 0, +8,
+        +2, 0, +8,          +4, 0, +8,
+        +4, 0, +8,          +6, 0, +6,
+        +6, 0, +6,          +6, 0, +4,
+        +6, 0, +4,          +4, 0, +4,
+        +4, 0, +4,          +4, 0, +2,
+        +4, 0, +2,          +2, 0, +1,
+        +2, 0, +1,          +4, 0,  0,
+        +4, 0,  0,          +5, 0, -2,
+        +5, 0, -2,          +4, 0, -4,
+        +4, 0, -4,          +4, 0, -6,
+        +4, 0, -6,          +2, 0, -8,
+        +2, 0, -8,           0, 0, -7,
+         0, 0, -7,          -2, 0, -8,
+        -2, 0, -8,          -4, 0, -6,
+        -4, 0, -6,          -4, 0, -4,
+        -4, 0, -4,          -5, 0, -2,
+        -5, 0, -2,          -4, 0,  0,
+        -4, 0,  0,          -2, 0, +1,
+        -2, 0, +1,          -4, 0, +2,
+        -4, 0, +2,          -4, 0, +4,
+        -4, 0, +4,          -6, 0, +4,
+        -6, 0, +4,          -6, 0, +6,
+        -2, 0,  0,          -1, 0, -2,
+        -1, 0, -2,          -2, 0, -4,
+        -2, 0, -4,           0, 0, -5,
+         0, 0, -5,          +2, 0, -4,
+        +2, 0, -4,          +1, 0, -2,
+        +1, 0, -2,          +2, 0,  0,
+        -4, 0, -4,          -2, 0, -4,
+        +2, 0, -4,          +4, 0, -4,
+         0, 0, -5,           0, 0, -7,
+        -2, 0, +1,          -2, 0, +3,
+        -2, 0, +3,           0, 0, +4,
+         0, 0, +4,          +2, 0, +3,
+        +2, 0, +3,          +2, 0, +1,
+        +2, 0, +1,           0, 0,  0,
+         0, 0,  0,          -2, 0, +1,
+        -1, 0, +3,          +1, 0, +3,
+        +1, 0, +3,           0, 0, +1,
+         0, 0, +1,          -1, 0, +3,
+10 };

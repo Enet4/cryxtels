@@ -54,14 +54,6 @@ double ox, oy, oz;
 const int lwx = 3;
 const int lwy = 3;
 
-const int zbasex = WIDTH * 2 / 3, zbasey = 150*HEIGHT/200;
-const int nav_zbasex = WIDTH-2, nav_zbasey = HEIGHT-2;
-const int lowerbound_y = -static_cast<int>(HEIGHT/2-lwy), upperbound_y = static_cast<int>(HEIGHT/2-lwy);
-const int lowerbound_x = -static_cast<int>(WIDTH/2-lwx), upperbound_x = static_cast<int>(WIDTH/2-lwx);
-
-const u32 x_centro = WIDTH/2;
-const u32 y_centro = HEIGHT/2;
-
 double uneg = 1;
 double mindiff = 0.01;
 
@@ -71,14 +63,46 @@ u8 tmppal[256 * 4]; // 256*4 bytes (RGBU)
 // Old Palette definition
 //unsigned char tmppal[768]; // 256*3 bytes (RGB)
 
-using namespace std;
+static u32 width, height;
+static u32 framebuffer_size;
+static u32 window_width, window_height;
 
-void init(void);
+static u32 x_center, y_center;
+static int zbasex, zbasey;
+static int nav_zbasex, nav_zbasey;
+static int lowerbound_y, upperbound_y;
+static int lowerbound_x, upperbound_x;
 
-void init_video () // inizializza grafica a 320x200x256 colori.
-{
+static void read_config(void) {
+    const Config& config = get_config();
 
-    init();
+    width = config.render_width;
+    height = config.render_height;
+    framebuffer_size = width * height;
+    window_width = config.window_width;
+    window_height = config.window_height;
+
+    x_center = width / 2;
+    y_center = height / 2;
+
+    zbasex = width * 2 / 3;
+    zbasey = height * 150 / 200;
+    nav_zbasex = width - 2;
+    nav_zbasey = height - 2;
+    
+    lowerbound_y = -static_cast<int>(height/2-lwy);
+    upperbound_y = static_cast<int>(height/2-lwy);
+    lowerbound_x = -static_cast<int>(width/2-lwx);
+    upperbound_x = static_cast<int>(width/2-lwx);
+}
+
+void init_trig(void);
+
+void init_video () {
+
+    read_config();
+
+    init_trig();
 
     // Set SDL video mode (using surface rendering)
     Uint32 rmask, gmask, bmask, amask;
@@ -98,30 +122,30 @@ void init_video () // inizializza grafica a 320x200x256 colori.
 #endif
 
     // create software video buffer
-    video_buffer.reset(new unsigned char[WIDTH*HEIGHT]);
-    memset(&video_buffer[0], 0, WIDTH*HEIGHT);
+    video_buffer.reset(new unsigned char[framebuffer_size]);
+    memset(&video_buffer[0], 0, framebuffer_size);
 
-    p_surface_32 = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, rmask, gmask, bmask, amask);
+    p_surface_32 = SDL_CreateRGBSurface(0, width, height, 32, rmask, gmask, bmask, amask);
     if (p_surface_32 == nullptr) throw sdl_exception();
 
     p_window = SDL_CreateWindow("Crystal Pixels",
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            WIDTH_SCALED, HEIGHT_SCALED, SDL_WINDOW_RESIZABLE);
+            window_width, window_height, SDL_WINDOW_RESIZABLE);
     if (p_window == nullptr) throw sdl_exception();
 
     p_renderer = SDL_CreateRenderer(p_window, -1, SDL_RENDERER_TARGETTEXTURE);
 
     p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_ABGR8888,
-                                  SDL_TEXTUREACCESS_STREAMING, WIDTH,HEIGHT);
+                                  SDL_TEXTUREACCESS_STREAMING, width,height);
 
     //p_surface_scaled = SDL_GetWindowSurface(p_window);
-    SDL_SetWindowMinimumSize(p_window, WIDTH, HEIGHT);
+    SDL_SetWindowMinimumSize(p_window, width, height);
 }
 
 /// Darken the screen once.
 void darken_once (u8 inc) {
     unsigned char* it = &video_buffer[0];
-    unsigned int cx = WIDTH*HEIGHT;
+    unsigned int cx = framebuffer_size;
 
     do {
         auto k = *it;
@@ -156,8 +180,8 @@ void Render (void)
     unsigned int rpos_32 = 0;
     unsigned char* p_orig = &video_buffer[0];
     unsigned int* p_dest = static_cast<unsigned int*>(p_surface_32->pixels);
-    for (unsigned int y = 0 ; y < HEIGHT ; y++) {
-        for (unsigned int x = 0 ; x < WIDTH ; x++) {
+    for (unsigned int y = 0 ; y < height ; y++) {
+        for (unsigned int x = 0 ; x < width ; x++) {
             auto pixel = p_orig[rpos + x];
             unsigned int c = tmppal[pixel * 4]
                 | (tmppal[pixel * 4 + 1] << 8)
@@ -165,7 +189,7 @@ void Render (void)
                 | (tmppal[pixel * 4 + 3] << 24);
             p_dest[rpos_32 + x] = c;
         }
-        rpos += WIDTH;
+        rpos += width;
         rpos_32 += (p_surface_32->pitch >> 2);
     }
     SDL_UnlockTexture(p_texture);
@@ -223,17 +247,17 @@ void pcopy (u8 *dest, const u8 *sorg) {
     // longer really true anyway.
 
     // let's just use memcpy
-    memcpy(dest, sorg, WIDTH*HEIGHT*sizeof(*dest));
+    memcpy(dest, sorg, framebuffer_size*sizeof(*dest));
 }
 
 
 // This function is unsafe and should be removed
 void pclear (u8 *target, u8 pattern) {
     // Again, let's just try something different.
-    memset(target, pattern, WIDTH*HEIGHT*sizeof(*target));
+    memset(target, pattern, framebuffer_size*sizeof(*target));
 }
 
-void init () {
+void init_trig () {
     /* Caricamento delle tabelle con i risultati delle funzioni
        trigonometriche, spesso molto lente nell'esecuzione. */
 
@@ -266,120 +290,87 @@ void init () {
 }
 
 unsigned int ptr;
-unsigned int global_x, global_y;
 int share_x;
 int share_y;
+
+// Place a 3x3 dot centered at screen coordinates (x,y)
+// The function tolerates inputs on the frame's border and bumps them inwards
+inline void Dot_3x3(unsigned int x, unsigned int y, float brightness = 1.0) {
+    SDL_assert(x <= width);
+    SDL_assert(y <= height);
+    
+    // bump extreme inputs inward
+    if (x == 0) x = 1;
+    if (y == 0) y = 1;
+    if (x >= width-1) x = width-2;
+    if (y >= height-1) y = height-2;
+    u8* ptr = &video_buffer[0] + y*width + x;
+
+    if (*ptr >= 32){
+        return;
+    }
+    // top row
+    *(ptr-width-1) += 1;
+    *(ptr-width)   += 2;
+    *(ptr-width+1) += 1;
+    // center row
+    *(ptr-1)       += 2;
+    *ptr           += 4;
+    *(ptr+1)       += 2;
+    // bottom row
+    *(ptr+width-1) += 1;
+    *(ptr+width)   += 2;
+    *(ptr+width+1) += 1;
+}
 
 void Segmento (unsigned int x, unsigned int y,
            unsigned int x2, unsigned int y2)
 {
     // Pre-conditions
-    SDL_assert(x < WIDTH);
-    SDL_assert(y < HEIGHT);
-    SDL_assert(x2 < WIDTH);
-    SDL_assert(y2 < HEIGHT);
+    SDL_assert(x < width);
+    SDL_assert(y < height);
+    SDL_assert(x2 < width);
+    SDL_assert(y2 < height);
 
-    u8* si = &video_buffer[0];
-
-    int temp;
-    if (x==x2) {
-        if (y>y2) {
-            std::swap(y,y2);
-        }
-        y2++;
-        unsigned int di = WIDTH*y + x;
-        unsigned int _ax = WIDTH*y2;
-        // now we're making a pointer to the scanline at y2
-        u8* ax = si + _ax;
-        // now we'll make si point to the other scanline (y)
-        si += di;
-        while (si < ax) {
-            if (*si < 32) {
-                SDL_assert(si-WIDTH >= &video_buffer[0]);
-                SDL_assert(si+WIDTH < &video_buffer[0]+WIDTH*HEIGHT);
-                // left
-                *(si-1)       += 2;
-                // center
-                *si           += 4;
-                // right
-                *(si+1)       += 2;
-                // bottom-left
-                *(si+WIDTH-1) += 1;
-                // bottom
-                *(si+WIDTH)   += 2;
-                // bottom-right
-                *(si+WIDTH+1) += 1;
-                // top-left
-                *(si-WIDTH-1) += 1;
-                // top
-                *(si-WIDTH)   += 2;
-                // top-right
-                *(si-WIDTH+1) += 1;
-            }
-            si += WIDTH;
+    // Special case: vertical segment
+    if (x == x2) {
+        unsigned int y_min = std::min(y,y2);
+        unsigned int y_max = std::max(y,y2) + 1;
+        for (unsigned int y = y_min; y < y_max; y++) {
+            Dot_3x3(x,y);
         }
         return;
     }
 
-    int a = x2-x;
-    if (a<0) {
-        temp = x2; x2 = x; x = temp;
-        temp = y2; y2 = y; y = temp;
-        a = x2-x;
+    // In the following, we will assume x < x2
+    if (x2 < x) {
+        std::swap(x, x2);
+        std::swap(y, y2);
     }
+    int dx = x2 - x; // dx > 0
+    int dy = y2 - y;
+    int iterations = std::max(dx, std::abs(dy)) + 1;
+    
+    // simulate fixed-point arithmetic with bitshifts
+    dx <<= 16; dx /= iterations;
+    dy <<= 16; dy /= iterations;
 
-    int L = a;
-    int b = y2-y;
-    if (b>0) {
-        if (b>L)
-            L=b;
-    }
-    else {
-        if (-b>L)
-            L=-b;
-    }
-    L++;
+    // brush position (with 16 bits of fractional precision)
+    unsigned int brush_x = x << 16;
+    unsigned int brush_y = y << 16;
 
-    x2 <<= 16;
-    a <<= 16; a /= L;
-    b <<= 16; b /= L;
-
-    global_y = y << 16;
-    global_x = x << 16;
-
-    /* Traccia il segmento tramite DMA. */
-
-    //const unsigned int HACK_SHIFT = -4;
+    // stop when you reach column x2
+    unsigned int end = x2 << 16;
+    unsigned int max_y = height << 16;
     do {
-        unsigned int di = global_y >> 16;
+        // truncate brush coords and place a dot there
+        Dot_3x3(brush_x >> 16, brush_y >> 16);
 
-        unsigned char* di2 = si + WIDTH*di + (global_x >> 16);
-
-        if ( *di2 < 32 ) {
-            SDL_assert(di2-WIDTH-1 >= &video_buffer[0]);
-            SDL_assert(di2+WIDTH+1 < &video_buffer[0]+WIDTH*HEIGHT);
-            // left
-            *(di2-1)       += 2;
-            // center
-            *di2           += 4;
-            // right
-            *(di2+1)       += 2;
-            // bottom-left
-            *(di2+WIDTH-1) += 1;
-            // bottom
-            *(di2+WIDTH)   += 2;
-            // bottom-right
-            *(di2+WIDTH+1) += 1;
-            // top-left
-            *(di2-WIDTH-1) += 1;
-            // top
-            *(di2-WIDTH)   += 2;
-            // top-right
-            *(di2-WIDTH+1) += 1;
-        }
-        global_y += b;
-        global_x += a;
-    } while (global_x < x2);
+        // move to the next sample point
+        brush_y += dy;
+        brush_x += dx;
+    } while (brush_x < end
+        && brush_y < max_y); // safeguard for brush_y underflow
 }
 
 char explode = 0;
@@ -531,7 +522,7 @@ void Line3D (double p_x, double p_y, double p_z,
     if (fx<lowerbound_x||lx<lowerbound_x) return;
     if (fx>upperbound_x||lx>upperbound_x) return;
 
-    Segmento (fx+x_centro, fy+y_centro, lx+x_centro, ly+y_centro);
+    Segmento (fx+x_center, fy+y_center, lx+x_center, ly+y_center);
 }
 
 int C32 (double x, double y, double z)
@@ -557,8 +548,8 @@ int C32 (double x, double y, double z)
     if (share_x<lowerbound_x || share_x>upperbound_x)
         return 0;
 
-    share_x += x_centro;
-    share_y += y_centro;
+    share_x += x_center;
+    share_y += y_center;
 
     return 1;
 }
@@ -573,18 +564,18 @@ void aux_plot(unsigned int x, unsigned int y) {
     // Pre-conditions
     SDL_assert(x > 0);
     SDL_assert(y > 0);
-    SDL_assert(x < WIDTH-1);
-    SDL_assert(y < HEIGHT-1);
+    SDL_assert(x < width-1);
+    SDL_assert(y < height-1);
 
-    auto di = x+WIDTH*y;
+    auto di = x+width*y;
     auto si = &video_buffer[0] + di;
 
     if (*si < 32) {
         *si += 8;
         *(si+1) += 4;
         *(si-1) += 4;
-        *(si+WIDTH) += 4;
-        *(si-WIDTH) += 4;
+        *(si+width) += 4;
+        *(si-width) += 4;
     }
 }
 
@@ -642,7 +633,7 @@ void xrel (double px, double py, double pz)
 {
     if (C32 (ox+px, oy+py, oz+pz)) {
 
-        unsigned int di = share_x+WIDTH*share_y;
+        unsigned int di = share_x+width*share_y;
 
         unsigned char* si = &video_buffer[0];
         si += di; // get to point position
@@ -654,12 +645,12 @@ void xrel (double px, double py, double pz)
             *si += 8;
             *(si+1) += 4;
             *(si-1) += 4;
-            *(si+WIDTH-1) += 2;
-            *(si-WIDTH+1) += 2;
-            *(si+WIDTH) += 4;
-            *(si-WIDTH) += 4;
-            *(si+WIDTH+1) += 2;
-            *(si-WIDTH-1) += 2;
+            *(si+width-1) += 2;
+            *(si-width+1) += 2;
+            *(si+width) += 4;
+            *(si-width) += 4;
+            *(si+width+1) += 2;
+            *(si-width-1) += 2;
         }
     }
 }

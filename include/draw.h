@@ -68,15 +68,14 @@ void draw_vehicle_attitude(i16 alpha, i16 beta, char blink);
 /* info panel readings: */
 
 void draw_readings_force(double force);
-
 void draw_readings_speed(double speed);
-
 void draw_readings_docked();
-
 void draw_readings_heading(i16 alpha, i16 beta);
-
 void draw_readings_position(double x, double y, double z);
-
 void draw_readings_closest(double distance);
+
+
+/// Fottifoh object model
+extern const i8 fotty[277];
 
 #endif

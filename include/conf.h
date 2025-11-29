@@ -19,20 +19,38 @@
 #ifndef CONF_H_INCLUDED
 #define CONF_H_INCLUDED
 
+#include <string>
+
 #include "SDL.h"
 #include "primitives.h"
 
-constexpr u32 INTRO_FRAMES_PER_SECOND = 20;
-constexpr u32 FRAMES_PER_SECOND = 30;
+#define CONFIG_FILE_NAME "SETTINGS.INI"
 
-constexpr u32 WIDTH = 320;
-constexpr u32 HEIGHT = 200;
+typedef struct conf {
+    u32 framerate_intro;
+    u32 framerate;
+    int ticks_per_second;
+    int ticks_per_frame;    /// == ticks_per_second / framerate
+    int ticks_per_frame_intro; /// == ticks_per_second / framerate_intro
 
-constexpr u32 WIDTH_SC = 2;
-constexpr u32 HEIGHT_SC = 2;
+    u32 render_width;
+    u32 render_height;
+    float window_scale_x;
+    float window_scale_y;
+    u32 window_width; /// == render_width * window_scale_x
+    u32 window_height; /// == render_height * window_scale_y
 
-constexpr u32 WIDTH_SCALED = WIDTH*WIDTH_SC;
-constexpr u32 HEIGHT_SCALED = HEIGHT*HEIGHT_SC;
+    std::string definition_file; /// path to .def file
+
+    /// the following can be overridden by command line arguments
+    u32 cosm_pixels;
+    u32 cosm_objects;
+    std::string situation_file;
+    /// TODO: auto-save functionality?
+} Config;
+
+/// Returns the config object, loading it from disk on the first call
+const Config& get_config(); 
 
 constexpr auto keymap_thrust    = SDLK_a;
 constexpr auto keymap_back      = SDLK_z;

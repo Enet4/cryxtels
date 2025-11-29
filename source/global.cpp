@@ -99,7 +99,7 @@ u16 existent_objecttypes = 3; // Tipi di oggetto esistenti.
 
 /* Dati sui pixels. */
 
-u16 pixels = 0; // Nr. totale dei pixels (non inizializzato).
+u16 pixels; // Nr. totale dei pixels (non inizializzato).
 
 PixelTypeId* pixeltype; // Tipo di pixel, da 0 a existent_pixeltypes-1.
 
@@ -228,7 +228,7 @@ char *subsignal; // Files per sottofondi audio.
 
 /* Dati sugli oggetti. */
 
-u16 objects = 0; // Nr. totale degli oggetti (non inizializzato).
+u16 objects; // Nr. totale degli oggetti (non inizializzato).
 u16 _objects; // Variabile usata nei cicli come nr. totale di oggetti.
 
 ObjectTypeId  *objecttype;      // Tipo d'oggetto.

@@ -16,5 +16,6 @@ include_directories(include ${SDL2_INCLUDE_DIR})
 
 # add the executable
 add_executable(cryxtels
-    source/cryxtels.cpp source/fast3d.cpp source/global.cpp source/input.cpp source/text3d.cpp source/draw.cpp)
+    source/cryxtels.cpp source/fast3d.cpp source/global.cpp source/input.cpp
+    source/text3d.cpp source/draw.cpp source/transition.cpp source/intro.cpp source/conf.cpp)
 target_link_libraries(cryxtels ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY})

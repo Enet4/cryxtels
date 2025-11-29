@@ -92,11 +92,10 @@ void pclear (u8 *target, u8 pattern);
 
 /// Initialization of a table of trigonometric calculation results.
 // Inizializzazione.
-void init ();
+void init_trig ();
 
 // Tracciamento linee 2d.
 extern unsigned int ptr;
-extern unsigned int global_x, global_y;
 
 /// Make one thick plot
 void aux_plot(unsigned int x, unsigned int y);

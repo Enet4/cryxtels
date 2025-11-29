@@ -280,7 +280,9 @@ void leggi_t_fino_a (FILE* fh, char codcar, int ptyp)
 }
 
 void load_pixels_def(void) {
-    FILE* fh = std::fopen ("PIXELS.DEF", "rb");
+    static const char* def_filename = get_config().definition_file.c_str();
+
+    FILE* fh = std::fopen (def_filename, "rb");
     if (fh) {
         if (!trova_id (fh, "SEED")) {
             std::fclose (fh);
@@ -329,7 +331,7 @@ void load_pixels_def(void) {
         }
     }
     else {
-        cerr << "Missing file PIXELS.DEF" << endl;
+        cerr << "Missing file "<< def_filename << endl;
         throw 5;
     }
     if (fh)
@@ -339,13 +341,15 @@ void load_pixels_def(void) {
 // Carica il tipo di pixel specificato.
 
 void LoadPtyp (PixelTypeId ptyp) {
+    static const char* def_filename = get_config().definition_file.c_str();
+
     int c;
     unsigned int jjj;
 
     memcpy (&subsignal[9*ptyp], "\0\0\0\0\0\0\0\0\0", 9);
 
     if (loaded_pixeltypes>=BUFFERS) {
-        //alfin (0);
+        //alfin (false);
         cerr << "Too many pixels were loaded here!!!\n"
             "There's no more space in the game's buffers." << endl;
         exit (255);
@@ -355,7 +359,7 @@ void LoadPtyp (PixelTypeId ptyp) {
     pixeltype_type[loaded_pixeltypes] = ptyp;
     pixelmass[ptyp] = 10000;
 
-    FILE* fh = std::fopen("PIXELS.DEF", "rb");
+    FILE* fh = std::fopen(def_filename, "rb");
     if (fh) {
         if (ptyp>FRONTIER_M1)
             sprintf (t, "MODEL %d;\r\n", static_cast<int>(ptyp-FRONTIER));
@@ -371,7 +375,7 @@ void LoadPtyp (PixelTypeId ptyp) {
                 (pixel_elem_t[jjj])++;
             if (pixel_elem_t[jjj] == COMS) {
                 std::fclose (fh);
-                //alfin (0);
+                //alfin (false);
                 cerr << "Command not recognized.\nElement "
                     << (pixeltype_elements[loaded_pixeltypes]+1)
                     << " in model nr. " << ptyp << "." << endl;
@@ -424,7 +428,7 @@ void LoadPtyp (PixelTypeId ptyp) {
         } while (pixeltype_elements[loaded_pixeltypes] < ELEMS);
         std::fclose (fh);
         if (pixeltype_elements[loaded_pixeltypes]==ELEMS) {
-            //alfin (0);
+            //alfin (false);
             cerr << "Definition too long.\nModel nr. " << ptyp << endl;
             exit (1); // FIXME exit bomb
         }

@@ -40,15 +40,29 @@
 #include "input.h"
 #include "draw.h"
 #include "sdl_exception.h"
+#include "transition.h"
+#include "intro.h"
 
 #include "SDL.h"
 #include "conf.h"
 
-using namespace std;
+static u32 width;
+static u32 height;
+static int ticks_per_second;
+static int ticks_per_frame;
 
-constexpr int TICKS_IN_A_SECOND = 1000;
-constexpr int TICKS_PER_FRAME = TICKS_IN_A_SECOND / FRAMES_PER_SECOND;
-constexpr int INTRO_TICKS_PER_FRAME = TICKS_IN_A_SECOND / INTRO_FRAMES_PER_SECOND;
+/// initialize configuration variables
+static void read_config(void) {
+    const Config& config = get_config();
+    
+    width = config.render_width;
+    height = config.render_height;
+    ticks_per_second = config.ticks_per_second;
+    ticks_per_frame = config.ticks_per_frame;
+
+    pixels = config.cosm_pixels;
+    objects = config.cosm_objects;
+}
 
 // dummy function (nullify effect)
 inline void play (long) {}
@@ -63,17 +77,8 @@ inline bool allocation_farm();
 /// read the command line arguments and do stuff
 void read_args(int argc, char** argv, char& flag, char& sit);
 
-// Aggiorna il buffer dei pixels caricati.
-/// Updates buffer with loaded pixels:
-/// Search for the pixel type of ID `typ`
-/// and load it if it is not loaded yet.
-void cerca_e_carica (PixelTypeId typ);
-
 /// build the cosmos
 void build_cosm(char& flag);
-
-/// Update
-void Aggiornamento ();
 
 /// Update pixels' absd value (distance to observer)
 void dists ();
@@ -81,9 +86,6 @@ void dists ();
 // Assegnazione posizioni a pixels gravitanti.
 /// Assign positions to gravitating pixels.
 void rot ();
-
-/// Fade out effect of the display.
-void fade (u8 speed = 1);
 
 /// Docking effects.
 void dock_effects ();
@@ -94,15 +96,12 @@ void save_situation (char i);
 /// Load state
 void load_situation (char i, bool skip_fade = false);
 
-/// Terminate program in case PIXELS.DEF contains a syntax error
+// Terminate program in case PIXELS.DEF contains a syntax error
 void fail_pixel_def (int el, int pix);
 
 /// redefinition of random(int),
 /// which probably became deprecated or existed in an outdated library
 int random(int max_num);
-
-/// Terminate some stuff
-void alfin (char arc);
 
 /// Take a snapshot into a BMP file.
 void snapshot ();
@@ -129,11 +128,11 @@ void collyblock (double cx, double cy, double cz,
 /// It tries to get the nearest object.
 void CollyZone (int nopix, char objectblocks);
 
-// Disegna la forma di un Crystal Pixel o di un Oggetto.
-/// Draws a Cryxtel's, or an object's, model
+// Draw the entity with the corresponding code
 void Pixel (int typ);
 
-/// Draws an object
+// Draws the object with the corresponding code
+// Also handles text input for some reason
 void Object (int tipo);
 
 // Funzione che toglie un oggetto dal microcosmo e lo dá all'utente.
@@ -184,20 +183,21 @@ void scoppia (int nr_ogg, double potenza, int var);
 /// close file driver?
 void chiudi_filedriver ();
 
-/// Fottifoh object model
-extern i8 fotty[277];
-
 /// Run one frame of intro loop logic
 bool intro_loop();
 
 /// Run one frame of main loop logic
 bool main_loop();
 
+using namespace std;
+
 int main(int argc, char** argv)
 {
     cout << "Crystal Pixels" << endl
         << " version 3.15 originally made by Alessandro Ghignola in 1997" << endl
         << "     ported to modern systems by Eduardo Pinho in 2013" << endl;
+
+    read_config();
 
     char flag = 0;
     //char sit = 'S'; // < the original would auto-load the default game save (Alex's save)
@@ -241,6 +241,7 @@ int main(int argc, char** argv)
     // ...
     //}
     //while (!tasto_premuto() && !mpul) {
+    init_intro();
     while (run_intro) {
         run_intro = intro_loop();
     }
@@ -268,101 +269,10 @@ int main(int argc, char** argv)
         running = main_loop();
     } while (running);
 
-    alfin (1);
+    alfin(true);
 
     cout << "Quitting." << endl;
     return 0;
-}
-
-/**
- * The game introduction loop logic, called once per frame.
- * 
- * @return true if the introduction should continue normally,
- * false to end the introduction
- */
-bool intro_loop() {
-    static const int FOTTY_VIEWPORT_UPPER = HEIGHT*65/200;
-    static const int FOTTY_VIEWPORT_LOWER = HEIGHT*135/200;
-
-    //if (!sbp_stat) play (0);
-    u32 sync = SDL_GetTicks(); //clock();
-
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_WINDOWEVENT_RESIZED:
-            break;
-            case SDL_QUIT:
-                alfin (1);
-                exit(0);
-            break;
-            case SDL_KEYDOWN:
-            case SDL_MOUSEBUTTONDOWN:
-                return false; // Get out of here.
-            default:
-                break;
-        }
-    }
-
-    Txt ("CRYSTAL PIXELS", -77, 0, 100, 3, 4, 270, 0);
-    Txt ("WRITTEN BETWEEN 1994 AND 1997", -112, 0, 80, 2, 4, 270, 0);
-    Txt ("BY ALESSANDRO GHIGNOLA.", -78, 0, 60, 2, 4, 270, 0);
-    Txt (t, (1-(double)strlen(t)) * 6, 0, -60, 3, 4, 270, 0); // microcosm author
-    Txt ("MODERN VERSION IN 2013-2022", -104, 0, -84, 2, 4, 270, 0);
-
-    // rotate camera and approach text
-    if (beta<360) {
-        cam_y += 25;
-        beta += 2;
-        darken_once();
-    }
-    // once the text is up close:
-    else {
-        // place a fottifoh in front of the camera
-        c = (c+1)%360;
-        i16 tmp = beta; beta = c;
-        cam_y += 140;
-        Object (0);
-        cam_y -= 140;
-        beta = tmp;
-
-        u16 time = (SDL_GetTicks()/INTRO_TICKS_PER_FRAME) & 0xFFFF; // WIDTH;
-        u32 cx = WIDTH*50;
-        do {
-            if (time < WIDTH*HEIGHT) {
-                // pixel value outside fottifoh row range
-                if (time < WIDTH*FOTTY_VIEWPORT_UPPER + 4 ||
-                    time >= WIDTH*FOTTY_VIEWPORT_LOWER + 4)
-                {
-                    video_buffer[time] >>= 1;
-                }
-            }
-            if (cx >= WIDTH*50/2) {
-                time +=  WIDTH + 1;
-            } else {
-                time += WIDTH - 1;
-            }
-        } while (--cx > 0);
-
-        auto di = &video_buffer[0];
-        cx = HEIGHT*WIDTH; // all space
-        do {
-            // fade out effect
-            if (*di != 0) {
-                *di -= 1;
-            }
-            di++;
-        } while (--cx > 0);
-    }
-    Render();
-
-    unsigned long cticks = SDL_GetTicks();
-    while (sync + INTRO_TICKS_PER_FRAME > cticks) {
-        SDL_Delay(3);
-        cticks = SDL_GetTicks();
-    }
-
-    return true;
 }
 
 /// The main loop logic, called once per frame.
@@ -725,7 +635,7 @@ bool main_loop() {
                     rclick = SDL_GetTicks();
                 else {
                     // keep it pressed for half a second to invert
-                    if (SDL_GetTicks()-rclick>TICKS_IN_A_SECOND/2) {
+                    if (SDL_GetTicks()-rclick>ticks_per_second/2) {
                         fid_on (); // invert
                         i = SDLK_F1; //59;
                     }
@@ -895,8 +805,8 @@ bool main_loop() {
                     ax = ax / cx; // 360*32/36 = 320
                     ax <<= 2; // 320 * 4 = 1280
                     dx = 0;
-                    cx = WIDTH;
-                    auto si = ax % cx; // si = 1280 % WIDTH
+                    cx = width;
+                    auto si = ax % cx; // si = 1280 % width
                     ax = alpha;
                     cx = 360;
                     dx = 0;
@@ -904,8 +814,8 @@ bool main_loop() {
                     dx = 3;
                     ax = ax * dx; // (alpha % 360) * 3
                     dx = 0;
-                    cx = WIDTH;
-                    ax = ax * cx; // ax = (alpha % 360) * 3 * WIDTH
+                    cx = width;
+                    ax = ax * cx; // ax = (alpha % 360) * 3 * width
                     cx = ax >> 16; // cx = ax >> 16
                     dx = ax;
                     dx += si;
@@ -913,9 +823,9 @@ bool main_loop() {
                     auto p_data = &video_buffer[0];
                     si = 8;
                     do {
-                        cx = WIDTH*HEIGHT / 8;
+                        cx = width*height / 8;
                         std::fread(p_data, 1, cx, file);
-                        p_data += WIDTH*HEIGHT / 8;
+                        p_data += width*height / 8;
                     } while (--si != 0);
                     std::fclose (file);
                     // -- draw operation end
@@ -925,7 +835,7 @@ bool main_loop() {
 
                         // -- draw operation begin
                         auto si = &video_buffer[0];
-                        unsigned int cx = WIDTH*HEIGHT;
+                        unsigned int cx = width*height;
                         do
                         {
                             if (*si < (a&0xFF)) {
@@ -1271,7 +1181,7 @@ bool main_loop() {
 //                            int 0x1a
 //                            cmp si, dx
 //                            je ky
-                            while (si + TICKS_PER_FRAME > SDL_GetTicks());
+                            while (si + ticks_per_frame > SDL_GetTicks());
 //                            popa }
                             //adapted = fake_adaptor;
                             //pcopy (adaptor, adapted);
@@ -1348,13 +1258,13 @@ bool main_loop() {
             blink = 1 - blink; // Lampeggo della spia "volo rovesciato".
 
             unsigned long cticks = SDL_GetTicks();
-            while (sync + TICKS_PER_FRAME > cticks) {
+            while (sync + ticks_per_frame > cticks) {
                 SDL_Delay(3);
                 cticks = SDL_GetTicks();
             }
             //while (blink && (clock()==sync)); // Sincronizzatore (max 37 fps.)
 
-            //cout << " " << (TICKS_IN_A_SECOND / (cticks-sync)) << " fps" << endl;
+            //cout << " " << (ticks_per_second / (cticks-sync)) << " fps" << endl;
             //cout << "\t\t" << (cticks-sync) << "\t\t\r"; cout.flush();
     return running;
 }
@@ -1383,6 +1293,7 @@ void read_args(int argc, char** argv, char& flag, char& sit)
     flag = 0;
     char dist[20]; // Stringhe usate per conversioni.
     if (argc>2) {
+        objects = 0; /// override config file settings
         pixels = 0;
         if (strcasecmp(argv[2], "PIXELS") == 0) {
             pixels = (int)atof(argv[1]);
@@ -1413,20 +1324,6 @@ void read_args(int argc, char** argv, char& flag, char& sit)
             throw 1;
         }
     }
-    else {
-        // Use default pixel and object numbers
-        pixels = 250;
-        objects = 250;
-    }
-}
-
-
-void fail_pixel_def (int el, int pix)
-{
-    alfin (0);
-    cerr << "Pixel definition error: Pixel of type " << pix << " does not specify element nr. " << (el+1) << endl
-         << "0-valued parameters are invalid." << endl;
-    exit (1);
 }
 
 template <class T>
@@ -1637,56 +1534,6 @@ void rot ()
     }
 }
 
-/// enter a synchronous routine
-/// to fade out the screen
-/// (can be skipped by pressing any key)
-void fade (unsigned char speed) {
-    keybuffer_cleaner ();
-    unsigned int dx = 0;
-    auto skip = false;
-    do {
-        unsigned int sync = SDL_GetTicks();
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_KEYDOWN
-                || event.type == SDL_MOUSEBUTTONDOWN) {
-                skip = true;
-            }
-        }
-
-        darken_once(speed);
-        Render();
-        unsigned long cticks = SDL_GetTicks();
-        while (sync + TICKS_PER_FRAME > cticks) {
-            SDL_Delay(3);
-            cticks = SDL_GetTicks();
-        }
-    }
-    while(!skip && dx++ < (70 / speed));
-/*
-rip:    mpul = 0; mouse_input ();
-        _BL = tasto_premuto ();
-        asm {   les di, dword ptr adaptor
-                mov cx, 64000
-                xor dx, dx }
-__chic: asm {   cmp byte ptr es:[di], 0
-                je __zero
-                dec byte ptr es:[di]
-                inc dx }
-__zero: asm {   inc di
-                dec cx
-                jnz __chic
-                cmp bl, 0
-                jne halt
-                cmp mpul, 0
-                jne halt
-                cmp dx, 100
-                jnb rip }
-halt:   keybuffer_cleaner ();
-*/
-}
-
 void load_situation(char i, bool skip_fade) {
     if (i >= 'a' && i <= 'z') {
         i -= 'a' - 'A';
@@ -1725,48 +1572,6 @@ void save_situation(char i) {
     } catch (int e) {
         cerr << "Failed to save game to \"CRYXTELS." << i << "\": " << strerror(e) << endl;
     }
-}
-
-void cerca_e_carica (PixelTypeId typ) {
-    if (loaded_pixeltypes) {
-        for (auto iii = 0u; iii<loaded_pixeltypes; iii++) {
-            if (typ==pixeltype_type[iii])
-                return;
-        }
-    }
-    LoadPtyp (typ);
-}
-
-void Aggiornamento ()
-{
-    int p, o, f;
-
-    loaded_pixeltypes = 0;
-
-    for (p=0; p<pixels; p++) {
-        if (pixel_absd[p]<pixelmass[pixeltype[p]])
-            cerca_e_carica (pixeltype[p]);
-    }
-
-    for (o=0; o<_objects; o++) {
-        if (objecttype[o]>=3) {
-                f = 0;
-                if (object_location[o]>-1) {
-                        if (pixel_absd[object_location[o]]<4000)
-                            f = 1;
-                }
-                else {
-                    rx = absolute_x[o] - cam_x;
-                        ry = absolute_y[o] - cam_y;
-                        rz = absolute_z[o] - cam_z;
-                        if (sqrt(rx*rx+ry*ry+rz*rz)<1000) f = 1;
-                        }
-                        if (f) cerca_e_carica (objecttype[o]+FRONTIER_M3);
-                }
-        }
-
-        if (carry_type>=3)
-                cerca_e_carica (carry_type+FRONTIER_M3);
 }
 
 void dists ()
@@ -2045,20 +1850,6 @@ void chiudi_filedriver ()
     file_driver_off ();
     dsp_driver_on ();
 */
-}
-
-void alfin (char arc)
-{
-        if (arc) fade (5);
-        //dsp_driver_off (); // unused right now
-        if (recfile) {
-                //audio_stop (); // unused right now
-                std::fwrite("\0", 1, 1, recfile);
-                std::fclose(recfile);
-                recfile = nullptr;
-        }
-        //file_driver_off ();
-        ctrlkeys[0] = ctk;
 }
 
 void preleva_oggetto (int nr_ogg)
@@ -2416,6 +2207,60 @@ trovato:while (nr_elem<pixeltype_elements[iii]) {
 }
 
 
+// Updates buffer with loaded pixels:
+// Search for the pixel type of ID `typ`
+// and load it if it is not loaded yet.
+void cerca_e_carica (PixelTypeId typ) {
+    if (loaded_pixeltypes) {
+        for (auto iii = 0u; iii<loaded_pixeltypes; iii++) {
+            if (typ==pixeltype_type[iii])
+                return;
+        }
+    }
+    LoadPtyp (typ);
+}
+
+// TODO: What does this do?
+void Update()
+{
+    int p, o, f;
+
+    loaded_pixeltypes = 0;
+
+    for (p=0; p<pixels; p++) {
+        if (pixel_absd[p]<pixelmass[pixeltype[p]])
+            cerca_e_carica (pixeltype[p]);
+    }
+
+    for (o=0; o<_objects; o++) {
+        if (objecttype[o]>=3) {
+                f = 0;
+                if (object_location[o]>-1) {
+                        if (pixel_absd[object_location[o]]<4000)
+                            f = 1;
+                }
+                else {
+                    rx = absolute_x[o] - cam_x;
+                        ry = absolute_y[o] - cam_y;
+                        rz = absolute_z[o] - cam_z;
+                        if (sqrt(rx*rx+ry*ry+rz*rz)<1000) f = 1;
+                        }
+                        if (f) cerca_e_carica (objecttype[o]+FRONTIER_M3);
+                }
+        }
+
+        if (carry_type>=3)
+                cerca_e_carica (carry_type+FRONTIER_M3);
+}
+
+void fail_pixel_def (int el, int pix)
+{
+    alfin(false);
+    std::cerr << "Pixel definition error: Pixel of type " << pix << " does not specify element nr. " << (el+1) << std::endl
+         << "0-valued parameters are invalid." << std::endl;
+    exit(1);
+}
+
 void Pixel (int typ)
 {
     double p0, p1, p2, p3, p4, p5, p6, crx=0, cry=0, crz=0;
@@ -2438,15 +2283,15 @@ void Pixel (int typ)
             for (b=c; b<180; b+=c) {
                 if (C32(ox+p0*tsin[b]*tcos[a], oy+p0*tcos[b], oz-p0*tsin[a]*tsin[b])) {
                     // --- draw operation begin
-                    auto di = share_x + WIDTH*share_y;
+                    auto di = share_x + width*share_y;
                     auto si = &video_buffer[0] + di;
 
                     if (*si < 32) {
                         *si += 7;
                         *(si+1) += 5; *(si-1) += 5;
-                        *(si+WIDTH) += 5;  *(si-WIDTH) += 5;
-                        *(si+WIDTH+1) += 3; *(si-WIDTH-1) += 3;
-                        *(si-WIDTH+1) += 3; *(si+WIDTH-1) += 3;
+                        *(si+width) += 5;  *(si-width) += 5;
+                        *(si+width+1) += 3; *(si-width-1) += 3;
+                        *(si-width+1) += 3; *(si+width-1) += 3;
                     }
                     // --- draw operation end
                 }
@@ -2456,7 +2301,7 @@ void Pixel (int typ)
 
     if (pixel_absd[nopix]>pixelmass[typ]) {
         if (!C32(ox, oy, oz)) return;
-        vptr = share_x+WIDTH*share_y;
+        vptr = share_x+width*share_y;
 
         // --- draw operation begin
         auto cl = pixelmass[typ] / 1000; if (cl > 32) cl = 32;
@@ -2470,14 +2315,14 @@ void Pixel (int typ)
             *(si-1) += ch;
             *(si+2) += dl;
             *(si-2) += dl;
-            *(si+WIDTH-1) += dl;
-            *(si-WIDTH+1) += dl;
-            *(si+WIDTH) += ch;
-            *(si-WIDTH) += ch;
-            *(si+WIDTH+1) += dl;
-            *(si-WIDTH-1) += dl;
-            *(si+WIDTH*2) += dl;
-            *(si-WIDTH*2) += dl;
+            *(si+width-1) += dl;
+            *(si-width+1) += dl;
+            *(si+width) += ch;
+            *(si-width) += ch;
+            *(si+width+1) += dl;
+            *(si-width-1) += dl;
+            *(si+width*2) += dl;
+            *(si-width*2) += dl;
         }
         // --- draw operation end
     } else {
@@ -2488,7 +2333,7 @@ ricerca:
                     goto trovato;
             }
         }
-        Aggiornamento ();
+        Update();
         goto ricerca;
 trovato:
         if (typ>FRONTIER_M1) {
@@ -2949,8 +2794,8 @@ void Object (int tipo)
             break;
         // Orbital engine
         case 1:
-            for (   a = static_cast<int>((SDL_GetTicks()/TICKS_PER_FRAME)%45);
-                    a <= 135+(int)((SDL_GetTicks()/TICKS_PER_FRAME)%45);
+            for (   a = static_cast<int>((SDL_GetTicks()/ticks_per_frame)%45);
+                    a <= 135+(int)((SDL_GetTicks()/ticks_per_frame)%45);
                     a += 45) {
                 _ox = 25 * tcos[a]; _oy = 25 * tsin[a];
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
@@ -2960,7 +2805,7 @@ void Object (int tipo)
         case 2:
             b = 0;
             if (/* sbf_stat&& */pix==pixel_sonante)
-                b = ((SDL_GetTicks()/TICKS_PER_FRAME)%3)*15;
+                b = ((SDL_GetTicks()/ticks_per_frame)%3)*15;
             for (a=b; a<=135+b; a+=45) {
                 _ox = 5 * tcos[a]; _oy = 5 * tsin[a];
                 rel (-_ox, 0, _oy, _ox, 0, -_oy);
@@ -3040,7 +2885,7 @@ void Object (int tipo)
                                 }
                                 break;
                         case 27:
-                                alfin (1);
+                                alfin (true);
                                 exit (0);
                         default:
                             if (cursore<512) {
@@ -3080,54 +2925,3 @@ void Object (int tipo)
         }
     }
 }
-
-// Disegna la forma di un oggetto.
-
-i8 fotty[277] = {
-        -6, 0, +6,          -4, 0, +8,
-        -4, 0, +8,          -2, 0, +8,
-        -2, 0, +8,          -2, 0, +6,
-        -2, 0, +6,           0, 0, +7,
-         0, 0, +7,          +2, 0, +6,
-        +2, 0, +6,          +2, 0, +8,
-        +2, 0, +8,          +4, 0, +8,
-        +4, 0, +8,          +6, 0, +6,
-        +6, 0, +6,          +6, 0, +4,
-        +6, 0, +4,          +4, 0, +4,
-        +4, 0, +4,          +4, 0, +2,
-        +4, 0, +2,          +2, 0, +1,
-        +2, 0, +1,          +4, 0,  0,
-        +4, 0,  0,          +5, 0, -2,
-        +5, 0, -2,          +4, 0, -4,
-        +4, 0, -4,          +4, 0, -6,
-        +4, 0, -6,          +2, 0, -8,
-        +2, 0, -8,           0, 0, -7,
-         0, 0, -7,          -2, 0, -8,
-        -2, 0, -8,          -4, 0, -6,
-        -4, 0, -6,          -4, 0, -4,
-        -4, 0, -4,          -5, 0, -2,
-        -5, 0, -2,          -4, 0,  0,
-        -4, 0,  0,          -2, 0, +1,
-        -2, 0, +1,          -4, 0, +2,
-        -4, 0, +2,          -4, 0, +4,
-        -4, 0, +4,          -6, 0, +4,
-        -6, 0, +4,          -6, 0, +6,
-        -2, 0,  0,          -1, 0, -2,
-        -1, 0, -2,          -2, 0, -4,
-        -2, 0, -4,           0, 0, -5,
-         0, 0, -5,          +2, 0, -4,
-        +2, 0, -4,          +1, 0, -2,
-        +1, 0, -2,          +2, 0,  0,
-        -4, 0, -4,          -2, 0, -4,
-        +2, 0, -4,          +4, 0, -4,
-         0, 0, -5,           0, 0, -7,
-        -2, 0, +1,          -2, 0, +3,
-        -2, 0, +3,           0, 0, +4,
-         0, 0, +4,          +2, 0, +3,
-        +2, 0, +3,          +2, 0, +1,
-        +2, 0, +1,           0, 0,  0,
-         0, 0,  0,          -2, 0, +1,
-        -1, 0, +3,          +1, 0, +3,
-        +1, 0, +3,           0, 0, +1,
-         0, 0, +1,          -1, 0, +3,
-10 };
