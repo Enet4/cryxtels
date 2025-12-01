@@ -53,7 +53,8 @@ To make the audio loop automatically, drop a "REPEAT" object onto the audio play
 
 A few examples of audio CDs were added in this version. To create your own, you can copy one of them and change the presented title and file name. Take note that the file name is currently limited to a maximum of 8 characters (without extension) in upper case. So "wares.ogg" will not be found on Linux, but "WARES.OGG" is fine.
 
-For the silent experience, you can delete all audio files and the game will continue to operate.
+For the silent experience, set "[audio] enabled" in SETTINGS.INI to false.
+You can also delete all audio files and the game will continue to operate.
 
 __________________
 Command line parameters.
@@ -79,4 +80,4 @@ General settings.
     - Change the frame rates
     - Change the default generation parameters
     - Use a different file for the pixel definitions
-
+    - Enable/disable audio

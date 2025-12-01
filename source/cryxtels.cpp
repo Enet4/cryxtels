@@ -63,6 +63,8 @@ static void read_config(void) {
 
     pixels = config.cosm_pixels;
     objects = config.cosm_objects;
+
+    audioEnabled = config.audio_enabled;
 }
 
 /// initialize some parts of cryxtels
@@ -222,8 +224,10 @@ int main(int argc, char** argv)
         init_video();
         tinte (0);
 
-        // initialize audio device
-        init_audio();
+        // initialize audio device (unless it was disabled via settings)
+        if (audioEnabled) {
+            init_audio();
+        }
 
         // Configure input
 

@@ -129,6 +129,10 @@ void init_audio() {
 }
 
 bool set_sottofondo(const char* filename) {
+    if (!audioEnabled) {
+        return false;
+    }
+
     // skip if already set (or both are null)
     if (
         (filename == nullptr && AUDIO_FILENAMES[0] == nullptr) ||
