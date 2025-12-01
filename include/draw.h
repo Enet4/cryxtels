@@ -31,10 +31,11 @@ void draw_text_relative (const char *testo, double x, double y, double z, double
 /// Draw rectangle relative to the position of the ship
 void draw_rect_relative (double x, double y, double z, double l, double h);
 
-// Draw a console key on the ship's console.
-void draw_console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state);
+/// Draw a console on the ship's console (up)
+void draw_console_key_up(const char *serigraph, double x);
 
-
+/// Draw a console on the ship's console (held down)
+void draw_console_key_down(const char *serigraph, double x);
 
 /* HUD indicators: */
 

@@ -84,50 +84,30 @@ void draw_rect_relative (double x, double y, double z, double l, double h)
         draw_line_relative (x-l, y+h, z, x-l, y-h, z);
 }
 
-void draw_console_key (const char *serigraph, double x, char cod, char input, char current_state, char previous_state)
-{
-        if (EVA_in_progress) {
-                // disable console keys when far away from the HUD
-                d = sqrt(rel_x*rel_x + (rel_z+10)*(rel_z+10));
-                if (d>25) {
-                        input = 1;
-                        cod = 0;
-                }
-        }
+void draw_console_key_up(const char *serigraph, double x) {
+    draw_line_relative (x, 3.5, 12.01, x+1, 3.5, 12.01);
+    draw_line_relative (x, 3.5, 12.01, x, 4, 12.01);
+    draw_line_relative (x+1, 3.5, 12.01, x+1, 4, 12.01);
+    draw_line_relative (x, 3.5, 12.01, x, 4, 12.2);
+    draw_line_relative (x+1, 3.5, 12.01, x+1, 4, 12.2);
+    draw_line_relative (x, 4, 12.2, x+1, 4, 12.2);
+    draw_line_relative (x, 4, 12.01, x, 4, 12.2);
+    draw_line_relative (x+1, 4, 12.01, x+1, 4, 12.2);
+    draw_text_relative (serigraph, x+0.2, 3.7, 12.01, 0.05, 0.05);
+}
 
-        // only show console key as pressed when
-        // the key pressed is the same as the one bound to this console key
-        // AND the key wasn't already pressed in the previous frame
-        // (save for key code 1, which is a toggle button)
-        if (input!=cod || (cod != 1 && current_state == previous_state)) {
-                draw_line_relative (x, 3.5, 12.01, x+1, 3.5, 12.01);
-                draw_line_relative (x, 3.5, 12.01, x, 4, 12.01);
-                draw_line_relative (x+1, 3.5, 12.01, x+1, 4, 12.01);
-                draw_line_relative (x, 3.5, 12.01, x, 4, 12.2);
-                draw_line_relative (x+1, 3.5, 12.01, x+1, 4, 12.2);
-                draw_line_relative (x, 4, 12.2, x+1, 4, 12.2);
-                draw_line_relative (x, 4, 12.01, x, 4, 12.2);
-                draw_line_relative (x+1, 4, 12.01, x+1, 4, 12.2);
-                draw_text_relative (serigraph, x+0.2, 3.7, 12.01, 0.05, 0.05);
-        }
-        else {
-                draw_rect_relative (x+0.5, 3.75, 12.31, 0.5, 0.25);
-                //draw_line_relative (x, 4, 12.31, x+1, 4, 12.31);
-                //draw_line_relative (x, 3.5, 12.31, x+1, 3.5, 12.31);
-                //draw_line_relative (x, 3.5, 12.31, x, 4, 12.31);
-                //draw_line_relative (x+1, 3.5, 12.31, x+1, 4, 12.31);
-                draw_line_relative (x, 3.5, 12.31, x, 4, 12.5);
-                draw_line_relative (x+1, 3.5, 12.31, x+1, 4, 12.5);
-                draw_line_relative (x, 4, 12.5, x+1, 4, 12.5);
-                draw_line_relative (x, 4, 12.31, x, 4, 12.5);
-                draw_line_relative (x+1, 4, 12.31, x+1, 4, 12.5);
-                draw_text_relative (serigraph, x+0.2, 3.7, 12.31, 0.05, 0.05);
-                if (current_state!=previous_state) {
-                        if (EVA_in_progress && globalvocfile[0]!='.') return;
-                        //if (!sbp_stat) play (TASTO);
-                        subs = 0;
-                }
-        }
+void draw_console_key_down(const char *serigraph, double x) {
+    draw_rect_relative (x+0.5, 3.75, 12.31, 0.5, 0.25);
+    //draw_line_relative (x, 4, 12.31, x+1, 4, 12.31);
+    //draw_line_relative (x, 3.5, 12.31, x+1, 3.5, 12.31);
+    //draw_line_relative (x, 3.5, 12.31, x, 4, 12.31);
+    //draw_line_relative (x+1, 3.5, 12.31, x+1, 4, 12.31);
+    draw_line_relative (x, 3.5, 12.31, x, 4, 12.5);
+    draw_line_relative (x+1, 3.5, 12.31, x+1, 4, 12.5);
+    draw_line_relative (x, 4, 12.5, x+1, 4, 12.5);
+    draw_line_relative (x, 4, 12.31, x, 4, 12.5);
+    draw_line_relative (x+1, 4, 12.31, x+1, 4, 12.5);
+    draw_text_relative (serigraph, x+0.2, 3.7, 12.31, 0.05, 0.05);
 }
 
 void draw_indicator_crosshair()

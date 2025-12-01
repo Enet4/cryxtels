@@ -21,6 +21,7 @@
 #include "text3d.h"
 #include "transition.h"
 #include "intro.h"
+#include "dsp.h"
 
 #include "SDL.h"
 #include "conf.h"
@@ -120,7 +121,8 @@ void fade_out_effect(void) {
 }
 
 bool intro_loop(void) {
-    //if (!sbp_stat) play (0);
+    // keep playing intro audio while in the loop
+    play(SOTTOFONDO, 2);
     u32 sync = SDL_GetTicks(); //clock();
 
     SDL_Event event;

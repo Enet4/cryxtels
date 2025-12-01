@@ -16,6 +16,7 @@
  */
 #include "global.h"
 #include <cstdio>
+#include <cstring>
 
 bool type_mode = false; // using type mode flag instead of scroll lock
 char type_this = 0; // character to type in the keyboard
@@ -45,6 +46,12 @@ bool back_keyhold = false;
 
 /// tracker for right click holding duration
 int rclick = -1;
+
+/// tracker for the last time the echo sound was triggered
+unsigned int stso = 0;
+
+/// tracker for the gap to the nearest pixel
+unsigned int gap = 0;
 
 u8 taking = 0; // Flag: tentativo di prelevamento di un oggetto.
 ObjectId carry_type = -1; // Tipo oggetto trasportato (-1 = nessuno).
@@ -225,7 +232,16 @@ float *docksite_h;
 
 float *pixelmass; // Massa.
 
-char *subsignal; // Files per sottofondi audio.
+/** Files for sottofondi audio (background sounds).
+ *
+ * This array saves a contiguous sequence of associated file names per pixel type,
+ * each at most 8 characters long
+ * (without the ".VOC" extension)
+ * plus 1 byte for the null terminator.
+ *
+ * That is, the file name of the `i`th pixel type starts at `&subsignal[9 * i]`.
+ */
+char *subsignal;
 
 /* Dati sugli oggetti. */
 
@@ -272,12 +288,21 @@ int  nopix;
 
 //double ob = 15000, micro_x = 0, micro_y = 0;
 
-char globalvocfile[13] = ".voc"; // sottofondi sui pixels.
+/** A placeholder for the file name of the background audio.
+ *
+ * This buffer is used to load the audio file associated to a pixel or object,
+ * thus tracking whether it should be playing while in a pixel.
+ *
+ * Note that the effective audio being played,
+ * as well as the background audio to use when outside a pixel,
+ * is tracked separately in the dsp module.
+ */
+char globalvocfile[13] = ".voc";
 
 char fermo_li = 0;
 
-int vicini = 0;
-int sta_suonando = -1;
+bool vicini = 0;
+ObjectTypeId sta_suonando = -1;
 PixelId pixel_sonante = -1;
 
 FILE* recfile = nullptr;
@@ -299,4 +324,52 @@ unsigned record_filt[] = {     0,            0,           1 };
 
 char autore_forme[40]; // Nome di chi ha disegnato le forme del PIXELS.DEF
 char t[80]; // Usata nelle funz. Pixel & Object.
+
+AssociatedFileEffect read_associated_file_effect(const char* str) {
+    // ignore these associated file names,
+    // as they represent objects with different capabilities
+    if (!memcmp(str, "MAGNIFY\0", 8)) {
+        return AssociatedFileEffect::MAGNIFY;
+    }
+    if (!memcmp(str, "TEXT-", 5)) {
+        if (str[5] == 'V') {
+            return AssociatedFileEffect::TEXT_V;
+        } else if (str[5] == 'H') {
+            return AssociatedFileEffect::TEXT_H;
+        } else {
+            return AssociatedFileEffect::OTHER;
+        }
+    }
+    if (!memcmp(str, "BOMB\0" , 5)) {
+        return AssociatedFileEffect::BOMB;
+    }
+    if (!memcmp(str, "REPEAT\0", 7)) {
+        return AssociatedFileEffect::REPEAT;
+    }
+    if (!memcmp(str, "SORG-", 5)) {
+        switch (str[5]) {
+            case 'D':
+                return AssociatedFileEffect::SOURCE_D;
+            case 'C':
+                return AssociatedFileEffect::SOURCE_C;
+            case 'M':
+                return AssociatedFileEffect::SOURCE_M;
+            case 'L':
+                return AssociatedFileEffect::SOURCE_L;
+            default:
+                return AssociatedFileEffect::OTHER;
+        }
+    }
+    if (!memcmp(str, "N-TAPE\0", 7)) {
+        return AssociatedFileEffect::QUALITY_L;
+    }
+    if (!memcmp(str, "Q-TAPE\0", 7)) {
+        return AssociatedFileEffect::QUALITY_M;
+    }
+    if (!memcmp(str, "C-DISC\0", 7)) {
+        return AssociatedFileEffect::QUALITY_H;
+    }
+   
+    return AssociatedFileEffect::OTHER;
+}
 
