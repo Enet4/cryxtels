@@ -22,5 +22,4 @@ add_executable(cryxtels
     source/cryxtels.cpp source/fast3d.cpp source/global.cpp source/input.cpp
     source/text3d.cpp source/draw.cpp source/transition.cpp source/intro.cpp
     source/conf.cpp source/dsp.cpp)
-#target_link_libraries(cryxtels ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY})
-target_link_libraries(cryxtels PRIVATE SDL2 SDL2_mixer)
+target_link_libraries(cryxtels PRIVATE ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} SDL2_mixer)
