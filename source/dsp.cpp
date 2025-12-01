@@ -22,6 +22,13 @@
 #include <iostream>
 #include <cstring>
 
+// provide strcasecmp to msvc
+#ifdef _MSC_VER
+#include <string.h>
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 /** Global variable for whether audio is enabled. */
 bool audioEnabled = true;
 
