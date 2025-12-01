@@ -87,6 +87,7 @@ jobs:
         copy "pixels definition.txt" dist\
         copy gpl-3.0.txt dist\
         copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\SDL2_mixer.dll dist\
         cd dist
         Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_name }}-windows_x86.zip
         cd ..
