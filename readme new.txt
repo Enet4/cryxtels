@@ -32,7 +32,7 @@ In either mode:
     F3 : Enter / leave The Fly.
     F4 : Dock / Undock.
     F5 : Point towards Sunny ; while carrying a pixel, switch the pixel being carried to the next one.
-    F6 : Take a snapshot and save it with the name "SNAP.BMP".
+    F6 : Take a snapshot and save it with the name "SNAP_<date>_<time>.BMP".
     F7 : Toggle text typing mode, so that you can type in notepad objects.
     TAB : Toggle capability of climbing onto objects.
     M : Toggle between Keyboard mode and Mouse mode.
