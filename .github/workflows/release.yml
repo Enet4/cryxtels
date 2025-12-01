@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: Install SDL2
-      run: sudo apt update && sudo apt install -y libsdl2-dev
+      run: sudo apt update && sudo apt install -y libsdl2-dev libsdl2-mixer-dev
 
     - uses: actions/checkout@v4
 
@@ -64,7 +64,7 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-v1
 
     - name: Install SDL2
-      run: vcpkg install sdl2:x86-windows
+      run: vcpkg install sdl2:x86-windows sdl2-mixer:x86-windows
 
     - uses: actions/checkout@v4
 
