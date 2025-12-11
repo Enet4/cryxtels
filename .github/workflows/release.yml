@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "*.*.*"
+      - "*.*.*-*"
       - "*.*.*_*"
   workflow_dispatch: {}
 
@@ -32,7 +33,7 @@ jobs:
         cd ${{github.workspace}}
         mkdir dist
         cp build/cryxtels \
-          bin/*.ATM bin/PIXELS.DEF \
+          bin/*.ATM bin/*.VOC bin/PIXELS.DEF \
           "readme new.txt" "crystal pixels.txt" \
           "pixels definition.txt" gpl-3.0.txt \
           dist/
@@ -81,6 +82,7 @@ jobs:
         mkdir dist
         copy build\Release\cryxtels.exe dist\
         copy bin\*.ATM dist\
+        copy bin\*.VOC dist\
         copy bin\PIXELS.DEF dist\
         copy "readme new.txt" dist\
         copy "crystal pixels.txt" dist\
