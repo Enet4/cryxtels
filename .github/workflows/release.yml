@@ -41,13 +41,15 @@ jobs:
         zip ../cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip ./*
         cd ..
 
-    - name: Publish bundle to GitHub release
+    - name: Upload bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip
         tag: ${{ github.ref }}
         overwrite: true
+        prerelease: ${{ github.ref_type != 'tag' }}
+        draft: true
 
   release_windows_x86:
     runs-on: windows-latest
@@ -94,10 +96,12 @@ jobs:
         Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         cd ..
 
-    - name: Publish bundle to GitHub release
+    - name: Upload bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         tag: ${{ github.ref }}
         overwrite: true
+        prerelease: ${{ github.ref_type != 'tag' }}
+        draft: true
