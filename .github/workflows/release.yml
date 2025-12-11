@@ -38,14 +38,14 @@ jobs:
           "pixels definition.txt" gpl-3.0.txt \
           dist/
         cd dist
-        zip ../cryxtels-${{ github.ref_name }}-linux_x86_64.zip ./*
+        zip ../cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip ./*
         cd ..
 
     - name: Publish bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-linux_x86_64.zip
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip
         tag: ${{ github.ref }}
         overwrite: true
 
@@ -91,13 +91,13 @@ jobs:
         copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
         copy C:\vcpkg\installed\x86-windows\bin\SDL2_mixer.dll dist\
         cd dist
-        Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_name }}-windows_x86.zip
+        Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         cd ..
 
     - name: Publish bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-windows_x86.zip
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         tag: ${{ github.ref }}
         overwrite: true
