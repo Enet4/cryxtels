@@ -92,6 +92,10 @@ jobs:
         copy gpl-3.0.txt dist\
         copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
         copy C:\vcpkg\installed\x86-windows\bin\SDL2_mixer.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\vorbisfile.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\vorbis.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\ogg.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\wavpackdll.dll dist\
         cd dist
         Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         cd ..
