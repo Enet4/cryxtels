@@ -51,6 +51,8 @@ Config load_config(const std::string& fpath) {
     config.situation_file = ini["cosm"]["situation_file"] | "";
     config.definition_file = ini["cosm"]["definition_file"] | "PIXELS.DEF";
 
+    config.audio_enabled = ini["audio"]["enabled"] | true;
+
     return config;
 }
 

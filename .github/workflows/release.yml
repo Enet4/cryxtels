@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "*.*.*"
+      - "*.*.*-*"
       - "*.*.*_*"
   workflow_dispatch: {}
 
@@ -17,7 +18,7 @@ jobs:
 
     steps:
     - name: Install SDL2
-      run: sudo apt update && sudo apt install -y libsdl2-dev
+      run: sudo apt update && sudo apt install -y libsdl2-dev libsdl2-mixer-dev
 
     - uses: actions/checkout@v4
 
@@ -32,21 +33,23 @@ jobs:
         cd ${{github.workspace}}
         mkdir dist
         cp build/cryxtels \
-          bin/*.ATM bin/PIXELS.DEF \
+          bin/*.ATM bin/*.VOC bin/PIXELS.DEF bin/SETTINGS.INI \
           "readme new.txt" "crystal pixels.txt" \
           "pixels definition.txt" gpl-3.0.txt \
           dist/
         cd dist
-        zip ../cryxtels-${{ github.ref_name }}-linux_x86_64.zip ./*
+        zip ../cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip ./*
         cd ..
 
-    - name: Publish bundle to GitHub release
+    - name: Upload bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-linux_x86_64.zip
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-linux_x86_64.zip
         tag: ${{ github.ref }}
         overwrite: true
+        prerelease: ${{ github.ref_type != 'tag' }}
+        draft: true
 
   release_windows_x86:
     runs-on: windows-latest
@@ -64,7 +67,7 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-v1
 
     - name: Install SDL2
-      run: vcpkg install sdl2:x86-windows
+      run: vcpkg install sdl2:x86-windows sdl2-mixer:x86-windows
 
     - uses: actions/checkout@v4
 
@@ -81,20 +84,29 @@ jobs:
         mkdir dist
         copy build\Release\cryxtels.exe dist\
         copy bin\*.ATM dist\
+        copy bin\*.VOC dist\
         copy bin\PIXELS.DEF dist\
+        copy bin\SETTINGS.INI dist\
         copy "readme new.txt" dist\
         copy "crystal pixels.txt" dist\
         copy "pixels definition.txt" dist\
         copy gpl-3.0.txt dist\
         copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\SDL2_mixer.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\vorbisfile.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\vorbis.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\ogg.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\wavpackdll.dll dist\
         cd dist
-        Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_name }}-windows_x86.zip
+        Compress-Archive -Path * -DestinationPath ..\cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         cd ..
 
-    - name: Publish bundle to GitHub release
+    - name: Upload bundle to GitHub release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/cryxtels-${{ github.ref_name }}-windows_x86.zip
+        file: ${{github.workspace}}/cryxtels-${{ github.ref_type == 'tag' && github.ref_name || 'test' }}-windows_x86.zip
         tag: ${{ github.ref }}
         overwrite: true
+        prerelease: ${{ github.ref_type != 'tag' }}
+        draft: true

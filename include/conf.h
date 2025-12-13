@@ -27,6 +27,9 @@
 #define CONFIG_FILE_NAME "SETTINGS.INI"
 
 typedef struct conf {
+
+    // --- render group ---
+
     u32 framerate_intro;
     u32 framerate;
     int ticks_per_second;
@@ -40,12 +43,20 @@ typedef struct conf {
     u32 window_width; /// == render_width * window_scale_x
     u32 window_height; /// == render_height * window_scale_y
 
+    // --- cosm group ---
+
     std::string definition_file; /// path to .def file
 
-    /// the following can be overridden by command line arguments
+    // the following can be overridden by command line arguments
+
     u32 cosm_pixels;
     u32 cosm_objects;
     std::string situation_file;
+
+    // --- audio group ---
+
+    bool audio_enabled;
+
     /// TODO: auto-save functionality?
 } Config;
 

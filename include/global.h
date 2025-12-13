@@ -80,6 +80,12 @@ extern bool back_keyhold;
 /// tracker for right click holding duration
 extern int rclick;
 
+/// tracker for the last time the echo sound was triggered
+extern unsigned int stso;
+
+/// tracker for the gap to the nearest pixel
+extern unsigned int gap;
+
 
 extern u8 taking; // Flag: attempt of taking an object.
 extern ObjectId carry_type; // Object type being carried (-1 = none).
@@ -114,7 +120,8 @@ extern u8 echo; // Echo flags
 
 extern PixelId carried_pixel; // Pixel being carried (only considered in Sunny (Solicchio)).
 
-extern double disl; // dislivello incontrato da un passo all'altro.
+/// difference in altitude from one step to another
+extern double disl;
 
 /// Cursor position on a text board.
 extern u16 cursore;
@@ -222,7 +229,15 @@ extern float *docksite_h;
 // Pixel mass
 extern float *pixelmass;
 
-// Files for sottofondi audio.
+/** Files for sottofondi audio (background sounds).
+ *
+ * This array saves a contiguous sequence of associated file names per pixel type,
+ * each at most 8 characters long
+ * (without the ".VOC" extension)
+ * plus 1 byte for the null terminator.
+ *
+ * That is, the file name of the `i`th pixel type starts at `&subsignal[9 * i]`.
+ */
 extern char *subsignal;
 
 /* Concerning objects. */
@@ -270,13 +285,24 @@ extern int a, b, c; // Contatori ausiliari.
 extern int id; // 0, 1, 2 o 3. A seconda della distanza del pixel.
 extern int nopix; // Nr. Pixel.
 
-extern char globalvocfile[13]; // sottofondi sui pixels.
+/** A placeholder for the file name of the sottofondo,
+ * or depth sounder (AKA background audio).
+ *
+ * This buffer is used to load the audio file associated to a pixel or object,
+ * thus tracking whether it should be playing while in a pixel.
+ *
+ * Note that the effective audio being played,
+ * as well as the background audio to use when outside a pixel,
+ * is tracked separately in the dsp module.
+ */
+extern char globalvocfile[13];
 
 extern char fermo_li;
 
 /// whether the sound emitting object is close
-extern int vicini;
-extern int sta_suonando;
+extern bool vicini;
+/// The type of the object emitting sound.
+extern ObjectTypeId sta_suonando;
 /// ID of the pixel emitting sound.
 extern PixelId pixel_sonante;
 
@@ -286,7 +312,7 @@ extern double cox, coy, coz;
 extern u8 justloaded;
 
 /// Whether the last object moved is still being dropped.
-extern u8 moving_last_object; // Sta spostando l'ultimo oggetto lasciato.
+extern u8 moving_last_object;
 extern double cfx, cfy, cfz; // Carried-Final-relative-X/Y/Z (dove deve andare /\).
 
 extern const char *source_name[];
@@ -306,6 +332,8 @@ extern char t[80]; // Usata nelle funz. Pixel & Object.
 #define nr_audiofiles 14
 //#include <dsp.h>
 
+// identifiers for (originally) pre-loaded audios
+
 #define BOM        13
 #define DESTROY    12
 #define READY      11
@@ -317,9 +345,12 @@ extern char t[80]; // Usata nelle funz. Pixel & Object.
 #define LASCIARE    5
 #define PRENDERE    4
 #define DISTACCO    3
+// Warning: duplicate definition of the one below
 #define ATTRACCO    2
 #define TARGET      1
 
+// identifier for the depth sounder audio.
+// this does not refer to a specific audio file.
 #define SOTTOFONDO  0
 
 /* Fine sezione signal processing. */
@@ -356,6 +387,63 @@ extern char t[80]; // Usata nelle funz. Pixel & Object.
 #define MASSA               21 // 1 = massa del pixel in questione
 #define BLOCCO_ELEVATO      22 // Blocco collisione elevato.
 #define SOLID_BOX           23 // New Block: like collision high, but also draws a box.
+
+/// @brief Built-in object type: Fottifoh (copier)
+constexpr ObjectTypeId OBJECT_TYPE_FOTTIFOH = 0;
+
+/// @brief Built-in object type: orbital engine
+constexpr ObjectTypeId OBJECT_TYPE_ORBITAL_ENGINE = 1;
+
+/// @brief Built-in object type: CD player
+constexpr ObjectTypeId OBJECT_TYPE_CD_PLAYER = 2;
+
+// Enumeration of possible special effects for objects
+// which are defined via the "associated file" property.
+enum struct AssociatedFileEffect {
+    // No hardcoded effect,
+    // so the associated file is interpreted depending on context,
+    // usually as an audio file name.
+    OTHER = 0,
+
+    // "TEXT-V": a vertical text board
+    TEXT_V = 1,
+    
+    // "TEXT-H": a horizontal text board
+    TEXT_H = 2,
+
+    // "MAGNIFY": magnification goggles
+    MAGNIFY = 3,
+
+    // "BOMB": destroys pixels
+    BOMB = 4,
+
+    // "REPEAT": makes audio players loop/not loop when dropped onto them
+    REPEAT = 5,
+
+    // (currently unused) "SORG-D": recording source D (?)
+    SOURCE_C,
+
+    // (currently unused) "SORG-D": recording source C (CD?)
+    SOURCE_D,
+
+    // (currently unused) "SORG-M": recording source M (mic)
+    SOURCE_M,
+
+    // (currently unused) "SORG-L": recording source L (line in)
+    SOURCE_L,
+
+    // (currently unused) "N-TAPE": low audio quality
+    QUALITY_L,
+
+    // (currently unused) "Q-TAPE": medium audio quality
+    QUALITY_M,
+
+    // (currently unused) "C-DISC": high audio quality
+    QUALITY_H
+};
+
+// Reads an "associated file" value string and returns the corresponding effect. 
+AssociatedFileEffect read_associated_file_effect(const char* str);
 
 #endif
 
