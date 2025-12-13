@@ -160,8 +160,8 @@ void darken_once (u8 inc) {
 }
 
 void toggle_fullscreen (void) {
-    auto flags = SDL_GetWindowFlags(p_window);
-    SDL_SetWindowFullscreen(p_window, flags ^ SDL_WINDOW_FULLSCREEN_DESKTOP);
+    auto fullscreen_flags = SDL_GetWindowFlags(p_window) & SDL_WINDOW_FULLSCREEN_DESKTOP; 
+    SDL_SetWindowFullscreen(p_window, fullscreen_flags ^ SDL_WINDOW_FULLSCREEN_DESKTOP);
 }
 
 void snapshot (void)
