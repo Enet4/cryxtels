@@ -39,7 +39,7 @@ In either mode:
     X : Show/hide The Fly.
     I : Toggle direction indicators.
     E : Toggle Echo sonar.
-    Alt gr (right alt) : Keep it pressed for a hallucinating blur effect.
+    Alt gr (right alt) : Keep it pressed for illusory space redraw, a hallucinating blur effect.
     Left/Right/Up/Down : Move the cursor when writing to a notepad.
    
 __________________
