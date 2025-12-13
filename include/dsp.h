@@ -34,7 +34,9 @@ void init_audio();
  * Then you can play this file with `SOTTOFONDO` as the audio identifier.
  * Pass `nulltpr` to reset the depth sounder audio.
  *
- * \return 1 if audio is disabled or the file loads successfully, 0 if it fails
+ * \param filename The audio file name (including extension)
+ * \return true if audio is disabled or the file loads successfully,
+ *         false if it fails (printing an error message)
  */
 bool set_sottofondo(const char* filename);
 

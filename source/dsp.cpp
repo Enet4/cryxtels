@@ -137,7 +137,7 @@ void init_audio() {
 
 bool set_sottofondo(const char* filename) {
     if (!audioEnabled) {
-        return false;
+        return true;
     }
 
     // skip if already set (or both are null)
@@ -169,7 +169,7 @@ bool set_sottofondo(const char* filename) {
     std::cout << "Sottofondo: file '" << filename << "' selected." << std::endl;
 
     // try to pre-load the audio
-    auto chunk = AUDIO_HANDLES[0] = Mix_LoadWAV(filename);
+    const auto* chunk = AUDIO_HANDLES[0] = Mix_LoadWAV(filename);
     if (!chunk) {
         std::cerr << "Failed to load audio file '" << filename << "': " << Mix_GetError() << std::endl;
         AUDIO_FILENAMES[0] = nullptr;
@@ -188,7 +188,7 @@ void play(Audio audio, int channel_num, int loops) {
     SDL_assert(audio < TOTAL_AUDIOS);
 
     // load file if necessary
-    auto chunk = AUDIO_HANDLES[audio];
+    auto* chunk = AUDIO_HANDLES[audio];
 
     auto filename = AUDIO_FILENAMES[audio];
 
