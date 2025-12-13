@@ -778,8 +778,10 @@ bool main_loop() {
             cam_z = dsz + rel_z;
         }
 
-        // Sezione ridisegno spazio illusorio.
-        /// Create hallucinating effect.
+        // Illusory space redraw section.
+        // Create a hallucinating effect
+        // by darkening the video buffer
+        // instead of clearing it.
         if (ctrlkeys[0]&32) { // ctrlkeys[0]&32 is right alt
             darken_once();
                         /*
