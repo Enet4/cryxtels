@@ -1730,7 +1730,7 @@ void undock ()
             play (DISTACCO, 1); subs = 0;
             // bring echo sonar back
             audio_stop(2);
-            set_sottofondo("ECHO");
+            set_sottofondo("ECHO.VOC");
         }
         else {
             if (pixel_absd[pix] < 500 + 1000*pixel_rot[pix]
