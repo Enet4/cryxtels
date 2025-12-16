@@ -178,8 +178,8 @@ void update_ctrlkeys()
     if (r & KMOD_LALT)
         ctrlkeys[0] |= 16;
 
-    // relocating this to right alt instead of left alt
-    if (r & KMOD_RALT)
+    // recognize right alt and mode modifier
+    if ((r & KMOD_RALT) || (r & KMOD_MODE))
         ctrlkeys[0] |= 32;
 
     if (r & KMOD_CAPS)
