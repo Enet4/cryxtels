@@ -21,9 +21,9 @@
 #include "input.h"
 #include "transition.h"
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #include "conf.h"
-#include <dsp.h>
+#include "dsp.h"
 
 /// enter a synchronous routine
 /// to fade out the screen
@@ -43,8 +43,8 @@ void fade(u8 speed) {
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_KEYDOWN
-                || event.type == SDL_MOUSEBUTTONDOWN) {
+            if (event.type == SDL_EVENT_KEY_DOWN
+                || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 skip = true;
             }
         }

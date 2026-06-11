@@ -19,17 +19,17 @@
 #ifndef FAST3D_H_INCLUDED
 #define FAST3D_H_INCLUDED
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #include <memory>
 #include "primitives.h"
 
 constexpr double Pi = 3.141592653589793238462643383;
 
-/// The software membory buffer to perform all rendering in.
+/// The software memory buffer to perform all rendering in.
 extern std::unique_ptr<u8[]> video_buffer;
 
-///// The SDL surface to show a scaled result.
-//extern SDL_Surface * p_surface_scaled;
+/// Global pointer to the main window
+extern SDL_Window * p_window;
 
 /// Some old adapters.
 //unsigned char * adaptor = (unsigned char *) 0xA0000000;
@@ -48,7 +48,7 @@ extern float *tcosy, *tsiny;
 extern double cam_x, cam_y, cam_z;
 
 /// Alpha and Beta (camera orientation)
-extern i16 alpha,beta;
+extern i16 alpha, beta;
 
 /// Distance to the closest pixel.
 extern double kk;

@@ -44,7 +44,8 @@
 #include "intro.h"
 #include "dsp.h"
 
-#include "SDL.h"
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_mouse.h>
 #include "conf.h"
 
 static u32 width;
@@ -268,7 +269,7 @@ int main(int argc, char** argv)
     set_sottofondo("ECHO.VOC");
 
     if (grab_mouse) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
+        SDL_SetWindowRelativeMouseMode(p_window, true);
     }
 
     // discard relativa mouse movements up to now
@@ -281,6 +282,11 @@ int main(int argc, char** argv)
     } while (running);
 
     alfin(true);
+
+    // clean up audio resources
+    if (audioEnabled) {
+        destroy_audio();
+    }
 
     cout << "Quitting." << endl;
     return 0;
@@ -398,13 +404,13 @@ bool main_loop() {
         SDL_Event sdlevent;
         while (SDL_PollEvent(&sdlevent)) {
             switch (sdlevent.type) {
-              case SDL_WINDOWEVENT_RESIZED:
+              case SDL_EVENT_WINDOW_RESIZED:
                 break;
-              case SDL_QUIT:
+              case SDL_EVENT_QUIT:
                 quit_now = true;
                 break;
-              case SDL_KEYUP: if (sdlevent.key.state == SDL_RELEASED) {
-                i = sdlevent.key.keysym.sym;
+              case SDL_EVENT_KEY_UP: if (!sdlevent.key.down) {
+                i = sdlevent.key.key;
                 switch (i) {
                     case keymap_thrust:
                         thrust_keyhold = false;
@@ -414,8 +420,8 @@ bool main_loop() {
                         break;
                 }
                 i = 0;
-              case SDL_KEYDOWN: if (sdlevent.key.state == SDL_PRESSED) {
-                i = sdlevent.key.keysym.sym;
+              case SDL_EVENT_KEY_DOWN: if (sdlevent.key.down) {
+                i = sdlevent.key.key;
                 switch (i) {
 /*                  case 0xa1: ob /= 1.05; if (ob<15000) ob = 15000; break;
                     case 0x9d: micro_y -= 0.001; break;
@@ -509,14 +515,14 @@ bool main_loop() {
                     case SDLK_PAGEDOWN: // drop the object
                         if (carry_type!=-1) lascia_cadere ();
                         break;
-                    case SDLK_e: // Echo toggle
+                    case SDLK_E: // Echo toggle
                         // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         // ignore in text typing mode
                         if (type_mode) break;
                         echo ^= 1;
                         break;
-                    case SDLK_x: // The Fly view toggle
+                    case SDLK_X: // The Fly view toggle
                         // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         // ignore in text typing mode
@@ -528,14 +534,14 @@ bool main_loop() {
                         if (ctrlkeys[0]&3) break;
                         echo ^= 4;
                         break;
-                    case SDLK_i: // Information toggle
+                    case SDLK_I: // Information toggle
                         // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         // ignore in text typing mode
                         if (type_mode) break;
                         echo^=8;
                         break;
-                    case SDLK_m: // Keyboard/Mouse control toggle
+                    case SDLK_M: // Keyboard/Mouse control toggle
                         // ignore if any shift key is held
                         if (ctrlkeys[0]&3) break;
                         // ignore in text typing mode
@@ -548,7 +554,7 @@ bool main_loop() {
                         mx = beta * 5;
                         my = alpha * 5;
                         if (grab_mouse) {
-                            SDL_SetRelativeMouseMode(m ? SDL_TRUE : SDL_FALSE);
+                            SDL_SetWindowRelativeMouseMode(p_window, static_cast<bool>(m));
 
                             // fetch mouse delta to discard past movement
                             SDL_GetRelativeMouseState(&mdltx, &mdlty);
@@ -577,7 +583,7 @@ bool main_loop() {
                     }
 
                     // Loading and saving
-                    if ((i>=SDLK_a && i<=SDLK_z) || i == SDLK_ASTERISK) {
+                    if ((i>=SDLK_A && i<=SDLK_Z) || i == SDLK_ASTERISK) {
                         if (ctrlkeys[0]&1) {
                             load_situation(i);
                         } else if (ctrlkeys[0]&2) {
@@ -588,8 +594,8 @@ bool main_loop() {
 //                else {
                     /* Text typing something */
                     if (type_mode) {
-                        if (i >= SDLK_a && i <= SDLK_z) {
-                            i = i + 'A' - SDLK_a;
+                        if (i >= SDLK_A && i <= SDLK_Z) {
+                            i = i + 'A' - SDLK_A;
                         }
                         if (i>=32 && i<=96) {
                             type_this = i;
@@ -1298,7 +1304,7 @@ inline void init_start()
     }
 
 	// Init SDL
-	r = SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	r = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 	if (r < 0)
 	{	cerr << "Failed to init SDL: " << SDL_GetError() << endl;
 		throw 2;

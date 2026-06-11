@@ -16,7 +16,7 @@ Building this project requires:
 
 - A C++ compiler supporting standard C++11.
 - CMake 3.10 or greater is required.
-- The SDL 2 development library should be installed in the system,
+- The SDL 3 development library should be installed in the system,
   either via a package manager in your system
   or through [vcpkg](https://github.com/microsoft/vcpkg).
   The SDL_mixer extension is needed for audio support.
@@ -36,7 +36,7 @@ cmake --build build --config Release
 On Windows using vcpkg:
 
 ```bat
-vcpkg install sdl2:x86-windows
+vcpkg install sdl3:x86-windows
 mkdir build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release -A win32 -DCMAKE_TOOLCHAIN_FILE=C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -55,7 +55,7 @@ Before you start playing, please read *crystal pixels.txt* and *readme new.txt* 
 To run the game, execute `cryxtels` while ensuring that
 PIXELS.DEF and all .ATM files are in your current working directory
 (these are all available here in the [bin](bin) folder).
-Simple Directmedia Library version 2 must be installed in the system.
+Simple Directmedia Library version 3 must be installed in the system.
 
 ## License
 

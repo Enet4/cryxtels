@@ -32,6 +32,10 @@ using i16 = int16_t;
 using u32 = uint32_t;
 /// 32-bit signed integer
 using i32 = int32_t;
+/// 64-bit unsigned integer
+using u64 = uint64_t;
+/// 64-bit signed integer
+using i64 = int64_t;
 
 /// 32-bit floating point
 using f32 = float;

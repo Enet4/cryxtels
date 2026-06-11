@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <SDL3/SDL_surface.h>
 #include "sdl_exception.h"
 #include "conf.h"
 
@@ -30,9 +31,9 @@
 //SDL_Surface * p_surface = nullptr;
 std::unique_ptr<u8[]> video_buffer;
 
+SDL_Window * p_window = nullptr;
 SDL_Surface * p_surface_32 = nullptr;
 SDL_Surface * p_surface_scaled = nullptr;
-SDL_Window * p_window = nullptr;
 SDL_Renderer * p_renderer = nullptr;
 SDL_Texture * p_texture = nullptr;
 
@@ -105,38 +106,21 @@ void init_video () {
 
     init_trig();
 
-    // Set SDL video mode (using surface rendering)
-    Uint32 rmask, gmask, bmask, amask;
-
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-       on the endianness (byte order) of the machine */
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x00000000;
-#else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
-    amask = 0x00000000;
-#endif
 
     // create software video buffer
     video_buffer.reset(new unsigned char[framebuffer_size]);
     memset(&video_buffer[0], 0, framebuffer_size);
 
-    p_surface_32 = SDL_CreateRGBSurface(0, width, height, 32, rmask, gmask, bmask, amask);
+    p_surface_32 = SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBX32);
     if (p_surface_32 == nullptr) throw sdl_exception();
 
     p_window = SDL_CreateWindow("Crystal Pixels",
-            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
             window_width, window_height, SDL_WINDOW_RESIZABLE);
     if (p_window == nullptr) throw sdl_exception();
 
-    p_renderer = SDL_CreateRenderer(p_window, -1, SDL_RENDERER_TARGETTEXTURE);
+    p_renderer = SDL_CreateRenderer(p_window, nullptr);
 
-    p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_ABGR8888,
+    p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_RGBX32,
                                   SDL_TEXTUREACCESS_STREAMING, width,height);
 
     //p_surface_scaled = SDL_GetWindowSurface(p_window);
@@ -160,8 +144,8 @@ void darken_once (u8 inc) {
 }
 
 void toggle_fullscreen (void) {
-    auto fullscreen_flags = SDL_GetWindowFlags(p_window) & SDL_WINDOW_FULLSCREEN_DESKTOP; 
-    SDL_SetWindowFullscreen(p_window, fullscreen_flags ^ SDL_WINDOW_FULLSCREEN_DESKTOP);
+    bool is_fullscreen = SDL_GetWindowFlags(p_window) & SDL_WINDOW_FULLSCREEN;
+    SDL_SetWindowFullscreen(p_window, !is_fullscreen);
 }
 
 void snapshot (void)
@@ -182,7 +166,6 @@ void Render (void)
     using namespace std;
 
     // convert indexed 8-bit to RGBA 32-bit colors
-    //SDL_LockSurface(p_surface_32);
     SDL_LockTexture(p_texture, nullptr, &p_surface_32->pixels, &p_surface_32->pitch);
     // paint into surface pixels
     unsigned int rpos = 0;
@@ -202,8 +185,7 @@ void Render (void)
         rpos_32 += (p_surface_32->pitch >> 2);
     }
     SDL_UnlockTexture(p_texture);
-    //SDL_UnlockSurface(p_surface_32);
-    SDL_RenderCopy(p_renderer, p_texture, nullptr, nullptr);
+    SDL_RenderTexture(p_renderer, p_texture, nullptr, nullptr);
     SDL_RenderPresent(p_renderer);
 }
 
