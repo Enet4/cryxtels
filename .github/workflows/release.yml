@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install SDL2
-      run: sudo apt update && sudo apt install -y libsdl2-dev libsdl2-mixer-dev
+    - name: Install SDL3
+      run: sudo apt update && sudo apt install -y libsdl3-dev libsdl3-mixer-dev
 
     - uses: actions/checkout@v4
 
@@ -66,8 +66,8 @@ jobs:
          C:/vcpkg/installed
         key: ${{ runner.os }}-${{ env.cache-name }}-v1
 
-    - name: Install SDL2
-      run: vcpkg install sdl2:x86-windows sdl2-mixer:x86-windows
+    - name: Install SDL3
+      run: vcpkg install sdl3:x86-windows sdl3-mixer:x86-windows
 
     - uses: actions/checkout@v4
 
@@ -91,8 +91,8 @@ jobs:
         copy "crystal pixels.txt" dist\
         copy "pixels definition.txt" dist\
         copy gpl-3.0.txt dist\
-        copy C:\vcpkg\installed\x86-windows\bin\SDL2.dll dist\
-        copy C:\vcpkg\installed\x86-windows\bin\SDL2_mixer.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\SDL3.dll dist\
+        copy C:\vcpkg\installed\x86-windows\bin\SDL3_mixer.dll dist\
         copy C:\vcpkg\installed\x86-windows\bin\vorbisfile.dll dist\
         copy C:\vcpkg\installed\x86-windows\bin\vorbis.dll dist\
         copy C:\vcpkg\installed\x86-windows\bin\ogg.dll dist\
