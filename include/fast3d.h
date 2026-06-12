@@ -31,14 +31,6 @@ extern std::unique_ptr<u8[]> video_buffer;
 /// Global pointer to the main window
 extern SDL_Window * p_window;
 
-/// Some old adapters.
-//unsigned char * adaptor = (unsigned char *) 0xA0000000;
-//unsigned char * adapted = (unsigned char *) 0x80000000;
-//unsigned char * fake_adaptor = (unsigned char *) 0x80000000;
-
-/// This is the main palette.
-//extern unsigned char tmppal[768];
-
 /// Trigonometric tables, allocated dynamically and written in runtime.
 extern float *tcos, *tsin;
 extern float *tcosx, *tsinx;
@@ -77,10 +69,11 @@ void Render (void);
 /// Take a snapshot to a BMP
 void snapshot (void);
 
-/// Create a palette table based on new_palette.
-void tavola_colori (const u8 *new_palette,
-		    unsigned int starting_color, unsigned int nr_colors,
-		    i8 red_filter, i8 green_filter, i8 blue_filter);
+/// Update the pallette with the given saturation of yellow
+/// (for proximity to Sunny)
+///
+/// \param saturation the amount of yellow, between 0 and 255
+void tinte(u8 saturation);
 
 /// Copy a graphical page
 // Ultraveloce copia di pagina grafica.

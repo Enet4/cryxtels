@@ -1415,32 +1415,6 @@ inline bool allocation_farm()
     return true;
 }
 
-void tinte (unsigned char satu)
-{
-    constexpr unsigned char K = 255;
-    constexpr unsigned int GRAD_COUNT_1 = 16 * 3;
-    constexpr unsigned int GRAD_COUNT_2 = 16 * 3;
-
-    constexpr float F1 = 256.f / GRAD_COUNT_1;
-    constexpr float F2 = 256.f / GRAD_COUNT_2;
-
-    unsigned int i;
-    for (i=0; i < 768; i++) {
-        buffer[i] = K;
-    }
-    for (i=0; i < GRAD_COUNT_1; i += 3) {
-        buffer[i] = buffer[i + 1] = satu;
-        buffer[i + 2] = static_cast<float>(i) * F1;
-    }
-    for (i=0; i < GRAD_COUNT_2; i += 3) {
-        unsigned int v = static_cast<float>(i) * F2 + satu;
-        if (v > K) v = K;
-        buffer[i + GRAD_COUNT_1] = v;
-        buffer[i + GRAD_COUNT_1 + 1] = v;
-    }
-    tavola_colori (buffer, 0, 256, 63, 63, 63);
-}
-
 /// redefinition of random(int),
 /// which probably became deprecated.
 /// Generates a random number between 0 and max_num-1
