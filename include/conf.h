@@ -21,7 +21,8 @@
 
 #include <string>
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_keycode.h>
 #include "primitives.h"
 
 #define CONFIG_FILE_NAME "SETTINGS.INI"
@@ -63,8 +64,8 @@ typedef struct conf {
 /// Returns the config object, loading it from disk on the first call
 const Config& get_config(); 
 
-constexpr auto keymap_thrust    = SDLK_a;
-constexpr auto keymap_back      = SDLK_z;
+constexpr auto keymap_thrust    = SDLK_A;
+constexpr auto keymap_back      = SDLK_Z;
 constexpr auto keymap_up        = SDLK_UP;
 constexpr auto keymap_down      = SDLK_DOWN;
 constexpr auto keymap_left      = SDLK_LEFT;

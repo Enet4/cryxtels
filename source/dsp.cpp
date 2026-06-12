@@ -16,9 +16,9 @@
  */
 
 #include "dsp.h"
-#include <SDL.h>
-#include <SDL_audio.h>
-#include <SDL_mixer.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_audio.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include <iostream>
 #include <cstring>
 
@@ -37,10 +37,10 @@ bool audioEnabled = true;
  */
 constexpr unsigned int TOTAL_AUDIOS = 14;
 
-/** The total number of SDL2 mixer channels (or tracks),
+/** The total number of SDL mixer tracks,
  * which define how many sounds can be played simultaneously.
  * 
- * As each channel can only play one sound at a time,
+ * As each track can only play one sound at a time,
  * the following guidelines are set:
  * - track 0 for simpler sound effects
  * - track 1 for more complex sound effects of greater precedence
@@ -48,8 +48,20 @@ constexpr unsigned int TOTAL_AUDIOS = 14;
  */
 constexpr unsigned int TOTAL_NUM_TRACKS = 3;
 
+/** The array of audio tracks */
+MIX_Track* AUDIO_TRACKS[TOTAL_NUM_TRACKS] = {
+    nullptr,
+    nullptr,
+    nullptr,
+};
+/** Reference to the audio track for music. */
+MIX_Track*& MUSIC_AUDIO_TRACK = AUDIO_TRACKS[2];
+
 /** The SDL audio device ID. If 0, audio is not set */
 SDL_AudioDeviceID deviceId = 0;
+
+/** The SDL mixer object */
+MIX_Mixer* mixer = nullptr;
 
 const char* AUDIO_FILENAMES[TOTAL_AUDIOS] = {
     // SOTTOFONDO is actually a placeholder
@@ -70,7 +82,7 @@ const char* AUDIO_FILENAMES[TOTAL_AUDIOS] = {
     "BOM.VOC",
 };
 
-Mix_Chunk * AUDIO_HANDLES[TOTAL_AUDIOS] = {
+MIX_Audio * AUDIO_HANDLES[TOTAL_AUDIOS] = {
     // SOTTOFONDO
     0,
     // TARGET
@@ -115,24 +127,48 @@ Audio last_played[TOTAL_NUM_TRACKS] = {
 SDL_AudioSpec wavSpec;
 
 void init_audio() {
-    deviceId = Mix_OpenAudioDevice(
-        48000, // frequency
-        AUDIO_S16SYS, // format
+    MIX_Init();
+
+    SDL_AudioSpec audio_spec = {
+        SDL_AUDIO_S16, // format
         2, // channels
-        2048, // chunksize
-        nullptr, // device
-        0 // allowed_changes
-    );
-    if (deviceId != 0) {
-        std::cerr << "Failed to open audio device: " << Mix_GetError() << std::endl;
+        48000, // frequency
+    };
+
+    mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audio_spec);
+    if (mixer == nullptr) {
+        std::cerr << "Failed to open audio device: " << SDL_GetError() << std::endl;
         audioEnabled = false;
     } else {
+        auto props = MIX_GetMixerProperties(mixer);
+        deviceId = SDL_GetNumberProperty(props, MIX_PROP_MIXER_DEVICE_NUMBER, 0);
         std::cout << "Audio device " << deviceId << " selected" << std::endl;
-        SDL_PauseAudioDevice(deviceId, 0); // Start audio playback
     }
 
-    // set three channels / tracks
-    Mix_AllocateChannels(TOTAL_NUM_TRACKS);
+    // allocate each track
+    unsigned int tracknum = 0;
+    for (auto& track : AUDIO_TRACKS) {
+        track = MIX_CreateTrack(mixer);
+        if (track == nullptr) {
+            std::cerr << "Failed to create mixer track " << tracknum << ": " << SDL_GetError() << std::endl;
+        }
+        tracknum += 1;
+    }
+}
+
+void destroy_audio() {
+    audio_stop();
+    // clean up audios
+    for (auto& audio: AUDIO_HANDLES) {
+        MIX_DestroyAudio(audio);
+    }
+    // drop tracks
+    for (auto& track: AUDIO_TRACKS) {
+        MIX_DestroyTrack(track);
+    }
+    // drop mixer
+    MIX_DestroyMixer(mixer);
+    SDL_CloseAudioDevice(deviceId);
 }
 
 bool set_sottofondo(const char* filename) {
@@ -155,7 +191,7 @@ bool set_sottofondo(const char* filename) {
         // (assuming track 2 because it's the one used by SOTTOFONDO)
         audio_stop(2);
 
-        Mix_FreeChunk(AUDIO_HANDLES[0]);
+        MIX_DestroyAudio(AUDIO_HANDLES[0]);
         AUDIO_HANDLES[0] = nullptr;
     }
 
@@ -169,9 +205,9 @@ bool set_sottofondo(const char* filename) {
     std::cout << "Sottofondo: file '" << filename << "' selected." << std::endl;
 
     // try to pre-load the audio
-    const auto* chunk = AUDIO_HANDLES[0] = Mix_LoadWAV(filename);
+    const auto* chunk = AUDIO_HANDLES[0] = MIX_LoadAudio(mixer, filename, false);
     if (!chunk) {
-        std::cerr << "Failed to load audio file '" << filename << "': " << Mix_GetError() << std::endl;
+        std::cerr << "Failed to load audio file '" << filename << "': " << SDL_GetError() << std::endl;
         AUDIO_FILENAMES[0] = nullptr;
         return false;
     }
@@ -185,7 +221,7 @@ void play(Audio audio, int channel_num, int loops) {
     if (!audioEnabled) {
         return;
     }
-    SDL_assert(audio < TOTAL_AUDIOS);
+    SDL_assert(audio < static_cast<i32>(TOTAL_AUDIOS));
 
     // load file if necessary
     auto* chunk = AUDIO_HANDLES[audio];
@@ -199,27 +235,38 @@ void play(Audio audio, int channel_num, int loops) {
     }
 
     if (!chunk) {
-        chunk = AUDIO_HANDLES[audio] = Mix_LoadWAV(filename);
+        chunk = AUDIO_HANDLES[audio] = MIX_LoadAudio(mixer, filename, true);
         // if it still couldn't load, give up
         if (!chunk) {
-            std::cerr << "Failed to load audio file '" << filename << "': " << Mix_GetError() << std::endl;
+            std::cerr << "Failed to load audio file '" << filename << "': " << SDL_GetError() << std::endl;
             return;
         }
         std::cout << "Audio file '" << filename << "' loaded." << std::endl;
     }
 
+    auto track = AUDIO_TRACKS[channel_num];
+    if (track == nullptr) {
+        return;
+    }
+
     // if this was the audio last played in this channel
     if (last_played[channel_num] == audio) {
         // check whether the channel is still playing
-        if (Mix_Playing(channel_num)) {
+        if (MIX_TrackPlaying(track)) {
             // still playing, do not proceed
             return;
         }
     }
-
-    auto err = Mix_PlayChannel(channel_num, chunk, loops);
-    if (err != -1) {
-        last_played[err] = audio;
+    MIX_SetTrackAudio(track, chunk);
+    SDL_PropertiesID properties;
+    if (loops > 0) {
+        properties = SDL_CreateProperties();
+        SDL_SetNumberProperty(properties, MIX_PROP_PLAY_LOOPS_NUMBER, loops);
+    } else {
+        properties = 0;
+    }
+    if (MIX_PlayTrack(track, properties)) {
+        last_played[channel_num] = audio;
     }
 }
 
@@ -271,7 +318,7 @@ bool play_music(const char* name, bool repeat) {
     }
 
     // check whether the requested music is already playing
-    if (MUSIC_SELECTED == name && Mix_Playing(2)) {
+    if (MUSIC_SELECTED == name && MIX_TrackPlaying(MUSIC_AUDIO_TRACK)) {
         // already playing, do nothing
         return true;
     }
@@ -279,7 +326,7 @@ bool play_music(const char* name, bool repeat) {
     // clear previous music if any
     // (we need this because AUDIO_FILENAME[0] might be using the same buffer)
     if (MUSIC_SELECTED != "" && MUSIC_SELECTED != name) {
-        Mix_FreeChunk(AUDIO_HANDLES[0]);
+        MIX_DestroyAudio(AUDIO_HANDLES[0]);
         AUDIO_HANDLES[0] = nullptr;
         AUDIO_FILENAMES[0] = nullptr;
         MUSIC_SELECTED = "";
@@ -301,16 +348,12 @@ const char* last_music_playing() {
     return MUSIC_SELECTED == "" ? nullptr : MUSIC_SELECTED.c_str();
 }
 
-void audio_stop(int channel_num, int fadeout) {
+void audio_stop(int track_num, int fadeout) {
     if (!audioEnabled) {
         return;
     }
-    if (channel_num == -1) {
-        if (fadeout > 0) {
-            Mix_FadeOutChannel(-1, fadeout);
-        } else {
-            Mix_HaltChannel(-1);
-        }
+    if (track_num == -1) {
+        MIX_StopAllTracks(mixer, fadeout);
         // reset all last played trackers
         for (unsigned int i = 0; i < TOTAL_NUM_TRACKS; ++i) {
             last_played[i] = -1;
@@ -320,14 +363,15 @@ void audio_stop(int channel_num, int fadeout) {
         MUSIC_SELECTED = "";
 
     } else {
-        if (fadeout > 0) {
-            Mix_FadeOutChannel(channel_num, fadeout);
-        } else {
-            Mix_HaltChannel(channel_num);
-        }
-        last_played[channel_num] = -1;
+        auto track = AUDIO_TRACKS[track_num];
 
-        if (channel_num == 2) {
+        i64 fadeout_frames;
+        // convert fadeout ms to frames
+        fadeout_frames = MIX_TrackMSToFrames(track, fadeout);
+        MIX_StopTrack(track, fadeout_frames);
+        last_played[track_num] = -1;
+
+        if (track_num == 2) {
             MUSIC_SELECTED = "";
         }
     }

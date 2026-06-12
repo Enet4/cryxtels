@@ -27,7 +27,9 @@
 #include "global.h"
 #include "conf.h"
 #include "sdl_exception.h"
-#include "SDL.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_keycode.h>
 
 using namespace std;
 
@@ -39,7 +41,7 @@ const bool grab_mouse = true;
 
 //int fh = 0;
 class RWHandler {
-    SDL_RWops* p_rw;
+    SDL_IOStream* p_rw;
 public:
     RWHandler(void) noexcept
     : p_rw(nullptr) {
@@ -55,15 +57,16 @@ public:
     /// Open file, closing an existing one
     void open(const char* file, const char* mode) {
         close();
-        p_rw = SDL_RWFromFile(file, mode);
+        p_rw = SDL_IOFromFile(file, mode);
         if (p_rw == nullptr) {
             throw sdl_exception();
         }
     }
     /// Seek
-    /// \param either RW_SEEK_SET, RW_SEEK_CUR or RW_SEEK_END
-    unsigned long long seek(unsigned long long offset, int whence) {
-        return SDL_RWseek(p_rw, offset, whence);
+    /// \param offset byte offset
+    /// \param whence either SDL_IO_SEEK_SET, SDL_IO_SEEK_CUR or SDL_IO_SEEK_END
+    unsigned long long seek(unsigned long long offset, SDL_IOWhence whence) {
+        return SDL_SeekIO(p_rw, offset, whence);
     }
 
     template<typename T>
@@ -71,7 +74,7 @@ public:
         return write(&data, sizeof(T));
     }
     size_t write(const void* data, size_t size) {
-        return SDL_RWwrite(p_rw, data, size, 1);
+        return SDL_WriteIO(p_rw, data, size);
     }
 
     template<typename T>
@@ -79,13 +82,13 @@ public:
         return read(&data, sizeof(T));
     }
     size_t read(void* dest, size_t size) {
-        return SDL_RWread(p_rw, dest, size, 1);
+        return SDL_ReadIO(p_rw, dest, size);
     }
 
     /// Close file, silently ignores if no file in handle
     void close(void) noexcept {
         if (p_rw) {
-            SDL_RWclose(p_rw);
+            SDL_CloseIO(p_rw);
             p_rw = nullptr;
         }
     }
@@ -148,15 +151,16 @@ int tasto_premuto () {
 
 /* Lettura del mouse e ritorno nelle variabili indicate. */
 
-int mdltx = 0, mdlty = 0, mx = 0, my = 0, mpul = 0;
+float mdltx = 0, mdlty = 0;
+int mx = 0, my = 0, mpul = 0;
 
 void mouse_input() {
     // mouse delta is saved in mdltx and mdlty.
     auto r = SDL_GetRelativeMouseState(&mdltx, &mdlty);
 
     // Update mouse key presses
-    auto lmb = (r & SDL_BUTTON(1)) ? 1 : 0;
-    auto rmb = (r & SDL_BUTTON(3)) ? 2 : 0;
+    auto lmb = (r & SDL_BUTTON_MASK(1)) ? 1 : 0;
+    auto rmb = (r & SDL_BUTTON_MASK(3)) ? 2 : 0;
     mpul = lmb | rmb;
 }
 
@@ -166,23 +170,23 @@ void update_ctrlkeys()
     ctrlkeys.fill(0);
     auto r = SDL_GetModState();
 
-    if (r & KMOD_RSHIFT)
+    if (r & SDL_KMOD_RSHIFT)
         ctrlkeys[0] |= 1;
 
-    if (r & KMOD_LSHIFT)
+    if (r & SDL_KMOD_LSHIFT)
         ctrlkeys[0] |= 2;
 
-    //if (r & KMOD_SCROLL)
+    //if (r & SDL_KMOD_SCROLL)
     //    ctrlkeys[0] |= 16;
 
-    if (r & KMOD_LALT)
+    if (r & SDL_KMOD_LALT)
         ctrlkeys[0] |= 16;
 
     // recognize right alt and mode modifier
-    if ((r & KMOD_RALT) || (r & KMOD_MODE))
+    if ((r & SDL_KMOD_RALT) || (r & SDL_KMOD_MODE))
         ctrlkeys[0] |= 32;
 
-    if (r & KMOD_CAPS)
+    if (r & SDL_KMOD_CAPS)
         ctrlkeys[0] |= 64;
 }
 
@@ -196,7 +200,7 @@ void keybuffer_cleaner()
 char trova_id (FILE* fh, const char *id) {
     if (!fh) return '\0';
 
-    std::fseek(fh, 0, SEEK_SET);
+    std::fseek(fh, 0, SDL_IO_SEEK_SET);
 
     while (1) {
         const char *idpos;
@@ -206,11 +210,11 @@ char trova_id (FILE* fh, const char *id) {
         if ((idpos = stristr ((const char*)buffer, id)) != NULL) {
             int dlt = (unsigned char*)idpos - buffer;
             int spostam = (int)strlen(id)-(cl-dlt);
-            std::fseek (fh, spostam, SEEK_CUR);
+            std::fseek (fh, spostam, SDL_IO_SEEK_CUR);
             return 1;
         }
         if (std::fread(buffer, 1, 1, fh) == 0) return '\0';
-        std::fseek (fh, -129, SEEK_CUR);
+        std::fseek (fh, -129, SDL_IO_SEEK_CUR);
     }
 }
 
@@ -293,7 +297,7 @@ void load_pixels_def(void) {
         leggi_t_fino_a (fh, '=', -1);
         eol = 0; leggi_t_fino_a (fh, ';', -1);
         srand ((unsigned)atof(t));
-        std::fseek (fh, 0, SEEK_SET);
+        std::fseek (fh, 0, SDL_IO_SEEK_SET);
         if (!trova_id (fh, "AUTHOR")) {
             std::fclose (fh);
             cerr << "Missing command in PIXELS.DEF: AUTHOR = AUTHOR_NAME;" << endl;
@@ -302,7 +306,7 @@ void load_pixels_def(void) {
         eol = 0; leggi_t_fino_a (fh, '=', -1);
         eol = 0; leggi_t_fino_a (fh, ';', -1);
         strcpy (autore_forme, t);
-        std::fseek (fh, 0, SEEK_SET);
+        std::fseek (fh, 0, SDL_IO_SEEK_SET);
         int ptyp = 0;
         sprintf (t, "TYPE %d;\r\n", ptyp);
         while (trova_id (fh, t)) {

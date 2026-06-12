@@ -14,8 +14,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install SDL2
-      run: sudo apt update && sudo apt install -y libsdl2-dev libsdl2-mixer-dev
+    - name: Set up SDL3
+      uses: libsdl-org/setup-sdl@main
+      id: sdl
+      with:
+        install-linux-dependencies: true
+        version: 3-latest
+        version-sdl-mixer: 3-latest
 
     - uses: actions/checkout@v4
 
@@ -40,8 +45,8 @@ jobs:
          C:/vcpkg/installed
         key: ${{ runner.os }}-${{ env.cache-name }}-v1
 
-    - name: Install SDL2 (+ SDL2_mixer)
-      run: vcpkg install sdl2:x86-windows sdl2-mixer:x86-windows
+    - name: Install SDL3 (+ SDL3_mixer)
+      run: vcpkg install sdl3:x86-windows sdl3-mixer:x86-windows
 
     - uses: actions/checkout@v4
 

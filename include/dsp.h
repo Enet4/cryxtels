@@ -29,6 +29,9 @@ extern bool audioEnabled;
 /** initialize the audio device */
 void init_audio();
 
+/** clean up all audio related resources */
+void destroy_audio();
+
 /** Set the audio file for the depth sounder (sottofondo).
  *
  * Then you can play this file with `SOTTOFONDO` as the audio identifier.
@@ -40,10 +43,16 @@ void init_audio();
  */
 bool set_sottofondo(const char* filename);
 
-/** try to play an audio.
- * Consider using a different channel for music or longer sounds.
+/** Try to play an audio.
+ * 
+ * @param audio game identifier of the audio to play
+ * @param tracknum the track number to play this audio on.
+ *        Default is track 0. Use it for simpler sound effects.
+ *        Use track 1 for more complex sound effects of greater precedence.
+ *        Use track 2 for the music and the echo sonar.
+ * @param loops how many times to loop the audio (-1 to loop forever)
  */
-void play(Audio audio, int channel = 0, int loops = 0);
+void play(Audio audio, int tracknum = 0, int loops = 0);
 
 /**
  * Play an audio file as music.

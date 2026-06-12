@@ -33,7 +33,8 @@ int tasto_premuto (); // torna 1 se c' un tasto premuto da estrarre.
 
 /* Lettura del mouse e ritorno nelle variabili indicate. */
 /// Mouse reading. The function updates these variables.
-extern int mdltx, mdlty, mx, my, mpul;
+extern float mdltx, mdlty;
+extern int mx, my, mpul;
 extern const bool grab_mouse;
 void mouse_input ();
 

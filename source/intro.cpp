@@ -23,7 +23,7 @@
 #include "intro.h"
 #include "dsp.h"
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #include "conf.h"
 
 static u32 tickrate;
@@ -128,14 +128,14 @@ bool intro_loop(void) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-            case SDL_WINDOWEVENT_RESIZED:
+            case SDL_EVENT_WINDOW_RESIZED:
             break;
-            case SDL_QUIT:
+            case SDL_EVENT_QUIT:
                 alfin(true);
                 exit(0);
             break;
-            case SDL_KEYDOWN:
-            case SDL_MOUSEBUTTONDOWN:
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 return false; // end intro
             default:
                 break;
