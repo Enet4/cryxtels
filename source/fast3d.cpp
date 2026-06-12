@@ -28,11 +28,10 @@
 #include "conf.h"
 
 // Variables!
-//SDL_Surface * p_surface = nullptr;
 std::unique_ptr<u8[]> video_buffer;
 
 SDL_Window * p_window = nullptr;
-SDL_Surface * p_surface_32 = nullptr;
+SDL_Surface * p_surface = nullptr;
 SDL_Surface * p_surface_scaled = nullptr;
 SDL_Renderer * p_renderer = nullptr;
 SDL_Texture * p_texture = nullptr;
@@ -59,11 +58,11 @@ const int lwy = 3;
 double uneg = 1;
 double mindiff = 0.01;
 
-/// New Palette definition
-u8 tmppal[256 * 4]; // 256*4 bytes (RGBU)
+/// Newer Palette definition
+SDL_Palette* p_palette;
 
-// Old Palette definition
-//unsigned char tmppal[768]; // 256*3 bytes (RGB)
+/// temporary space for palette colors
+u8 tmppal[256 * 4]; // 256 RGBX colors
 
 static u32 width, height;
 static u32 framebuffer_size;
@@ -111,8 +110,10 @@ void init_video () {
     video_buffer.reset(new unsigned char[framebuffer_size]);
     memset(&video_buffer[0], 0, framebuffer_size);
 
-    p_surface_32 = SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBX32);
-    if (p_surface_32 == nullptr) throw sdl_exception();
+    p_surface = SDL_CreateSurface(width, height, SDL_PIXELFORMAT_INDEX8);
+    if (p_surface == nullptr) throw sdl_exception();
+
+    p_palette = SDL_CreateSurfacePalette(p_surface);
 
     p_window = SDL_CreateWindow("Crystal Pixels",
             window_width, window_height, SDL_WINDOW_RESIZABLE);
@@ -120,8 +121,10 @@ void init_video () {
 
     p_renderer = SDL_CreateRenderer(p_window, nullptr);
 
-    p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_RGBX32,
-                                  SDL_TEXTUREACCESS_STREAMING, width,height);
+    p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_INDEX8,
+                                  SDL_TEXTUREACCESS_STREAMING, width, height);
+
+    SDL_SetTexturePalette(p_texture, p_palette);
 
     //p_surface_scaled = SDL_GetWindowSurface(p_window);
     SDL_SetWindowMinimumSize(p_window, width, height);
@@ -158,77 +161,89 @@ void snapshot (void)
     strftime(datetime, fmtlen, "%Y-%m-%d_%H%M%S", std::localtime(&now));
     sprintf(filename, "SNAP_%s.BMP", datetime);
     
-    SDL_SaveBMP(p_surface_32, filename);
+    SDL_SaveBMP(p_surface, filename);
 }
 
 void Render (void)
 {
-    using namespace std;
 
     // convert indexed 8-bit to RGBA 32-bit colors
-    SDL_LockTexture(p_texture, nullptr, &p_surface_32->pixels, &p_surface_32->pitch);
-    // paint into surface pixels
-    unsigned int rpos = 0;
-    unsigned int rpos_32 = 0;
-    unsigned char* p_orig = &video_buffer[0];
-    unsigned int* p_dest = static_cast<unsigned int*>(p_surface_32->pixels);
-    for (unsigned int y = 0 ; y < height ; y++) {
-        for (unsigned int x = 0 ; x < width ; x++) {
-            auto pixel = p_orig[rpos + x];
-            unsigned int c = tmppal[pixel * 4]
-                | (tmppal[pixel * 4 + 1] << 8)
-                | (tmppal[pixel * 4 + 2] << 16)
-                | (tmppal[pixel * 4 + 3] << 24);
-            p_dest[rpos_32 + x] = c;
-        }
-        rpos += width;
-        rpos_32 += (p_surface_32->pitch >> 2);
-    }
+    SDL_LockTexture(p_texture, nullptr, &p_surface->pixels, &p_surface->pitch);
+
+    // copy directly from the buffer
+    memcpy(p_surface->pixels, &video_buffer[0], width * height);
+
+    SDL_UpdateTexture(p_texture, nullptr, &video_buffer[0], width);
     SDL_UnlockTexture(p_texture);
     SDL_RenderTexture(p_renderer, p_texture, nullptr, nullptr);
     SDL_RenderPresent(p_renderer);
 }
 
+/// Create a palette table based on new_palette, with an optional filtering
 void tavola_colori (const u8 *nuova_tavolozza,
             unsigned int colore_di_partenza, unsigned int nr_colori,
             i8 filtro_rosso, i8 filtro_verde, i8 filtro_blu)
 {
-    constexpr unsigned int K_FILTER = 63; // original is 63
-    unsigned int c, cc = 0;
-    nr_colori *= 4; // using new padding in palette table
-    colore_di_partenza *= 4; // new padding
+    constexpr unsigned int K_FILTER = 63; // maximum post-filter value
 
-    int pad = 3;
-    c = colore_di_partenza;
-    while (c < nr_colori-colore_di_partenza) {
-        tmppal[c] = nuova_tavolozza[cc];
-        cc++;
-        c++;
-        if (--pad == 0) {
-            tmppal[c] = 0;
-            c++;
-            pad = 3;
-        }
+    // first copy palette
+    SDL_SetPaletteColors(p_palette, reinterpret_cast<const SDL_Color*>(nuova_tavolozza), 0, nr_colori);
+
+    // then apply the filter if necessary
+
+    // (pinky-promise that the filter works,
+    // it's just that it's not worth doing so many calculations
+    // if the outcome is the same)
+    if (filtro_rosso == 63 && filtro_verde == 63 && filtro_blu == 63) {
+        return;
     }
 
-    c = colore_di_partenza;
-    while (c<nr_colori+colore_di_partenza) {
-        u16 temp = tmppal[c];
-        temp *= (u8)filtro_rosso;
-        temp /= K_FILTER;
-        tmppal[c] = temp;
-        c++;
-        temp = tmppal[c];
-        temp *= (u8)filtro_verde;
-        temp /= K_FILTER;
-        tmppal[c] = temp;
-        c++;
-        temp = tmppal[c];
-        temp *= (u8)filtro_blu;
-        temp /= K_FILTER;
-        tmppal[c] = temp;
-        c+=2;
+    for (unsigned int c = colore_di_partenza; c < static_cast<unsigned int>(p_palette->ncolors); c++) {
+        auto& color = p_palette->colors[c];
+        // red
+        u16 temp = color.r * static_cast<u8>(filtro_rosso) / K_FILTER;
+        color.r = static_cast<u8>(temp);
+        // green
+        temp = color.g * static_cast<u8>(filtro_verde) / K_FILTER;
+        color.g = static_cast<u8>(temp);
+        // blue
+        temp = color.b * static_cast<u8>(filtro_blu) / K_FILTER;
+        color.b = static_cast<u8>(temp);
     }
+}
+
+void tinte (unsigned char satu)
+{
+    constexpr u8 K = 255;
+    constexpr unsigned int GRAD_COUNT_1 = 16 * 4;
+    constexpr unsigned int GRAD_COUNT_2 = 16 * 4;
+
+    constexpr float F1 = 256.f / GRAD_COUNT_1;
+    constexpr float F2 = 256.f / GRAD_COUNT_2;
+
+    unsigned int i;
+    // gradient 1: black to blue
+    for (i = 0; i < GRAD_COUNT_1; i += 4) {
+        tmppal[i] = tmppal[i + 1] = satu;
+        tmppal[i + 2] = static_cast<float>(i) * F1;
+        tmppal[i + 3] = 0;
+    }
+    // gradient 2: maximum blue to white
+    for (i = 0; i < GRAD_COUNT_2; i += 4) {
+        unsigned int v = static_cast<float>(i) * F2 + satu;
+        if (v > K) v = K;
+        tmppal[i + GRAD_COUNT_1] = v;
+        tmppal[i + GRAD_COUNT_1 + 1] = v;
+        // maximum blue
+        tmppal[i + GRAD_COUNT_1 + 2] = 255;
+        tmppal[i + GRAD_COUNT_1 + 3] = 0;
+    }
+    // the rest of the palette is white
+    for (i = GRAD_COUNT_1 + GRAD_COUNT_2; i < 256 * 4; i++) {
+        tmppal[i] = K;
+    }
+
+    tavola_colori (tmppal, 0, 256, 63, 63, 63);
 }
 
 // This function is unsafe and should be removed
