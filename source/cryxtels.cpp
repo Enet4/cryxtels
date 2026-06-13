@@ -1782,11 +1782,33 @@ void extra_stop_extra ()
     }
 }
 
+// TODO: we should just have a vector library...
+// among other things, that would allow us to easily pass vectors to functions and return them
+void normalize_r ()
+{
+    float norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
+    rx *= norm;
+    ry *= norm;
+    rz *= norm;
+}
+
+// find (alpha,beta) orientation of desired vector r
 void find_alphabeta()
 {
-    // find (alpha,beta) orientation of desired vector r
-    alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
-    beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
+    if (rx == 0 && ry == 0 && rz == 0) {
+        // no effect
+        alpha90 = alpha;
+        beta90 = beta;
+    } else {
+        normalize_r();
+        alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
+        if (rx == 0 && rz == 0) {
+            // do not call atan2(0,0)
+            beta90 = beta;
+        } else {
+            beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
+        }
+    }
 
     // rectify the ship if it's "upside down"
     if (alpha90 > 90 && alpha90 < 270) {
@@ -1800,23 +1822,12 @@ void find_alphabeta()
     m = 0;
 }
 
-// TODO: we should just have a vector library...
-// among other things, that would allow us to easily pass vectors to functions and return them
-void normalize_r ()
-{
-    float norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
-    rx *= norm;
-    ry *= norm;
-    rz *= norm;
-}
-
 void fid_on ()
 {
     if (EVA_in_progress||trackframe||fid||lead||orig) return;
     rx =   tsin[beta] * tcos[alpha];
     rz = - tcos[beta] * tcos[alpha];
     ry = - tsin[alpha];
-    // r is already a unit vector
     find_alphabeta ();
     fid = 1;
 }
@@ -1827,7 +1838,6 @@ void lead_on ()
     rx = spd_x;
     ry = spd_y;
     rz = spd_z;
-    normalize_r();
     find_alphabeta ();
     lead = 1;
 }
@@ -1838,7 +1848,6 @@ void orig_on ()
     rx = -cam_x;
     ry = -cam_y;
     rz = -cam_z;
-    normalize_r();
     find_alphabeta ();
     orig = 1;
 }
