@@ -68,6 +68,14 @@ static void read_config(void) {
     audioEnabled = config.audio_enabled;
 }
 
+inline i16 angle(i16 x) {
+    return x - std::floor((float)x/360.0) * 360;
+}
+
+inline i16 angle_between(i16 target, i16 current) {
+    return angle(target - current + 180) - 180;
+}
+
 /// initialize some parts of cryxtels
 inline void init_start();
 
@@ -742,14 +750,14 @@ bool main_loop() {
         // FID (freno inerziale diamagnetico).
         // Non pi cos facile: ora c' lo SPIN.
         if (fid||lead||orig) {
-            v_alpha = alpha90 - alpha;
+            v_alpha = angle_between(alpha90, alpha);
             if (v_alpha>5) v_alpha = 5;
             if (v_alpha<-5) v_alpha = -5;
-            alpha += v_alpha;
-            v_beta = beta90 - beta;
+            alpha = angle(alpha + v_alpha);
+            v_beta = angle_between(beta90, beta);
             if (v_beta>5) v_beta = 5;
             if (v_beta<-5) v_beta = -5;
-            beta += v_beta;
+            beta = angle(beta + v_beta);
             if (alpha==alpha90 && beta==beta90) {
                 m = comera_m;
                 mx = beta * 5;
@@ -1776,6 +1784,13 @@ void extra_stop_extra ()
 
 void find_alphabeta()
 {
+    // Brute-force approach to find alpha and beta parameters
+    // from a desired orientation vector [ rx, ry, rz ],
+    // without using inverse trig function calls... but it's
+    // doing 3600 array accesses and 720 branch instructions,
+    // so is it really faster? Probably yes since the trig
+    // tables fit in L1 cache.
+    // The results are written into [ alpha90, beta90 ].
     kk = 1E9;
     for (c=0; c<360; c++) {
         x2 = cam_x - 100 * tsin[c] * tcos[alpha];
@@ -1799,6 +1814,11 @@ void find_alphabeta()
             kk = ox;
             alpha90 = c;
         }
+    }
+    // rectify the ship if it's "upside down"
+    if (alpha90 > 90 && alpha90 < 270) {
+        alpha90 = angle(180 - alpha90);
+        beta90 = angle(beta90 - 180);
     }
     play (FID, 1);
     subs = 0;
