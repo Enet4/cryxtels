@@ -1784,64 +1784,50 @@ void extra_stop_extra ()
 
 void find_alphabeta()
 {
-    // Brute-force approach to find alpha and beta parameters
-    // from a desired orientation vector [ rx, ry, rz ],
-    // without using inverse trig function calls... but it's
-    // doing 3600 array accesses and 720 branch instructions,
-    // so is it really faster? Probably yes since the trig
-    // tables fit in L1 cache.
-    // The results are written into [ alpha90, beta90 ].
-    kk = 1E9;
-    for (c=0; c<360; c++) {
-        x2 = cam_x - 100 * tsin[c] * tcos[alpha];
-        z2 = cam_z + 100 * tcos[c] * tcos[alpha];
-        y2 = cam_y + 100 * tsin[alpha];
-        ox = rx - x2; oy = ry - y2; oz = rz - z2;
-        ox = ox*ox+oy*oy+oz*oz;
-        if (ox<kk) {
-            kk = ox;
-            beta90 = c;
-        }
-    }
-    kk = 1E9;
-    for (c=0; c<360; c++) {
-        x2 = cam_x - 100 * tsin[beta90] * tcos[c];
-        z2 = cam_z + 100 * tcos[beta90] * tcos[c];
-        y2 = cam_y + 100 * tsin[c];
-        ox = rx - x2; oy = ry - y2; oz = rz - z2;
-        ox = ox*ox+oy*oy+oz*oz;
-        if (ox<kk) {
-            kk = ox;
-            alpha90 = c;
-        }
-    }
+    // find (alpha,beta) orientation of desired vector r
+    alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
+    beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
+
     // rectify the ship if it's "upside down"
     if (alpha90 > 90 && alpha90 < 270) {
         alpha90 = angle(180 - alpha90);
         beta90 = angle(beta90 - 180);
     }
+
     play (FID, 1);
     subs = 0;
     comera_m = m;
     m = 0;
 }
 
+// TODO: we should just have a vector library...
+// among other things, that would allow us to easily pass vectors to functions and return them
+void normalize_r ()
+{
+    float norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
+    rx *= norm;
+    ry *= norm;
+    rz *= norm;
+}
+
 void fid_on ()
 {
-        if (EVA_in_progress||trackframe||fid||lead||orig) return;
-        rx = cam_x + 100 * tsin[beta] * tcos[alpha];
-        rz = cam_z - 100 * tcos[beta] * tcos[alpha];
-        ry = cam_y - 100 * tsin[alpha];
-        find_alphabeta ();
-        fid = 1;
+    if (EVA_in_progress||trackframe||fid||lead||orig) return;
+    rx =   tsin[beta] * tcos[alpha];
+    rz = - tcos[beta] * tcos[alpha];
+    ry = - tsin[alpha];
+    // r is already a unit vector
+    find_alphabeta ();
+    fid = 1;
 }
 
 void lead_on ()
 {
     if (EVA_in_progress||trackframe||fid||lead||orig) return;
-    rx = cam_x + spd_x;
-    ry = cam_y + spd_y;
-    rz = cam_z + spd_z;
+    rx = spd_x;
+    ry = spd_y;
+    rz = spd_z;
+    normalize_r();
     find_alphabeta ();
     lead = 1;
 }
@@ -1849,9 +1835,10 @@ void lead_on ()
 void orig_on ()
 {
     if (EVA_in_progress||trackframe||fid||lead||orig) return;
-    rx = cam_x / 1.001;
-    ry = cam_y / 1.001;
-    rz = cam_z / 1.001;
+    rx = -cam_x;
+    ry = -cam_y;
+    rz = -cam_z;
+    normalize_r();
     find_alphabeta ();
     orig = 1;
 }
