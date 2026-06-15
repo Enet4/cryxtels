@@ -201,13 +201,13 @@ void tavola_colori (const u8 *nuova_tavolozza,
     for (unsigned int c = colore_di_partenza; c < static_cast<unsigned int>(p_palette->ncolors); c++) {
         auto& color = p_palette->colors[c];
         // red
-        u16 temp = color.r * static_cast<u8>(filtro_rosso) / K_FILTER;
+        u16 temp = color.r * static_cast<u16>(filtro_rosso) / K_FILTER;
         color.r = static_cast<u8>(temp);
         // green
-        temp = color.g * static_cast<u8>(filtro_verde) / K_FILTER;
+        temp = color.g * static_cast<u16>(filtro_verde) / K_FILTER;
         color.g = static_cast<u8>(temp);
         // blue
-        temp = color.b * static_cast<u8>(filtro_blu) / K_FILTER;
+        temp = color.b * static_cast<u16>(filtro_blu) / K_FILTER;
         color.b = static_cast<u8>(temp);
     }
 }
