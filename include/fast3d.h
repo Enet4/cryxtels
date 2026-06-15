@@ -73,7 +73,7 @@ void snapshot (void);
 /// (for proximity to Sunny)
 ///
 /// \param saturation the amount of yellow, between 0 and 255
-void tinte(u8 saturation);
+void update_palette(u8 saturation);
 
 /// Copy a graphical page
 // Ultraveloce copia di pagina grafica.

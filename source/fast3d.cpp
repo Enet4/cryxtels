@@ -212,7 +212,7 @@ void tavola_colori (const u8 *nuova_tavolozza,
     }
 }
 
-void tinte (unsigned char satu)
+void update_palette (u8 satu)
 {
     constexpr u8 K = 255;
     constexpr unsigned int GRAD_COUNT_1 = 16 * 4;

@@ -180,9 +180,6 @@ void lead_on ();
 /// Point towards Sunny
 void orig_on ();
 
-/// Generate the color palette
-void tinte (u8 satu);
-
 /// Explode
 void scoppia (int nr_ogg, double potenza, int var);
 
@@ -223,7 +220,7 @@ int main(int argc, char** argv)
 
         // set the display
         init_video();
-        tinte (0);
+        update_palette (0);
 
         // initialize audio device (unless it was disabled via settings)
         if (audioEnabled) {
@@ -432,7 +429,7 @@ bool main_loop() {
                     case SDLK_RETURN:
                         if (ctrlkeys[0]&16) {
                             toggle_fullscreen();
-                            tinte(0);
+                            update_palette(0);
                         }
                         break;
                     case keymap_up:
@@ -712,13 +709,13 @@ bool main_loop() {
         if (dsol<15000) {
             // adjusted from (63-dsol/240)
             // to account for new sample value range (0..256)
-            tinte (static_cast<unsigned char>(255 - dsol / 60.));
+            update_palette (static_cast<unsigned char>(255 - dsol / 60.));
             yel = true;
         }
         else {
             if (yel) {
                 // reset to no yellow if last game frame had some yellow
-                tinte (0);
+                update_palette (0);
                 yel = false;
             }
         }
