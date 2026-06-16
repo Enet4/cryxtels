@@ -69,7 +69,8 @@ static void read_config(void) {
 }
 
 inline i16 angle(i16 x) {
-    return x - std::floor((float)x/360.0) * 360;
+    i16 y = x % 360;
+    return (y < 0) ? y + 360 : y;
 }
 
 inline i16 angle_between(i16 target, i16 current) {
