@@ -1787,7 +1787,7 @@ void extra_stop_extra ()
 // among other things, that would allow us to easily pass vectors to functions and return them
 void normalize_r ()
 {
-    float norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
+    double norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
     rx *= norm;
     ry *= norm;
     rz *= norm;
