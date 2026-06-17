@@ -1803,8 +1803,8 @@ void find_alphabeta()
     } else {
         normalize_r();
         alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
-        if (rx == 0 && rz == 0) {
-            // do not call atan2(0,0)
+        if (alpha90 == 90 || alpha90 == 270) {
+            // calling atan2 with near-zero arguments is meaningless and dangerous
             beta90 = beta;
         } else {
             beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
