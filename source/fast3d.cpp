@@ -156,21 +156,18 @@ void snapshot (void)
     time_t now; std::time(&now);
     strftime(datetime, fmtlen, "%Y-%m-%d_%H%M%S", std::localtime(&now));
     sprintf(filename, "SNAP_%s.BMP", datetime);
-    
+
+    SDL_LockSurface(p_surface);
+    // copy to the surface
+    memcpy(p_surface->pixels, &video_buffer[0], width * height);
+    SDL_UnlockSurface(p_surface);
+
     SDL_SaveBMP(p_surface, filename);
 }
 
 void Render (void)
 {
-
-    // convert indexed 8-bit to RGBA 32-bit colors
-    SDL_LockTexture(p_texture, nullptr, &p_surface->pixels, &p_surface->pitch);
-
-    // copy directly from the buffer
-    memcpy(p_surface->pixels, &video_buffer[0], width * height);
-
     SDL_UpdateTexture(p_texture, nullptr, &video_buffer[0], width);
-    SDL_UnlockTexture(p_texture);
     SDL_RenderTexture(p_renderer, p_texture, nullptr, nullptr);
     SDL_RenderPresent(p_renderer);
 }
