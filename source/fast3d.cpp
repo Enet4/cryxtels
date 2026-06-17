@@ -32,7 +32,6 @@ std::unique_ptr<u8[]> video_buffer;
 
 SDL_Window * p_window = nullptr;
 SDL_Surface * p_surface = nullptr;
-SDL_Surface * p_surface_scaled = nullptr;
 SDL_Renderer * p_renderer = nullptr;
 SDL_Texture * p_texture = nullptr;
 
@@ -115,18 +114,15 @@ void init_video () {
 
     p_palette = SDL_CreateSurfacePalette(p_surface);
 
-    p_window = SDL_CreateWindow("Crystal Pixels",
-            window_width, window_height, SDL_WINDOW_RESIZABLE);
+    SDL_CreateWindowAndRenderer("Crystal Pixels",
+            window_width, window_height, SDL_WINDOW_RESIZABLE,
+            &p_window, &p_renderer);
     if (p_window == nullptr) throw sdl_exception();
-
-    p_renderer = SDL_CreateRenderer(p_window, nullptr);
 
     p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_INDEX8,
                                   SDL_TEXTUREACCESS_STREAMING, width, height);
 
     SDL_SetTexturePalette(p_texture, p_palette);
-
-    //p_surface_scaled = SDL_GetWindowSurface(p_window);
     SDL_SetWindowMinimumSize(p_window, width, height);
 }
 
