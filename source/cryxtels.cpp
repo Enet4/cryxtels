@@ -68,6 +68,15 @@ static void read_config(void) {
     audioEnabled = config.audio_enabled;
 }
 
+inline i16 angle(i16 x) {
+    i16 y = x % 360;
+    return (y < 0) ? y + 360 : y;
+}
+
+inline i16 angle_between(i16 target, i16 current) {
+    return angle(target - current + 180) - 180;
+}
+
 /// initialize some parts of cryxtels
 inline void init_start();
 
@@ -742,14 +751,14 @@ bool main_loop() {
         // FID (freno inerziale diamagnetico).
         // Non pi cos facile: ora c' lo SPIN.
         if (fid||lead||orig) {
-            v_alpha = alpha90 - alpha;
+            v_alpha = angle_between(alpha90, alpha);
             if (v_alpha>5) v_alpha = 5;
             if (v_alpha<-5) v_alpha = -5;
-            alpha += v_alpha;
-            v_beta = beta90 - beta;
+            alpha = angle(alpha + v_alpha);
+            v_beta = angle_between(beta90, beta);
             if (v_beta>5) v_beta = 5;
             if (v_beta<-5) v_beta = -5;
-            beta += v_beta;
+            beta = angle(beta + v_beta);
             if (alpha==alpha90 && beta==beta90) {
                 m = comera_m;
                 mx = beta * 5;
@@ -1774,32 +1783,40 @@ void extra_stop_extra ()
     }
 }
 
+// TODO: we should just have a vector library...
+// among other things, that would allow us to easily pass vectors to functions and return them
+void normalize_r ()
+{
+    double norm = 1.0 / std::sqrt(rx * rx + ry * ry + rz * rz);
+    rx *= norm;
+    ry *= norm;
+    rz *= norm;
+}
+
+// find (alpha,beta) orientation of desired vector r
 void find_alphabeta()
 {
-    kk = 1E9;
-    for (c=0; c<360; c++) {
-        x2 = cam_x - 100 * tsin[c] * tcos[alpha];
-        z2 = cam_z + 100 * tcos[c] * tcos[alpha];
-        y2 = cam_y + 100 * tsin[alpha];
-        ox = rx - x2; oy = ry - y2; oz = rz - z2;
-        ox = ox*ox+oy*oy+oz*oz;
-        if (ox<kk) {
-            kk = ox;
-            beta90 = c;
+    if (rx == 0 && ry == 0 && rz == 0) {
+        // no effect
+        alpha90 = alpha;
+        beta90 = beta;
+    } else {
+        normalize_r();
+        alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
+        if (alpha90 == 90 || alpha90 == 270) {
+            // calling atan2 with near-zero arguments is meaningless and dangerous
+            beta90 = beta;
+        } else {
+            beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
         }
     }
-    kk = 1E9;
-    for (c=0; c<360; c++) {
-        x2 = cam_x - 100 * tsin[beta90] * tcos[c];
-        z2 = cam_z + 100 * tcos[beta90] * tcos[c];
-        y2 = cam_y + 100 * tsin[c];
-        ox = rx - x2; oy = ry - y2; oz = rz - z2;
-        ox = ox*ox+oy*oy+oz*oz;
-        if (ox<kk) {
-            kk = ox;
-            alpha90 = c;
-        }
+
+    // rectify the ship if it's "upside down"
+    if (alpha90 > 90 && alpha90 < 270) {
+        alpha90 = angle(180 - alpha90);
+        beta90 = angle(beta90 - 180);
     }
+
     play (FID, 1);
     subs = 0;
     comera_m = m;
@@ -1808,20 +1825,20 @@ void find_alphabeta()
 
 void fid_on ()
 {
-        if (EVA_in_progress||trackframe||fid||lead||orig) return;
-        rx = cam_x + 100 * tsin[beta] * tcos[alpha];
-        rz = cam_z - 100 * tcos[beta] * tcos[alpha];
-        ry = cam_y - 100 * tsin[alpha];
-        find_alphabeta ();
-        fid = 1;
+    if (EVA_in_progress||trackframe||fid||lead||orig) return;
+    rx =   tsin[beta] * tcos[alpha];
+    rz = - tcos[beta] * tcos[alpha];
+    ry = - tsin[alpha];
+    find_alphabeta ();
+    fid = 1;
 }
 
 void lead_on ()
 {
     if (EVA_in_progress||trackframe||fid||lead||orig) return;
-    rx = cam_x + spd_x;
-    ry = cam_y + spd_y;
-    rz = cam_z + spd_z;
+    rx = spd_x;
+    ry = spd_y;
+    rz = spd_z;
     find_alphabeta ();
     lead = 1;
 }
@@ -1829,9 +1846,9 @@ void lead_on ()
 void orig_on ()
 {
     if (EVA_in_progress||trackframe||fid||lead||orig) return;
-    rx = cam_x / 1.001;
-    ry = cam_y / 1.001;
-    rz = cam_z / 1.001;
+    rx = -cam_x;
+    ry = -cam_y;
+    rz = -cam_z;
     find_alphabeta ();
     orig = 1;
 }
