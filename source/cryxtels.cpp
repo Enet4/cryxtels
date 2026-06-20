@@ -189,9 +189,6 @@ void lead_on ();
 /// Point towards Sunny
 void orig_on ();
 
-/// Generate the color palette
-void tinte (u8 satu);
-
 /// Explode
 void scoppia (int nr_ogg, double potenza, int var);
 
@@ -232,7 +229,7 @@ int main(int argc, char** argv)
 
         // set the display
         init_video();
-        tinte (0);
+        update_palette (0);
 
         // initialize audio device (unless it was disabled via settings)
         if (audioEnabled) {
@@ -441,7 +438,7 @@ bool main_loop() {
                     case SDLK_RETURN:
                         if (ctrlkeys[0]&16) {
                             toggle_fullscreen();
-                            tinte(0);
+                            update_palette(0);
                         }
                         break;
                     case keymap_up:
@@ -721,13 +718,13 @@ bool main_loop() {
         if (dsol<15000) {
             // adjusted from (63-dsol/240)
             // to account for new sample value range (0..256)
-            tinte (static_cast<unsigned char>(255 - dsol / 60.));
+            update_palette (static_cast<unsigned char>(255 - dsol / 60.));
             yel = true;
         }
         else {
             if (yel) {
                 // reset to no yellow if last game frame had some yellow
-                tinte (0);
+                update_palette (0);
                 yel = false;
             }
         }
@@ -1422,32 +1419,6 @@ inline bool allocation_farm()
         return false;
     }
     return true;
-}
-
-void tinte (unsigned char satu)
-{
-    constexpr unsigned char K = 255;
-    constexpr unsigned int GRAD_COUNT_1 = 16 * 3;
-    constexpr unsigned int GRAD_COUNT_2 = 16 * 3;
-
-    constexpr float F1 = 256.f / GRAD_COUNT_1;
-    constexpr float F2 = 256.f / GRAD_COUNT_2;
-
-    unsigned int i;
-    for (i=0; i < 768; i++) {
-        buffer[i] = K;
-    }
-    for (i=0; i < GRAD_COUNT_1; i += 3) {
-        buffer[i] = buffer[i + 1] = satu;
-        buffer[i + 2] = static_cast<float>(i) * F1;
-    }
-    for (i=0; i < GRAD_COUNT_2; i += 3) {
-        unsigned int v = static_cast<float>(i) * F2 + satu;
-        if (v > K) v = K;
-        buffer[i + GRAD_COUNT_1] = v;
-        buffer[i + GRAD_COUNT_1 + 1] = v;
-    }
-    tavola_colori (buffer, 0, 256, 63, 63, 63);
 }
 
 /// redefinition of random(int),
