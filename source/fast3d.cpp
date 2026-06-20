@@ -72,6 +72,7 @@ static int zbasex, zbasey;
 static int nav_zbasex, nav_zbasey;
 static int lowerbound_y, upperbound_y;
 static int lowerbound_x, upperbound_x;
+static SDL_ScaleMode scale_mode;
 
 static void read_config(void) {
     const Config& config = get_config();
@@ -81,6 +82,7 @@ static void read_config(void) {
     framebuffer_size = width * height;
     window_width = config.window_width;
     window_height = config.window_height;
+    scale_mode = config.scale_mode;
 
     x_center = width / 2;
     y_center = height / 2;
@@ -121,8 +123,10 @@ void init_video () {
 
     p_texture = SDL_CreateTexture(p_renderer, SDL_PIXELFORMAT_INDEX8,
                                   SDL_TEXTUREACCESS_STREAMING, width, height);
-
+    // use the same palette for both surface and texture
     SDL_SetTexturePalette(p_texture, p_palette);
+    // set window scaling interpolation
+    SDL_SetTextureScaleMode(p_texture, scale_mode);
     SDL_SetWindowMinimumSize(p_window, width, height);
 }
 
