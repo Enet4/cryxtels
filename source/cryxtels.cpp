@@ -1305,7 +1305,6 @@ bool main_loop() {
 
 inline void init_start()
 {
-    int r;
     auto mem_ok = allocation_farm();
     if (!mem_ok) {
         cerr << "Not enough memory (seriously!?)" << endl;
@@ -1313,8 +1312,9 @@ inline void init_start()
     }
 
 	// Init SDL
-	r = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-	if (r < 0)
+    auto init_flags = audioEnabled ? SDL_INIT_VIDEO | SDL_INIT_AUDIO : SDL_INIT_VIDEO;
+    auto loaded = SDL_Init(init_flags); 
+	if (!loaded)
 	{	cerr << "Failed to init SDL: " << SDL_GetError() << endl;
 		throw 2;
     }

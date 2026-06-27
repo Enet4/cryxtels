@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
 
 ## SDL3_mixer
-find_package(SDL3_mixer REQUIRED)
+find_package(SDL3_mixer)
 
 # project includes
 include_directories(include)
@@ -21,6 +21,8 @@ include_directories(include)
 add_executable(cryxtels
     source/cryxtels.cpp source/fast3d.cpp source/global.cpp source/input.cpp
     source/text3d.cpp source/draw.cpp source/transition.cpp source/intro.cpp
-    source/conf.cpp source/dsp.cpp)
+    source/conf.cpp
+    $<IF:$<TARGET_EXISTS:SDL3_mixer::SDL3_mixer>, source/dsp.cpp, source/dsp.stub.cpp>)
+
 target_link_libraries(cryxtels PRIVATE
-    SDL3::SDL3 $<IF:$<TARGET_EXISTS:SDL3_mixer::SDL3_mixer>,SDL3_mixer::SDL3_mixer,SDL3_mixer>)
+    SDL3::SDL3 $<IF:$<TARGET_EXISTS:SDL3_mixer::SDL3_mixer>,SDL3_mixer::SDL3_mixer,>)
