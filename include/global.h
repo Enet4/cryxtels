@@ -21,8 +21,11 @@
 // provide strcasecmp to msvc
 #ifdef _MSC_VER
 #include <string.h>
-#define strncasecmp _strnicmp
 #define strcasecmp _stricmp
+#endif
+#ifdef __DJGPP__
+int wal_stricmp(const char *a, const char *b);
+#define strcasecmp wal_stricmp
 #endif
 
 #include <cstdio>

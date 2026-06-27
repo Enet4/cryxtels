@@ -48,6 +48,10 @@
 #include <SDL3/SDL_mouse.h>
 #include "conf.h"
 
+#ifndef __DJGPP__
+using std::round;
+#endif
+
 static u32 width;
 static u32 height;
 static int ticks_per_second;
@@ -1773,12 +1777,12 @@ void find_alphabeta()
         beta90 = beta;
     } else {
         normalize_r();
-        alpha90 = angle((i16) std::round((180.0 * std::asin(ry)) / Pi));
+        alpha90 = angle((i16) round((180.0 * std::asin(ry)) / Pi));
         if (alpha90 == 90 || alpha90 == 270) {
             // calling atan2 with near-zero arguments is meaningless and dangerous
             beta90 = beta;
         } else {
-            beta90 = angle((i16) std::round((180.0 * std::atan2(-rx, rz)) / Pi));
+            beta90 = angle((i16) round((180.0 * std::atan2(-rx, rz)) / Pi));
         }
     }
 

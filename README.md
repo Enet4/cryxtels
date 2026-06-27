@@ -44,6 +44,21 @@ cmake --build build --config Release -A win32 -DCMAKE_TOOLCHAIN_FILE=C:/path/to/
 
 The output is the executable file `cryxtels`.
 
+### DOS via DJGPP (experimental)
+
+1. Follow the instructions [here] to build the SDL port for MS-DOS.
+   - You will need a DJGPP toolchain in your system for this.
+     If your version provides `i686-pc-msdosdjgpp-gcc`,
+     you can edit this one in the toolchain file `build-scripts/i586-pc-msdosdjgpp.cmake`
+2. At cryxtels:
+
+   ```sh
+   cmake -S. -Bbuild-dos -DSDL3_DIR=«SDL»/build/ -DCMAKE_TOOLCHAIN_FILE=«SDL»/build-scripts/i586-pc-msdosdjgpp.cmake -DCMAKE_BUILD_TYPE=Release
+   cmake --build build-dos
+   ```
+
+3. This gives you `cryxtels.exe`. Don't forget to include a copy of `CWSDPMI.EXE` and all other assets as usual.
+
 ## Installing
 
 Place the compiled executable in the bin directory.

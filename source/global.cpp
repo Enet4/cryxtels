@@ -17,6 +17,7 @@
 #include "global.h"
 #include <cstdio>
 #include <cstring>
+#include <cctype>
 
 bool type_mode = false; // using type mode flag instead of scroll lock
 char type_this = 0; // character to type in the keyboard
@@ -373,3 +374,17 @@ AssociatedFileEffect read_associated_file_effect(const char* str) {
     return AssociatedFileEffect::OTHER;
 }
 
+// Source - https://stackoverflow.com/a/30734030
+// Posted by chux, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-06-27, License - CC BY-SA 4.0
+
+int wal_stricmp(const char *a, const char *b) {
+  int ca, cb;
+  do {
+     ca = (unsigned char) *a++;
+     cb = (unsigned char) *b++;
+     ca = std::tolower(std::toupper(ca));
+     cb = std::tolower(std::toupper(cb));
+   } while (ca == cb && ca != '\0');
+   return ca - cb;
+}
