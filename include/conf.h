@@ -27,6 +27,7 @@
 
 #define CONFIG_FILE_NAME "SETTINGS.INI"
 
+/** Game configuration (from SETTINGS.INI) */
 typedef struct conf {
 
     // --- render group ---
@@ -43,6 +44,7 @@ typedef struct conf {
     float window_scale_y;
     u32 window_width; /// == render_width * window_scale_x
     u32 window_height; /// == render_height * window_scale_y
+    SDL_ScaleMode scale_mode;
 
     // --- cosm group ---
 

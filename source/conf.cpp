@@ -46,6 +46,17 @@ Config load_config(const std::string& fpath) {
     config.window_width = config.render_width * config.window_scale_x;
     config.window_height = config.render_height * config.window_scale_y;
 
+    SDL_ScaleMode mode = SDL_SCALEMODE_NEAREST;
+    auto scale = ini["render"]["scale_mode"] | "nearest";
+    if (scale.empty() || scale == "nearest") {
+        mode = SDL_SCALEMODE_NEAREST;
+    } else if (scale == "linear") {
+        mode = SDL_SCALEMODE_LINEAR;
+    } else {
+        std::cerr << "Invalid setting `render.scale_mode`: must be one of \"nearest\" or \"linear\"" << std::endl;
+    }
+    config.scale_mode = mode;
+
     config.cosm_pixels = ini["cosm"]["num_pixels"] | 250;
     config.cosm_objects = ini["cosm"]["num_objects"] | 250;
     config.situation_file = ini["cosm"]["situation_file"] | "";
